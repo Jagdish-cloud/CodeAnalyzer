@@ -8,6 +8,8 @@ import NotFound from "@/pages/not-found";
 import AddInstitution from "@/pages/add-institution";
 import Dashboard from "@/pages/dashboard";
 import Mapping from "@/pages/mapping";
+import Staff from "@/pages/staff";
+import AddStaff from "@/pages/add-staff";
 
 function Router() {
   return (
@@ -15,6 +17,8 @@ function Router() {
       <Switch>
         <Route path="/" component={AddInstitution} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/staff" component={Staff} />
+        <Route path="/staff/add" component={AddStaff} />
         <Route path="/mapping" component={Mapping} />
         <Route path="/add-institution" component={AddInstitution} />
         <Route component={NotFound} />

@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertInstitutionSchema } from "@shared/schema";
+import { insertInstitutionSchema, insertStaffSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -155,6 +155,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Institution deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete institution" });
+    }
+  });
+
+  // Staff routes
+  app.get("/api/staff", async (req, res) => {
+    try {
+      const staff = await storage.getAllStaff();
+      res.json(staff);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch staff" });
+    }
+  });
+
+  app.post("/api/staff", async (req, res) => {
+    try {
+      const result = insertStaffSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const staffMember = await storage.createStaff(result.data);
+      res.status(201).json(staffMember);
+    } catch (error) {
+      console.error("Staff creation error:", error);
+      res.status(500).json({ message: "Failed to create staff member" });
+    }
+  });
+
+  app.get("/api/staff/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid staff ID" });
+      }
+
+      const staffMember = await storage.getStaff(id);
+      if (!staffMember) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      res.json(staffMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch staff member" });
+    }
+  });
+
+  app.patch("/api/staff/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid staff ID" });
+      }
+
+      const result = insertStaffSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const staffMember = await storage.updateStaff(id, result.data);
+      
+      if (!staffMember) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      res.json(staffMember);
+    } catch (error) {
+      console.error("Staff update error:", error);
+      res.status(500).json({ message: "Failed to update staff member" });
+    }
+  });
+
+  app.delete("/api/staff/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid staff ID" });
+      }
+
+      const deleted = await storage.deleteStaff(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete staff member" });
     }
   });
 

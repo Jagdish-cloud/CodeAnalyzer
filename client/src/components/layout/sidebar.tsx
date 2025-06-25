@@ -7,6 +7,7 @@ import {
   BarChart3,
   Home,
   Map,
+  Users,
   ChevronDown,
   ChevronRight,
   GraduationCap,
@@ -44,6 +45,13 @@ const menuItems: { items: MenuItem[] } = {
           type: "item",
           icon: "feather icon-home",
           url: "/",
+        },
+        {
+          id: "staff-data",
+          title: "Staff Data",
+          type: "item",
+          icon: "feather icon-users",
+          url: "/staff",
         },
         {
           id: "create-mapping",

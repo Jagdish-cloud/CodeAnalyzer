@@ -1,4 +1,4 @@
-import { users, institutions, type User, type InsertUser, type Institution, type InsertInstitution } from "@shared/schema";
+import { users, institutions, staff, type User, type InsertUser, type Institution, type InsertInstitution, type Staff, type InsertStaff } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -9,19 +9,28 @@ export interface IStorage {
   createInstitution(institution: InsertInstitution): Promise<Institution>;
   updateInstitution(id: number, institution: Partial<InsertInstitution>): Promise<Institution | undefined>;
   deleteInstitution(id: number): Promise<boolean>;
+  getStaff(id: number): Promise<Staff | undefined>;
+  getAllStaff(): Promise<Staff[]>;
+  createStaff(staff: InsertStaff): Promise<Staff>;
+  updateStaff(id: number, staff: Partial<InsertStaff>): Promise<Staff | undefined>;
+  deleteStaff(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private institutions: Map<number, Institution>;
+  private staff: Map<number, Staff>;
   private currentUserId: number;
   private currentInstitutionId: number;
+  private currentStaffId: number;
 
   constructor() {
     this.users = new Map();
     this.institutions = new Map();
+    this.staff = new Map();
     this.currentUserId = 1;
     this.currentInstitutionId = 1;
+    this.currentStaffId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -72,6 +81,45 @@ export class MemStorage implements IStorage {
 
   async deleteInstitution(id: number): Promise<boolean> {
     return this.institutions.delete(id);
+  }
+
+  async getStaff(id: number): Promise<Staff | undefined> {
+    return this.staff.get(id);
+  }
+
+  async getAllStaff(): Promise<Staff[]> {
+    return Array.from(this.staff.values());
+  }
+
+  async createStaff(insertStaff: InsertStaff): Promise<Staff> {
+    const id = this.currentStaffId++;
+    const staffMember: Staff = { 
+      id,
+      name: insertStaff.name,
+      staffId: insertStaff.staffId,
+      role: insertStaff.role,
+      newRole: insertStaff.newRole || null,
+      mobileNumber: insertStaff.mobileNumber,
+      email: insertStaff.email,
+      managerName: insertStaff.managerName,
+      status: insertStaff.status,
+      lastWorkingDay: insertStaff.lastWorkingDay || null,
+    };
+    this.staff.set(id, staffMember);
+    return staffMember;
+  }
+
+  async updateStaff(id: number, updateData: Partial<InsertStaff>): Promise<Staff | undefined> {
+    const existing = this.staff.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Staff = { ...existing, ...updateData };
+    this.staff.set(id, updated);
+    return updated;
+  }
+
+  async deleteStaff(id: number): Promise<boolean> {
+    return this.staff.delete(id);
   }
 }
 

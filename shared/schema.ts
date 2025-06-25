@@ -21,6 +21,19 @@ export const institutions = pgTable("institutions", {
   inst_contact_person: json("inst_contact_person").notNull(),
 });
 
+export const staff = pgTable("staff", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  staffId: text("staff_id").notNull().unique(),
+  role: text("role").notNull(),
+  newRole: text("new_role").$default(() => null),
+  mobileNumber: text("mobile_number").notNull(),
+  email: text("email").notNull().unique(),
+  managerName: text("manager_name").notNull(),
+  status: text("status").notNull(),
+  lastWorkingDay: text("last_working_day").$default(() => null),
+});
+
 const contactPersonSchema = z.object({
   contact_person_name: z.string().min(1, "Name is required"),
   contact_person_designation: z.string().min(1, "Designation is required"),
@@ -62,10 +75,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+export const insertStaffSchema = createInsertSchema(staff).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertInstitution = z.infer<typeof insertInstitutionSchema>;
 export type Institution = typeof institutions.$inferSelect;
+export type InsertStaff = z.infer<typeof insertStaffSchema>;
+export type Staff = typeof staff.$inferSelect;
 export type ContactPerson = z.infer<typeof contactPersonSchema>;
 export type Branch = z.infer<typeof branchSchema>;
 export type SuperAdmin = z.infer<typeof superAdminSchema>;
