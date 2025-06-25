@@ -1,0 +1,607 @@
+import React, { useState } from 'react';
+import { Card, Form, Row, Col, Button } from 'react-bootstrap';
+
+const AddInstitution = () => {
+    // Initial state matching your schema
+    const [formData, setFormData] = useState({
+      inst_name: '',
+      inst_location: '',
+      inst_address: '',
+      inst_logo: null,
+      inst_Official_Website: '',
+      inst_Official_Contact_Number: '',
+      inst_Official_Email_Id: '',
+      inst_branches: [
+        {
+          branch_name: '',
+          branch_address: '',
+          branch_contact_person_name: '',
+          branch_contact_person_designation: '',
+          branch_contact_person_mobile_number: '',
+          branch_contact_person_email: '',
+          branch_super_admins: [
+            {
+              branch_super_admin_name: '',
+              branch_super_admin_mobile_number: '',
+              branch_super_admin_email: ''
+            }
+          ],
+          branch_mobile_app: [
+            {
+              branch_mobile_license_count: '',
+              branch_bhagen_logo_flag: 'yes'
+            }
+          ]
+        }
+      ],
+      inst_contact_person: [
+        {
+          contact_person_name: '',
+          contact_person_designation: '',
+          contact_person_mobile_number: '',
+          contact_person_email: ''
+        }
+      ]
+    });
+  
+    // Handle institution field changes
+    const handleInstitutionChange = (field, value) => {
+      setFormData({ ...formData, [field]: value });
+    };
+  
+    // Handle logo file change
+    const handleLogoChange = (e) => {
+      setFormData({ ...formData, inst_logo: e.target.files[0] });
+    };
+  
+    // Handle contact person changes
+    const handleContactChange = (index, field, value) => {
+      const updatedContacts = [...formData.inst_contact_person];
+      updatedContacts[index][field] = value;
+      setFormData({ ...formData, inst_contact_person: updatedContacts });
+    };
+  
+    // Handle branch changes
+    const handleBranchChange = (branchIndex, field, value) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches[branchIndex][field] = value;
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Handle super admin changes
+    const handleSuperAdminChange = (branchIndex, adminIndex, field, value) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches[branchIndex].branch_super_admins[adminIndex][field] = value;
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Handle mobile app configuration changes
+    const handleMobileAppChange = (branchIndex, field, value) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches[branchIndex].branch_mobile_app[0][field] = value;
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Add new contact person
+    const addContactPerson = () => {
+      setFormData({
+        ...formData,
+        inst_contact_person: [
+          ...formData.inst_contact_person,
+          {
+            contact_person_name: '',
+            contact_person_designation: '',
+            contact_person_mobile_number: '',
+            contact_person_email: ''
+          }
+        ]
+      });
+    };
+  
+    // Add new branch
+    const addBranch = () => {
+      setFormData({
+        ...formData,
+        inst_branches: [
+          ...formData.inst_branches,
+          {
+            branch_name: '',
+            branch_address: '',
+            branch_contact_person_name: '',
+            branch_contact_person_designation: '',
+            branch_contact_person_mobile_number: '',
+            branch_contact_person_email: '',
+            branch_super_admins: [
+              {
+                branch_super_admin_name: '',
+                branch_super_admin_mobile_number: '',
+                branch_super_admin_email: ''
+              }
+            ],
+            branch_mobile_app: [
+              {
+                branch_mobile_license_count: '',
+                branch_bhagen_logo_flag: 'yes'
+              }
+            ]
+          }
+        ]
+      });
+    };
+  
+    // Add new super admin to a branch
+    const addSuperAdmin = (branchIndex) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches[branchIndex].branch_super_admins.push({
+        branch_super_admin_name: '',
+        branch_super_admin_mobile_number: '',
+        branch_super_admin_email: ''
+      });
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Remove contact person
+    const removeContactPerson = (index) => {
+      const updatedContacts = [...formData.inst_contact_person];
+      updatedContacts.splice(index, 1);
+      setFormData({ ...formData, inst_contact_person: updatedContacts });
+    };
+  
+    // Remove branch
+    const removeBranch = (index) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches.splice(index, 1);
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Remove super admin
+    const removeSuperAdmin = (branchIndex, adminIndex) => {
+      const updatedBranches = [...formData.inst_branches];
+      updatedBranches[branchIndex].branch_super_admins.splice(adminIndex, 1);
+      setFormData({ ...formData, inst_branches: updatedBranches });
+    };
+  
+    // Form submission
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      
+      // Prepare the final data structure
+      const submissionData = {
+        inst_name: formData.inst_name,
+        inst_location: formData.inst_location,
+        inst_address: formData.inst_address,
+        inst_logo: formData.inst_logo,
+        inst_Official_Website: formData.inst_Official_Website,
+        inst_Official_Contact_Number: formData.inst_Official_Contact_Number,
+        inst_Official_Email_Id: formData.inst_Official_Email_Id,
+        inst_branches: formData.inst_branches.map(branch => ({
+          branch_name: branch.branch_name,
+          branch_address: branch.branch_address,
+          branch_contact_person_name: branch.branch_contact_person_name,
+          branch_contact_person_designation: branch.branch_contact_person_designation,
+          branch_contact_person_mobile_number: branch.branch_contact_person_mobile_number,
+          branch_contact_person_email: branch.branch_contact_person_email,
+          branch_super_admins: branch.branch_super_admins.map(admin => ({
+            branch_super_admin_name: admin.branch_super_admin_name,
+            branch_super_admin_mobile_number: admin.branch_super_admin_mobile_number,
+            branch_super_admin_email: admin.branch_super_admin_email
+          })),
+          branch_mobile_app: branch.branch_mobile_app.map(app => ({
+            branch_mobile_license_count: app.branch_mobile_license_count,
+            branch_bhagen_logo_flag: app.branch_bhagen_logo_flag
+          }))
+        })),
+        inst_contact_person: formData.inst_contact_person.map(contact => ({
+          contact_person_name: contact.contact_person_name,
+          contact_person_designation: contact.contact_person_designation,
+          contact_person_mobile_number: contact.contact_person_mobile_number,
+          contact_person_email: contact.contact_person_email
+        }))
+      };
+  
+      console.log('Submitting:', submissionData);
+      // Here you would typically send the data to your API
+      // axios.post('/api/institutions', submissionData).then(...)
+      
+      // For demonstration, we'll just show the data structure
+      alert('Institution data prepared successfully! Check console for details.');
+    };
+  
+  // Return the form JSX (as provided in previous response)
+  return (
+    <div className="container-fluid">
+      <Form onSubmit={handleSubmit}>
+        {/* Institution Basic Information */}
+        <Card className="mb-4">
+          <Card.Header>
+            <Card.Title as="h5">Institution Details</Card.Title>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Institution Name*</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter institution name"
+                    value={formData.inst_name}
+                    onChange={(e) => handleInstitutionChange('inst_name', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Location*</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter location (City, State)"
+                    value={formData.inst_location}
+                    onChange={(e) => handleInstitutionChange('inst_location', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Official Contact Number*</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    placeholder="Enter official contact number"
+                    value={formData.inst_Official_Contact_Number}
+                    onChange={(e) => handleInstitutionChange('inst_Official_Contact_Number', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Address*</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    placeholder="Enter full address"
+                    value={formData.inst_address}
+                    onChange={(e) => handleInstitutionChange('inst_address', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Official Email*</Form.Label>
+                  <Form.Control
+                    type="email"
+                    placeholder="Enter official email"
+                    value={formData.inst_Official_Email_Id}
+                    onChange={(e) => handleInstitutionChange('inst_Official_Email_Id', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+                </Col>
+                <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Official Website</Form.Label>
+                  <Form.Control
+                    type="url"
+                    placeholder="Enter website URL"
+                    value={formData.inst_Official_Website}
+                    onChange={(e) => handleInstitutionChange('inst_Official_Website', e.target.value)}
+                  />
+                </Form.Group>
+                </Col>
+                <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Institution Logo</Form.Label>
+                  <Form.Control 
+                    type="file" 
+                    onChange={handleLogoChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        {/* Contact Persons */}
+        <Card className="mb-4">
+          <Card.Header>
+            <Card.Title as="h5">Contact Persons</Card.Title>
+          </Card.Header>
+          <Card.Body>
+            {formData.inst_contact_person.map((contact, index) => (
+              <div key={`contact-${index}`} className="mb-4">
+                <Row>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Name*</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter contact person name"
+                        value={contact.contact_person_name}
+                        onChange={(e) => handleContactChange(index, 'contact_person_name', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Designation*</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter designation"
+                        value={contact.contact_person_designation}
+                        onChange={(e) => handleContactChange(index, 'contact_person_designation', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Email*</Form.Label>
+                      <Form.Control
+                        type="email"
+                        placeholder="Enter email address"
+                        value={contact.contact_person_email}
+                        onChange={(e) => handleContactChange(index, 'contact_person_email', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={2}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Mobile*</Form.Label>
+                      <Form.Control
+                        type="tel"
+                        placeholder="Enter mobile"
+                        value={contact.contact_person_mobile_number}
+                        onChange={(e) => handleContactChange(index, 'contact_person_mobile_number', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={1}className="d-flex align-items-center mt-3">
+                    {formData.inst_contact_person.length > 1 && (
+                      <Button variant="danger" size="sm" onClick={() => removeContactPerson(index)}>
+                        x
+                      </Button>
+                    )}
+                  </Col>
+                </Row>
+              </div>
+            ))}
+            <Button variant="outline-secondary" onClick={addContactPerson}>
+              + Add Contact Person
+            </Button>
+          </Card.Body>
+        </Card>
+  
+        {/* Branches */}
+        <Card className="mb-4">
+          <Card.Header>
+            <Card.Title as="h5">Branches</Card.Title>
+          </Card.Header>
+          <Card.Body>
+            {formData.inst_branches.map((branch, branchIndex) => (
+              <div key={`branch-${branchIndex}`} className="mb-4 border p-3 rounded">
+                <Row>
+                {formData.inst_branches.length > 1 && (
+                  <div className="text-end">
+                    <Button variant="danger" size="sm" onClick={() => removeBranch(branchIndex)}>
+                        x
+                    </Button>
+                  </div>
+                )}
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Branch Name*</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter branch name"
+                        value={branch.branch_name}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_name', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Branch Address*</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        placeholder="Enter branch address"
+                        value={branch.branch_address}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_address', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+  
+                <h6 className="mt-3">Branch Contact Person</h6>
+                <Row>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Name*</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter contact name"
+                        value={branch.branch_contact_person_name}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_contact_person_name', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Designation*</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Enter designation"
+                        value={branch.branch_contact_person_designation}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_contact_person_designation', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Mobile*</Form.Label>
+                      <Form.Control
+                        type="tel"
+                        placeholder="Enter mobile number"
+                        value={branch.branch_contact_person_mobile_number}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_contact_person_mobile_number', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Email*</Form.Label>
+                      <Form.Control
+                        type="email"
+                        placeholder="Enter email address"
+                        value={branch.branch_contact_person_email}
+                        onChange={(e) => handleBranchChange(branchIndex, 'branch_contact_person_email', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+  
+                <h6 className="mt-3">Super Admins</h6>
+                {branch.branch_super_admins.map((admin, adminIndex) => (
+                  <div key={`superadmin-${branchIndex}-${adminIndex}`} className="mb-3 p-3 bg-light rounded">
+                    <Row>
+                      <Col md={4}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Name*</Form.Label>
+                          <Form.Control
+                            type="text"
+                            placeholder="Enter admin name"
+                            value={admin.branch_super_admin_name}
+                            onChange={(e) => handleSuperAdminChange(branchIndex, adminIndex, 'branch_super_admin_name', e.target.value)}
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Mobile*</Form.Label>
+                          <Form.Control
+                            type="tel"
+                            placeholder="Enter mobile number"
+                            value={admin.branch_super_admin_mobile_number}
+                            onChange={(e) => handleSuperAdminChange(branchIndex, adminIndex, 'branch_super_admin_mobile_number', e.target.value)}
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Email*</Form.Label>
+                          <Form.Control
+                            type="email"
+                            placeholder="Enter email address"
+                            value={admin.branch_super_admin_email}
+                            onChange={(e) => handleSuperAdminChange(branchIndex, adminIndex, 'branch_super_admin_email', e.target.value)}
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+                      
+                      <Col md={1} className="d-flex align-items-center mt-3">
+                        {branch.branch_super_admins.length > 1 && (
+                          <div>
+                        <Button variant="danger" size="sm" onClick={() => removeSuperAdmin(branchIndex, adminIndex)}>
+                            ×
+                          </Button>            
+                      </div>
+
+                        )}
+                      </Col>
+                    </Row>
+                  </div>
+                ))}
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm" 
+                  onClick={() => addSuperAdmin(branchIndex)}
+                  className="mb-3"
+                >
+                  + Add Super Admin
+                </Button>
+  
+                <h5 className="mt-3">Mobile App Configuration</h5>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Mobile Licenses*</Form.Label>
+                      <Form.Control
+                        type="number"
+                        placeholder="Enter license count"
+                        value={branch.branch_mobile_app[0]?.branch_mobile_license_count || ''}
+                        onChange={(e) => handleMobileAppChange(branchIndex, 'branch_mobile_license_count', e.target.value)}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Display Bhagen Logo?*</Form.Label>
+                      <div>
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="Yes"
+                          name={`bhagenLogo-${branchIndex}`}
+                          id={`bhagenLogoYes-${branchIndex}`}
+                          checked={branch.branch_mobile_app[0]?.branch_bhagen_logo_flag === 'yes'}
+                          onChange={() => handleMobileAppChange(branchIndex, 'branch_bhagen_logo_flag', 'yes')}
+                        />
+                        <Form.Check
+                          inline
+                          type="radio"
+                          label="No"
+                          name={`bhagenLogo-${branchIndex}`}
+                          id={`bhagenLogoNo-${branchIndex}`}
+                          checked={branch.branch_mobile_app[0]?.branch_bhagen_logo_flag === 'no'}
+                          onChange={() => handleMobileAppChange(branchIndex, 'branch_bhagen_logo_flag', 'no')}
+                        />
+                      </div>
+                    </Form.Group>
+                    <Col md={12}>
+                  <Card.Text className="text-danger mb-1">Note :</Card.Text>
+                  <Card.Text className="text-dark mb-1">
+                    If Bhagen logo display is ticked YES then Bhagen logo will be displayed in the User App.
+                  </Card.Text>
+                  <Card.Text className="text-dark mb-1">
+                    If Bhagen logo display is ticked NO then Bhagen logo will not be displayed in the User App. Instead in the footer it
+                    will say Powered by Bhagen
+                  </Card.Text>
+                </Col>
+                  </Col>
+                </Row>
+  
+
+              </div>
+            ))}
+            <Button variant="outline-secondary" onClick={addBranch}>
+              + Add Branch
+            </Button>
+          </Card.Body>
+        </Card>
+  
+        <div className="text-center mt-4">
+          <Button variant="primary" type="submit" size="lg">
+            Create Institution
+          </Button>
+        </div>
+      </Form>
+    </div>
+  );
+};
+
+export default AddInstitution;
