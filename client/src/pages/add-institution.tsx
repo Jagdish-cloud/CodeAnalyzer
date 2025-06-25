@@ -16,11 +16,9 @@ import {
   MapPin, 
   Plus, 
   Trash2, 
-  User, 
+  User,
   Shield, 
   Smartphone,
-  GraduationCap,
-  HelpCircle,
   ChevronRight,
   Info,
   Check
@@ -233,31 +231,6 @@ export default function AddInstitution() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <nav className="bg-surface shadow-sm border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0">
-                <GraduationCap className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">Educational Management System</h1>
-                <p className="text-sm text-muted-foreground">Institution Registration</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <HelpCircle className="h-5 w-5" />
-              </Button>
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-primary-foreground" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
