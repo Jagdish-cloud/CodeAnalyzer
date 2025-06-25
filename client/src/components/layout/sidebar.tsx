@@ -96,7 +96,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-2 h-auto text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+            className="w-full justify-between p-2 h-auto text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-300"
             onClick={() => toggleGroup(item.id)}
           >
             <span>{item.title}</span>
@@ -124,8 +124,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start p-2 h-auto text-sm font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-800",
-              isActive && "bg-blue-50 text-blue-700 border-r-2 border-blue-500 hover:bg-blue-50"
+              "w-full justify-start p-2 h-auto text-sm font-normal text-slate-700 hover:bg-slate-300 hover:text-slate-900",
+              isActive && "bg-blue-100 text-blue-800 border-r-2 border-blue-600 hover:bg-blue-100"
             )}
             onClick={onClose}
           >
@@ -152,15 +152,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-slate-50 border-r border-slate-200 shadow-lg z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed left-0 top-0 h-full w-64 bg-slate-200 border-r border-slate-300 shadow-lg z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         style={{ boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06)" }}
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-300">
           <div className="flex items-center space-x-2">
-            <GraduationCap className="h-8 w-7 text-slate-600" />
-            <span className="font-semibold text-slate-700">School Admin</span>
+            <GraduationCap className="h-8 w-7 text-slate-700" />
+            <span className="font-semibold text-slate-800">School Admin</span>
           </div>
           <Button
             variant="ghost"
