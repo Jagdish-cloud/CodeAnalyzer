@@ -23,7 +23,11 @@ export function Layout({ children }: LayoutProps) {
       
       {/* Main content area */}
       <div className="lg:ml-64">
-        <Navbar onMenuToggle={toggleSidebar} />
+        <Navbar 
+          onMenuToggle={toggleSidebar} 
+          sidebarOpen={sidebarOpen}
+          onSidebarClose={closeSidebar}
+        />
         
         {/* Page content */}
         <main className="flex-1">

@@ -5,7 +5,8 @@ import {
   User, 
   Search,
   Settings,
-  LogOut
+  LogOut,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,9 +20,11 @@ import { Input } from "@/components/ui/input";
 
 interface NavbarProps {
   onMenuToggle: () => void;
+  sidebarOpen: boolean;
+  onSidebarClose: () => void;
 }
 
-export function Navbar({ onMenuToggle }: NavbarProps) {
+export function Navbar({ onMenuToggle, sidebarOpen, onSidebarClose }: NavbarProps) {
   return (
     <header className="bg-background border-b border-border h-16 flex items-center justify-between px-4 lg:px-6">
       {/* Left side */}
@@ -30,9 +33,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           variant="ghost"
           size="sm"
           className="lg:hidden"
-          onClick={onMenuToggle}
+          onClick={sidebarOpen ? onSidebarClose : onMenuToggle}
         >
-          <Menu className="h-5 w-5" />
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
         
         {/* Search */}
