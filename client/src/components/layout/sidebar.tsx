@@ -152,9 +152,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-slate-50 border-r border-slate-200 z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed left-0 top-0 h-full w-64 bg-slate-50 border-r border-slate-200 shadow-lg z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
+        style={{ boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06)" }}
       >
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <div className="flex items-center space-x-2">
