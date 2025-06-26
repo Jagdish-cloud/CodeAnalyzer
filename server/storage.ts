@@ -1,4 +1,4 @@
-import { users, institutions, staff, type User, type InsertUser, type Institution, type InsertInstitution, type Staff, type InsertStaff } from "@shared/schema";
+import { users, institutions, staff, classMappings, type User, type InsertUser, type Institution, type InsertInstitution, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -14,23 +14,32 @@ export interface IStorage {
   createStaff(staff: InsertStaff): Promise<Staff>;
   updateStaff(id: number, staff: Partial<InsertStaff>): Promise<Staff | undefined>;
   deleteStaff(id: number): Promise<boolean>;
+  getClassMapping(id: number): Promise<ClassMapping | undefined>;
+  getAllClassMappings(): Promise<ClassMapping[]>;
+  createClassMapping(mapping: InsertClassMapping): Promise<ClassMapping>;
+  updateClassMapping(id: number, mapping: Partial<InsertClassMapping>): Promise<ClassMapping | undefined>;
+  deleteClassMapping(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private institutions: Map<number, Institution>;
   private staff: Map<number, Staff>;
+  private classMappings: Map<number, ClassMapping>;
   private currentUserId: number;
   private currentInstitutionId: number;
   private currentStaffId: number;
+  private currentClassMappingId: number;
 
   constructor() {
     this.users = new Map();
     this.institutions = new Map();
     this.staff = new Map();
+    this.classMappings = new Map();
     this.currentUserId = 1;
     this.currentInstitutionId = 1;
     this.currentStaffId = 1;
+    this.currentClassMappingId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -120,6 +129,38 @@ export class MemStorage implements IStorage {
 
   async deleteStaff(id: number): Promise<boolean> {
     return this.staff.delete(id);
+  }
+
+  async getClassMapping(id: number): Promise<ClassMapping | undefined> {
+    return this.classMappings.get(id);
+  }
+
+  async getAllClassMappings(): Promise<ClassMapping[]> {
+    return Array.from(this.classMappings.values());
+  }
+
+  async createClassMapping(insertMapping: InsertClassMapping): Promise<ClassMapping> {
+    const id = this.currentClassMappingId++;
+    const mapping: ClassMapping = { 
+      ...insertMapping, 
+      id,
+      status: insertMapping.status || "Current working"
+    };
+    this.classMappings.set(id, mapping);
+    return mapping;
+  }
+
+  async updateClassMapping(id: number, updateData: Partial<InsertClassMapping>): Promise<ClassMapping | undefined> {
+    const existing = this.classMappings.get(id);
+    if (!existing) return undefined;
+    
+    const updated: ClassMapping = { ...existing, ...updateData };
+    this.classMappings.set(id, updated);
+    return updated;
+  }
+
+  async deleteClassMapping(id: number): Promise<boolean> {
+    return this.classMappings.delete(id);
   }
 }
 

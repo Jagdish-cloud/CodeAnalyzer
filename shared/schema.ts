@@ -26,12 +26,21 @@ export const staff = pgTable("staff", {
   name: text("name").notNull(),
   staffId: text("staff_id").notNull().unique(),
   role: text("role").notNull(),
-  newRole: text("new_role").$default(() => null),
+  newRole: text("new_role"),
   mobileNumber: text("mobile_number").notNull(),
   email: text("email").notNull().unique(),
   managerName: text("manager_name").notNull(),
   status: text("status").notNull(),
-  lastWorkingDay: text("last_working_day").$default(() => null),
+  lastWorkingDay: text("last_working_day"),
+});
+
+export const classMappings = pgTable("class_mappings", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  class: text("class").notNull(),
+  division: text("division").notNull(),
+  subject: text("subject").notNull(),
+  status: text("status").notNull().default("Current working"),
 });
 
 const contactPersonSchema = z.object({
@@ -79,12 +88,18 @@ export const insertStaffSchema = createInsertSchema(staff).omit({
   id: true,
 });
 
+export const insertClassMappingSchema = createInsertSchema(classMappings).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertInstitution = z.infer<typeof insertInstitutionSchema>;
 export type Institution = typeof institutions.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Staff = typeof staff.$inferSelect;
+export type InsertClassMapping = z.infer<typeof insertClassMappingSchema>;
+export type ClassMapping = typeof classMappings.$inferSelect;
 export type ContactPerson = z.infer<typeof contactPersonSchema>;
 export type Branch = z.infer<typeof branchSchema>;
 export type SuperAdmin = z.infer<typeof superAdminSchema>;

@@ -60,6 +60,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-map",
           url: "/mapping",
         },
+        {
+          id: "class-mapping",
+          title: "Class/Subject/Div Mapping",
+          type: "item",
+          icon: "feather icon-graduation-cap",
+          url: "/class-mapping",
+        },
       ],
     },
   ],
@@ -73,6 +80,10 @@ const getIcon = (iconName: string) => {
       return Home;
     case "feather icon-map":
       return Map;
+    case "feather icon-users":
+      return Users;
+    case "feather icon-graduation-cap":
+      return GraduationCap;
     default:
       return Home;
   }
