@@ -6,13 +6,35 @@ import { useLocation } from "wouter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertClassMappingSchema, type InsertClassMapping } from "@shared/schema";
+import {
+  insertClassMappingSchema,
+  type InsertClassMapping,
+} from "@shared/schema";
 import { Plus, ArrowLeft } from "lucide-react";
 
 const formSchema = insertClassMappingSchema.extend({
@@ -25,18 +47,43 @@ const formSchema = insertClassMappingSchema.extend({
 type FormData = z.infer<typeof formSchema>;
 
 const defaultYears = ["2022-23", "2023-24", "2024-25", "2025-26"];
-const defaultClasses = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+const defaultClasses = [
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+];
 const defaultDivisions = ["A", "B", "C", "D"];
 const defaultSubjects = [
-  "Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science",
-  "Physics", "Chemistry", "Biology", "History", "Geography", "Economics", "Physical Education", "Art"
+  "Mathematics",
+  "English",
+  "Science",
+  "Social Studies",
+  "Hindi",
+  "Computer Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "History",
+  "Geography",
+  "Economics",
+  "Physical Education",
+  "Art",
 ];
 
 export default function AddClassMapping() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [customClasses, setCustomClasses] = useState<string[]>([]);
   const [customDivisions, setCustomDivisions] = useState<string[]>([]);
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
@@ -64,18 +111,18 @@ export default function AddClassMapping() {
         subject: data.subject,
         status: data.status || "Current working",
       };
-      
+
       const response = await fetch("/api/class-mappings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mappingData),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to create class mapping");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -101,7 +148,7 @@ export default function AddClassMapping() {
 
   const handleAddClass = () => {
     if (newClass.trim()) {
-      setCustomClasses(prev => [...prev, newClass.trim()]);
+      setCustomClasses((prev) => [...prev, newClass.trim()]);
       form.setValue("class", newClass.trim());
       setNewClass("");
       setIsClassModalOpen(false);
@@ -110,7 +157,7 @@ export default function AddClassMapping() {
 
   const handleAddDivision = () => {
     if (newDivision.trim()) {
-      setCustomDivisions(prev => [...prev, newDivision.trim()]);
+      setCustomDivisions((prev) => [...prev, newDivision.trim()]);
       form.setValue("division", newDivision.trim());
       setNewDivision("");
       setIsDivisionModalOpen(false);
@@ -147,7 +194,10 @@ export default function AddClassMapping() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Choose Year</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select academic year" />
@@ -173,7 +223,10 @@ export default function AddClassMapping() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Select Class</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select class" />
@@ -191,8 +244,11 @@ export default function AddClassMapping() {
                     </FormItem>
                   )}
                 />
-                
-                <Dialog open={isClassModalOpen} onOpenChange={setIsClassModalOpen}>
+
+                <Dialog
+                  open={isClassModalOpen}
+                  onOpenChange={setIsClassModalOpen}
+                >
                   <DialogTrigger asChild>
                     <Button type="button" variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
@@ -205,13 +261,12 @@ export default function AddClassMapping() {
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm font-medium">Class</label>
                         <Input
                           value={newClass}
                           onChange={(e) => setNewClass(e.target.value)}
-                          placeholder="Enter class name"
+                          placeholder="Enter class"
                           onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === "Enter") {
                               e.preventDefault();
                               handleAddClass();
                             }
@@ -233,7 +288,10 @@ export default function AddClassMapping() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Select Division</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select division" />
@@ -251,8 +309,11 @@ export default function AddClassMapping() {
                     </FormItem>
                   )}
                 />
-                
-                <Dialog open={isDivisionModalOpen} onOpenChange={setIsDivisionModalOpen}>
+
+                <Dialog
+                  open={isDivisionModalOpen}
+                  onOpenChange={setIsDivisionModalOpen}
+                >
                   <DialogTrigger asChild>
                     <Button type="button" variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
@@ -265,13 +326,12 @@ export default function AddClassMapping() {
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm font-medium">Division</label>
                         <Input
                           value={newDivision}
                           onChange={(e) => setNewDivision(e.target.value)}
-                          placeholder="Enter division name"
+                          placeholder="Enter division"
                           onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === "Enter") {
                               e.preventDefault();
                               handleAddDivision();
                             }
@@ -292,7 +352,10 @@ export default function AddClassMapping() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Subject</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select subject" />

@@ -27,8 +27,8 @@ interface MenuItem {
 const menuItems: { items: MenuItem[] } = {
   items: [
     {
-      id: "institution",
-      title: "Institution",
+      id: "masters",
+      title: "Masters",
       type: "group",
       icon: "icon-navigation",
       children: [
@@ -39,13 +39,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-bar-chart",
           url: "/dashboard",
         },
-        {
-          id: "create-institution",
-          title: "Institution",
-          type: "item",
-          icon: "feather icon-home",
-          url: "/",
-        },
+        // {
+        //   id: "create-institution",
+        //   title: "Institution",
+        //   type: "item",
+        //   icon: "feather icon-home",
+        //   url: "/",
+        // },
         {
           id: "staff-data",
           title: "Staff Data",
@@ -53,13 +53,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-users",
           url: "/staff",
         },
-        {
-          id: "create-mapping",
-          title: "Map Institution to Modules",
-          type: "item",
-          icon: "feather icon-map",
-          url: "/mapping",
-        },
+        // {
+        //   id: "create-mapping",
+        //   title: "Map Institution to Modules",
+        //   type: "item",
+        //   icon: "feather icon-map",
+        //   url: "/mapping",
+        // },
         {
           id: "class-mapping",
           title: "Class/Subject/Div Mapping",
@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-2 h-auto text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-300"
+            className="w-full justify-between w-100 p-2 h-auto text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-300"
             onClick={() => toggleGroup(item.id)}
           >
             <span>{item.title}</span>
@@ -144,11 +144,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             variant="ghost"
             className={cn(
               "w-full justify-start p-2 h-auto text-sm font-normal text-slate-700 hover:bg-slate-300 hover:text-slate-900",
-              isActive && "bg-blue-100 text-blue-800 border-r-2 border-blue-600 hover:bg-blue-100"
+              isActive &&
+                "bg-blue-100 text-blue-800 border-r-2 border-blue-600 hover:bg-blue-100",
             )}
             onClick={onClose}
           >
-            <Icon className="h-4 w-4 mr-3" />
+            <Icon className="h-4 w-4 mr-1" />
             {item.title}
           </Button>
         </Link>
@@ -174,11 +175,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           "fixed left-0 top-0 h-full w-64 bg-slate-200 border-r border-slate-300 shadow-lg z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
-        style={{ boxShadow: "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06)" }}
+        style={{
+          boxShadow:
+            "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-300">
+        <div className="flex items-center justify-between p-4 h-16 border-b border-slate-300 ">
           <div className="flex items-center space-x-2">
-            <GraduationCap className="h-8 w-7 text-slate-700" />
+            <GraduationCap className="h-7 w-7 text-slate-700" />
             <span className="font-semibold text-slate-800">School Admin</span>
           </div>
           <Button

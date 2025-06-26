@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit } from "lucide-react";
 import type { ClassMapping } from "@shared/schema";
@@ -34,7 +41,7 @@ export default function ClassMapping() {
         <Link href="/add-class-mapping">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Staff
+            Add Class Mappings
           </Button>
         </Link>
       </div>
@@ -70,7 +77,13 @@ export default function ClassMapping() {
                       {mapping.class} - {mapping.division} ({mapping.subject})
                     </TableCell>
                     <TableCell>
-                      <Badge variant={mapping.status === "Current working" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          mapping.status === "Current working"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
                         {mapping.status}
                       </Badge>
                     </TableCell>
