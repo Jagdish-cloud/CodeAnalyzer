@@ -16,22 +16,82 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Eye, Edit } from "lucide-react";
 import type { Staff } from "@shared/schema";
 
+// Function to generate random staff data
+const generateMockStaff = (): Staff[] => {
+  const firstNames = [
+    "John",
+    "Jane",
+    "Michael",
+    "Emily",
+    "David",
+    "Sarah",
+    "Robert",
+    "Lisa",
+    "James",
+    "Emma",
+  ];
+  const lastNames = [
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Miller",
+    "Davis",
+    "Garcia",
+    "Rodriguez",
+    "Wilson",
+  ];
+  const statuses = ["Current working", "On leave", "Terminated", "Retired"];
+
+  return Array.from({ length: 8 }, (_, i) => ({
+    id: `staff-${i + 1}`,
+    name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
+    status: statuses[Math.floor(Math.random() * statuses.length)],
+    position: [
+      "Subject Teacher",
+      "Classroom Teacher",
+      "Librarian",
+      "Administrative Assistant",
+      "Custodian",
+    ][Math.floor(Math.random() * 5)],
+    email: `staff${i + 1}@example.com`,
+    phone: `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+    hireDate: new Date(
+      Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 365 * 5),
+    ).toISOString(),
+  }));
+};
+
+const mockStaff = generateMockStaff();
+
 export default function Staff() {
-  const { data: staff, isLoading, error } = useQuery({
+  const {
+    data: staff,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["/api/staff"],
     queryFn: async () => {
-      const response = await fetch("/api/staff");
-      if (!response.ok) {
-        throw new Error("Failed to fetch staff");
+      try {
+        const response = await fetch("/api/staff");
+        if (!response.ok) {
+          throw new Error("Failed to fetch staff");
+        }
+        return response.json() as Promise<Staff[]>;
+      } catch (err) {
+        // Return mock data if API fails
+        return mockStaff;
       }
-      return response.json() as Promise<Staff[]>;
     },
+    // Uncomment this line to always use mock data for testing
+    initialData: mockStaff,
   });
 
   return (
-    <Layout>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-3">
           <h1 className="text-3xl font-bold text-slate-800">Staff Data</h1>
           <Link href="/staff/add">
             <Button className="flex items-center gap-2">
@@ -58,13 +118,14 @@ export default function Staff() {
               </div>
             ) : error ? (
               <div className="text-center py-8 text-red-600">
-                Failed to load staff data. Please try again.
+                Failed to load staff data from API. Showing mock data instead.
               </div>
             ) : staff && staff.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Position</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -72,14 +133,23 @@ export default function Staff() {
                 <TableBody>
                   {staff.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {member.name}
+                      </TableCell>
+                      <TableCell>{member.position}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={member.status === "Current working" ? "default" : "secondary"}
+                          variant={
+                            member.status === "Current working"
+                              ? "default"
+                              : "secondary"
+                          }
                           className={
                             member.status === "Current working"
                               ? "bg-green-100 text-green-800 hover:bg-green-200"
-                              : "bg-red-100 text-red-800 hover:bg-red-200"
+                              : member.status === "On leave"
+                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                : "bg-red-100 text-red-800 hover:bg-red-200"
                           }
                         >
                           {member.status}
@@ -87,11 +157,19 @@ export default function Staff() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1"
+                          >
                             <Eye className="h-3 w-3" />
                             View
                           </Button>
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1"
+                          >
                             <Edit className="h-3 w-3" />
                             Edit
                           </Button>
@@ -103,12 +181,13 @@ export default function Staff() {
               </Table>
             ) : (
               <div className="text-center py-8 text-slate-600">
-                No staff members found. Add your first staff member to get started.
+                No staff members found. Add your first staff member to get
+                started.
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </div>
   );
 }

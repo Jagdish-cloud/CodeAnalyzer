@@ -29,28 +29,34 @@ import { apiRequest } from "@/lib/queryClient";
 import type { InsertStaff } from "@shared/schema";
 
 // Validation schema
-const staffSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  staffId: z.string().min(1, "Staff ID is required"),
-  role: z.string().min(1, "Role is required"),
-  newRole: z.string().optional(),
-  mobileNumber: z.string()
-    .min(10, "Mobile number must be at least 10 digits")
-    .max(15, "Mobile number must not exceed 15 digits")
-    .regex(/^[0-9+\-\s()]+$/, "Invalid mobile number format"),
-  email: z.string().email("Invalid email address"),
-  managerName: z.string().min(1, "Manager name is required"),
-  status: z.enum(["Current working", "Resigned"]),
-  lastWorkingDay: z.string().optional(),
-}).refine((data) => {
-  if (data.status === "Resigned" && !data.lastWorkingDay) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Last working day is required when status is Resigned",
-  path: ["lastWorkingDay"],
-});
+const staffSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    staffId: z.string().min(1, "Staff ID is required"),
+    role: z.string().min(1, "Role is required"),
+    newRole: z.string().optional(),
+    mobileNumber: z
+      .string()
+      .min(10, "Mobile number must be at least 10 digits")
+      .max(15, "Mobile number must not exceed 15 digits")
+      .regex(/^[0-9+\-\s()]+$/, "Invalid mobile number format"),
+    email: z.string().email("Invalid email address"),
+    managerName: z.string().min(1, "Manager name is required"),
+    status: z.enum(["Current working", "Resigned"]),
+    lastWorkingDay: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.status === "Resigned" && !data.lastWorkingDay) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Last working day is required when status is Resigned",
+      path: ["lastWorkingDay"],
+    },
+  );
 
 type StaffFormData = z.infer<typeof staffSchema>;
 
@@ -154,8 +160,8 @@ export default function AddStaff() {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto p-6 max-w-4xl">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
@@ -166,7 +172,9 @@ export default function AddStaff() {
             <ArrowLeft className="h-4 w-4" />
             Back to Staff
           </Button>
-          <h1 className="text-3xl font-bold text-slate-800">Add New Staff Member</h1>
+          <h1 className="text-3xl font-bold text-slate-800">
+            Add New Staff Member
+          </h1>
         </div>
 
         <Card>
@@ -175,7 +183,10 @@ export default function AddStaff() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -205,7 +216,7 @@ export default function AddStaff() {
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     control={form.control}
                     name="role"
                     render={({ field }) => (
@@ -215,17 +226,20 @@ export default function AddStaff() {
                           <Input placeholder="Enter current role" {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
+                      </FormItem> 
                     )}
-                  />
+                  />*/}
 
                   <FormField
                     control={form.control}
                     name="newRole"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Add New Role</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <FormLabel>Select Role</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a role" />
@@ -251,10 +265,10 @@ export default function AddStaff() {
                       <FormItem>
                         <FormLabel>Mobile Number</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="Enter mobile number"
                             type="tel"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -269,10 +283,10 @@ export default function AddStaff() {
                       <FormItem>
                         <FormLabel>Email ID</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="Enter email address"
                             type="email"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -286,7 +300,10 @@ export default function AddStaff() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Manager Name</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select manager" />
@@ -311,14 +328,19 @@ export default function AddStaff() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Current working">Current working</SelectItem>
+                            <SelectItem value="Current working">
+                              Current working
+                            </SelectItem>
                             <SelectItem value="Resigned">Resigned</SelectItem>
                           </SelectContent>
                         </Select>
@@ -335,10 +357,7 @@ export default function AddStaff() {
                         <FormItem>
                           <FormLabel>Last Working Day</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="date"
-                              {...field} 
-                            />
+                            <Input type="date" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -355,7 +374,11 @@ export default function AddStaff() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={mutation.isPending} className="flex items-center gap-2">
+                  <Button
+                    type="submit"
+                    disabled={mutation.isPending}
+                    className="flex items-center gap-2"
+                  >
                     <Save className="h-4 w-4" />
                     {mutation.isPending ? "Saving..." : "Save Staff"}
                   </Button>
@@ -365,6 +388,6 @@ export default function AddStaff() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </div>
   );
 }
