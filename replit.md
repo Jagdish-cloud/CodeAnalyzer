@@ -133,6 +133,14 @@ Preferred communication style: Simple, everyday language.
   - Applied unique vibrant color schemes to each page background
   - Created cohesive modern design system throughout the application
   - Increased sidebar width from 256px to 320px for better spacing and readability
+- June 27, 2025: Added Teacher Subject/Class/Div Mapping functionality:
+  - Created new menu item "Teacher Subject/Class/Div Mapping" in sidebar
+  - Built landing page with table showing Class-Subject, Status, and Action columns
+  - Added comprehensive Add Teacher Mapping form with class/subject dropdowns
+  - Implemented dynamic divisions table based on class/subject selection
+  - Created teacher assignment functionality with dropdown for available teachers
+  - Added complete CRUD operations for teacher mappings in backend
+  - Applied consistent teal-cyan gradient design matching application theme
 
 ## Changelog
 

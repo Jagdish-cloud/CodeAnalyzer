@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -221,6 +221,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete class mapping" });
+    }
+  });
+
+  // Teacher mapping routes
+  app.get("/api/teacher-mappings", async (req, res) => {
+    try {
+      const mappings = await storage.getAllTeacherMappings();
+      res.json(mappings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch teacher mappings" });
+    }
+  });
+
+  app.post("/api/teacher-mappings", async (req, res) => {
+    try {
+      const result = insertTeacherMappingSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const mapping = await storage.createTeacherMapping(result.data);
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error("Teacher mapping creation error:", error);
+      res.status(500).json({ message: "Failed to create teacher mapping" });
+    }
+  });
+
+  app.get("/api/teacher-mappings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mapping ID" });
+      }
+
+      const mapping = await storage.getTeacherMapping(id);
+      if (!mapping) {
+        return res.status(404).json({ message: "Teacher mapping not found" });
+      }
+      
+      res.json(mapping);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch teacher mapping" });
+    }
+  });
+
+  app.patch("/api/teacher-mappings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mapping ID" });
+      }
+
+      const result = insertTeacherMappingSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const mapping = await storage.updateTeacherMapping(id, result.data);
+      if (!mapping) {
+        return res.status(404).json({ message: "Teacher mapping not found" });
+      }
+
+      res.json(mapping);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update teacher mapping" });
+    }
+  });
+
+  app.delete("/api/teacher-mappings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mapping ID" });
+      }
+
+      const deleted = await storage.deleteTeacherMapping(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Teacher mapping not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete teacher mapping" });
     }
   });
 

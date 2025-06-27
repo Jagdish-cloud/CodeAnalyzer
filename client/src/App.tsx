@@ -10,6 +10,8 @@ import Staff from "@/pages/staff";
 import AddStaff from "@/pages/add-staff";
 import ClassMapping from "@/pages/class-mapping";
 import AddClassMapping from "@/pages/add-class-mapping";
+import TeacherMapping from "@/pages/teacher-mapping";
+import AddTeacherMapping from "@/pages/add-teacher-mapping";
 
 function Router() {
   return (
@@ -21,6 +23,8 @@ function Router() {
         <Route path="/staff/add" component={AddStaff} />
         <Route path="/class-mapping" component={ClassMapping} />
         <Route path="/add-class-mapping" component={AddClassMapping} />
+        <Route path="/teacher-mapping" component={TeacherMapping} />
+        <Route path="/add-teacher-mapping" component={AddTeacherMapping} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

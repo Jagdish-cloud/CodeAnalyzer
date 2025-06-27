@@ -32,6 +32,14 @@ export const classMappings = pgTable("class_mappings", {
   status: text("status").notNull().default("Current working"),
 });
 
+export const teacherMappings = pgTable("teacher_mappings", {
+  id: serial("id").primaryKey(),
+  class: text("class").notNull(),
+  subject: text("subject").notNull(),
+  divisions: json("divisions").notNull(), // Array of {division: string, teacherId: number, teacherName: string}
+  status: text("status").notNull().default("Current working"),
+});
+
 
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -47,9 +55,15 @@ export const insertClassMappingSchema = createInsertSchema(classMappings).omit({
   id: true,
 });
 
+export const insertTeacherMappingSchema = createInsertSchema(teacherMappings).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Staff = typeof staff.$inferSelect;
 export type InsertClassMapping = z.infer<typeof insertClassMappingSchema>;
 export type ClassMapping = typeof classMappings.$inferSelect;
+export type InsertTeacherMapping = z.infer<typeof insertTeacherMappingSchema>;
+export type TeacherMapping = typeof teacherMappings.$inferSelect;

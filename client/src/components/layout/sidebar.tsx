@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   GraduationCap,
+  UserCheck,
   Menu,
   X,
 } from "lucide-react";
@@ -53,6 +54,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-graduation-cap",
           url: "/class-mapping",
         },
+        {
+          id: "teacher-mapping",
+          title: "Teacher Subject/Class/Div Mapping",
+          type: "item",
+          icon: "feather icon-user-check",
+          url: "/teacher-mapping",
+        },
       ],
     },
   ],
@@ -70,6 +78,8 @@ const getIcon = (iconName: string) => {
       return Users;
     case "feather icon-graduation-cap":
       return GraduationCap;
+    case "feather icon-user-check":
+      return UserCheck;
     default:
       return Home;
   }
