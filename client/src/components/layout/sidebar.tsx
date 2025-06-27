@@ -40,25 +40,11 @@ const menuItems: { items: MenuItem[] } = {
           url: "/dashboard",
         },
         {
-          id: "create-institution",
-          title: "Institution",
-          type: "item",
-          icon: "feather icon-home",
-          url: "/",
-        },
-        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",
           icon: "feather icon-users",
           url: "/staff",
-        },
-        {
-          id: "create-mapping",
-          title: "Map Institution to Modules",
-          type: "item",
-          icon: "feather icon-map",
-          url: "/mapping",
         },
         {
           id: "class-mapping",

@@ -1,14 +1,9 @@
-import { users, institutions, staff, classMappings, type User, type InsertUser, type Institution, type InsertInstitution, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping } from "@shared/schema";
+import { users, staff, classMappings, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getInstitution(id: number): Promise<Institution | undefined>;
-  getAllInstitutions(): Promise<Institution[]>;
-  createInstitution(institution: InsertInstitution): Promise<Institution>;
-  updateInstitution(id: number, institution: Partial<InsertInstitution>): Promise<Institution | undefined>;
-  deleteInstitution(id: number): Promise<boolean>;
   getStaff(id: number): Promise<Staff | undefined>;
   getAllStaff(): Promise<Staff[]>;
   createStaff(staff: InsertStaff): Promise<Staff>;
@@ -23,21 +18,17 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
-  private institutions: Map<number, Institution>;
   private staff: Map<number, Staff>;
   private classMappings: Map<number, ClassMapping>;
   private currentUserId: number;
-  private currentInstitutionId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
 
   constructor() {
     this.users = new Map();
-    this.institutions = new Map();
     this.staff = new Map();
     this.classMappings = new Map();
     this.currentUserId = 1;
-    this.currentInstitutionId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
   }
@@ -59,38 +50,7 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async getInstitution(id: number): Promise<Institution | undefined> {
-    return this.institutions.get(id);
-  }
 
-  async getAllInstitutions(): Promise<Institution[]> {
-    return Array.from(this.institutions.values());
-  }
-
-  async createInstitution(insertInstitution: InsertInstitution): Promise<Institution> {
-    const id = this.currentInstitutionId++;
-    const institution: Institution = { 
-      ...insertInstitution, 
-      id,
-      inst_logo: insertInstitution.inst_logo || null,
-      inst_Official_Website: insertInstitution.inst_Official_Website || null
-    };
-    this.institutions.set(id, institution);
-    return institution;
-  }
-
-  async updateInstitution(id: number, updateData: Partial<InsertInstitution>): Promise<Institution | undefined> {
-    const existing = this.institutions.get(id);
-    if (!existing) return undefined;
-    
-    const updated: Institution = { ...existing, ...updateData };
-    this.institutions.set(id, updated);
-    return updated;
-  }
-
-  async deleteInstitution(id: number): Promise<boolean> {
-    return this.institutions.delete(id);
-  }
 
   async getStaff(id: number): Promise<Staff | undefined> {
     return this.staff.get(id);
