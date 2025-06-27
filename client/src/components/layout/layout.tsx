@@ -22,7 +22,7 @@ export function Layout({ children }: LayoutProps) {
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
       
       {/* Main content area */}
-      <div className="lg:ml-64 transition-all duration-300">
+      <div className="lg:ml-80 transition-all duration-300">
         <Navbar 
           onMenuToggle={toggleSidebar} 
           sidebarOpen={sidebarOpen}

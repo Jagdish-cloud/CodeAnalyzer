@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-3 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
+            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
             onClick={() => toggleGroup(item.id)}
           >
             <span>{item.title}</span>
@@ -149,7 +149,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
             onClick={onClose}
           >
-            <Icon className="h-4 w-4 mr-3" />
+            <Icon className="h-4 w-4" />
             {item.title}
           </Button>
         </Link>
@@ -172,7 +172,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl",
+          "fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         style={{
