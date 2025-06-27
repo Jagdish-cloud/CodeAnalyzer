@@ -39,13 +39,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-bar-chart",
           url: "/dashboard",
         },
-        // {
-        //   id: "create-institution",
-        //   title: "Institution",
-        //   type: "item",
-        //   icon: "feather icon-home",
-        //   url: "/",
-        // },
+        {
+          id: "create-institution",
+          title: "Institution",
+          type: "item",
+          icon: "feather icon-home",
+          url: "/",
+        },
         {
           id: "staff-data",
           title: "Staff Data",
@@ -53,13 +53,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-users",
           url: "/staff",
         },
-        // {
-        //   id: "create-mapping",
-        //   title: "Map Institution to Modules",
-        //   type: "item",
-        //   icon: "feather icon-map",
-        //   url: "/mapping",
-        // },
+        {
+          id: "create-mapping",
+          title: "Map Institution to Modules",
+          type: "item",
+          icon: "feather icon-map",
+          url: "/mapping",
+        },
         {
           id: "class-mapping",
           title: "Class/Subject/Div Mapping",

@@ -18,11 +18,11 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
       
       {/* Main content area */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-64 transition-all duration-300">
         <Navbar 
           onMenuToggle={toggleSidebar} 
           sidebarOpen={sidebarOpen}
@@ -30,7 +30,7 @@ export function Layout({ children }: LayoutProps) {
         />
         
         {/* Page content */}
-        <main className="flex-1">
+        <main className="flex-1 animate-fade-in">
           {children}
         </main>
       </div>
