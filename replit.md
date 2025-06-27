@@ -115,7 +115,19 @@ This is a full-stack web application built with Express.js and React, designed f
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- December 26, 2024: Migrated from Replit Agent to standard Replit environment
+- December 26, 2024: Added Class/Subject/Div Mapping functionality with complete CRUD operations
+- December 26, 2024: Modernized UI with contemporary design system:
+  - Implemented gradient backgrounds and glass morphism effects
+  - Updated color palette with improved contrast and accessibility
+  - Added smooth animations and hover effects
+  - Enhanced typography with better font features
+  - Modernized cards, buttons, and form layouts
+  - Applied consistent modern styling across dashboard and class mapping pages
+
 ## Changelog
 
-Changelog:
 - June 25, 2025. Initial setup
+- December 26, 2024. UI modernization and feature enhancement

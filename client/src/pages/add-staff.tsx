@@ -160,26 +160,30 @@ export default function AddStaff() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center gap-4 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center gap-6 mb-8">
           <Button
             variant="outline"
-            size="sm"
             onClick={() => setLocation("/staff")}
-            className="flex items-center gap-2"
+            className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Staff
           </Button>
-          <h1 className="text-3xl font-bold text-slate-800">
-            Add New Staff Member
-          </h1>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+              Add Staff Member
+            </h1>
+            <p className="text-slate-600 dark:text-slate-300">
+              Create a new staff member profile
+            </p>
+          </div>
         </div>
 
-        <Card>
+        <Card className="glass-morphism card-hover">
           <CardHeader>
-            <CardTitle>Staff Information</CardTitle>
+            <CardTitle className="text-slate-800 dark:text-slate-200 text-xl">Staff Information</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -366,20 +370,21 @@ export default function AddStaff() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-4 pt-6">
+                <div className="flex justify-end gap-4 pt-8">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setLocation("/staff")}
+                    className="bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={mutation.isPending}
-                    className="flex items-center gap-2"
+                    className="btn-modern bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg"
                   >
-                    <Save className="h-4 w-4" />
+                    <Save className="h-4 w-4 mr-2" />
                     {mutation.isPending ? "Saving..." : "Save Staff"}
                   </Button>
                 </div>

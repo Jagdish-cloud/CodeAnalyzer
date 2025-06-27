@@ -230,19 +230,21 @@ export default function AddInstitution() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-6 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+          <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
             <span>Dashboard</span>
             <ChevronRight className="h-3 w-3" />
             <span>Institutions</span>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Add New Institution</span>
+            <span className="text-blue-600 dark:text-blue-400">Add New Institution</span>
           </div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Add New Institution</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-3">
+            Add New Institution
+          </h2>
+          <p className="text-slate-600 dark:text-slate-300 text-lg">
             Enter comprehensive details for the new educational institution including branches, contacts, and administrative configuration.
           </p>
         </div>
