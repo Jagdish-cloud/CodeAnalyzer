@@ -67,7 +67,7 @@ export default function Staff() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-amber-950 dark:via-orange-950 dark:to-red-950">
       <div className="container mx-auto px-6 py-8">
         <div className="space-y-8">
           {/* Header Section */}

@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between w-100 p-2 h-auto text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-300"
+            className="w-full justify-between p-3 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
             onClick={() => toggleGroup(item.id)}
           >
             <span>{item.title}</span>
@@ -143,13 +143,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start p-2 h-auto text-sm font-normal text-slate-700 hover:bg-slate-300 hover:text-slate-900",
+              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1",
               isActive &&
-                "bg-blue-100 text-blue-800 border-r-2 border-blue-600 hover:bg-blue-100",
+                "bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-white/20 shadow-lg hover:from-blue-500/40 hover:to-purple-500/40",
             )}
             onClick={onClose}
           >
-            <Icon className="h-4 w-4 mr-1" />
+            <Icon className="h-4 w-4 mr-3" />
             {item.title}
           </Button>
         </Link>
@@ -172,23 +172,27 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-slate-200 border-r border-slate-300 shadow-lg z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         style={{
           boxShadow:
-            "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06)",
+            "4px 0 20px -2px rgba(0, 0, 0, 0.3), 2px 0 10px -1px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <div className="flex items-center justify-between p-4 h-16 border-b border-slate-300 ">
-          <div className="flex items-center space-x-2">
-            <GraduationCap className="h-7 w-7 text-slate-700" />
-            <span className="font-semibold text-slate-800">School Admin</span>
+        <div className="flex items-center justify-between p-4 h-16 border-b border-white/10 bg-white/5 backdrop-blur-sm">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg flex items-center justify-center shadow-lg">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </div>
+            <span className="font-bold text-white bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              EduAdmin
+            </span>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden"
+            className="lg:hidden text-white/80 hover:text-white hover:bg-white/10"
             onClick={onClose}
           >
             <X className="h-4 w-4" />

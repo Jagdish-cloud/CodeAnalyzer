@@ -43,7 +43,7 @@ export default function ClassMapping() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950">
       <div className="container mx-auto px-6 py-8">
         <div className="space-y-8">
           {/* Header Section */}

@@ -120,7 +120,7 @@ export default function AddClassMapping() {
   const allDivisions = [...defaultDivisions, ...customDivisions];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950">
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center mb-8">
           <Button
