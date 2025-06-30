@@ -163,6 +163,13 @@ Preferred communication style: Simple, everyday language.
   - Integrated class teacher checkbox functionality (single selection enforced)
   - Updated form to create multiple teacher mappings per subject assignment
   - Applied consistent teal-cyan gradient theme matching teacher mapping pages
+- June 30, 2025: Updated Teacher Subject/Class/Div Mapping Landing Page:
+  - Redesigned table to group mappings by Class-Division combinations
+  - Column 1 displays "Class [X] - Division [Y]" with "Subject: Subject1, Subject2" format
+  - Column 2 shows Status with gradient badge styling
+  - Column 3 contains Action buttons (View, Edit, Delete)
+  - Implemented grouped data structure for better organization and readability
+  - Applied consistent teal-cyan gradient theme throughout the interface
 
 ## Changelog
 
