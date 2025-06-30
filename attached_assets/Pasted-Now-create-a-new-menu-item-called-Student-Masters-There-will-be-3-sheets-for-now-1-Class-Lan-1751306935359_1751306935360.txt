@@ -1,0 +1,65 @@
+Now create a new menu item called : Student Masters
+
+There will be 3 sheets (for now)
+1.Class Landing
+2.Students Landing
+3.Add Student
+
+1. Class Landing: When Clicked on Student Masters menu item Class Landing page should be displayed.
+	- Class Landing Page consist of 
+		- Table
+			- Column 1 : Class-Division.
+			- Column 2 : Number of Students.
+			- Column 3 : Action (View (only view no edit): Onlick this will be redirected to the Students Landing screen.).
+		- Button
+			- + Add Student(Onlick this will be redirected to the Add Student screen.)
+
+2. Students Landing : When Clicked on Column 3 : Action (View) of Class Landing page it should be redirected to the Students Landing Page where Students of the particular Class and division will be displayed on the table.
+	- Students Landing consist of 
+		- Table
+			- Column 1 : Student Name.
+			- Column 2 : Roll Number(This should be auto assigned to the Student based on the First name Alpabetical. Roll number can be changed and sorted when a new Student is enrolled for the particular class-div).
+			- Column 3 : Action (View/Edit).
+		- Button
+			- + Add Student(Onlick this will be redirected to the Add Student screen.)
+			
+3. Add Student : When Clicked on + Add Student (on both Class Landing page and Students Landing) then Add Student page should be displayed.
+	- Add Student Page will consist of 
+	
+		- First Name : Text field
+		
+		- Middle Name(Optional) : Text field
+
+		- Last Name(Optional) : Text field
+
+		- Sex : Drop Down (Male/Female/Others)
+ 
+		- Date of Birth : Date Field
+		
+		- Address : Text Area field
+		
+		- Contact Number : Text field 
+		
+		- Emaiil ID : Text field
+		
+		- Class/Division : Drop Down from Previously Mapped data
+		
+		- Father's Name : Text field
+		
+		- Father's Mobile Number : Text field
+		
+		- Father's Email Id : Text field
+		
+		- Mother's Name : Text field
+		
+		- Mother's Mobile Number : Text field
+		
+		- Mother's Email Id : Text field
+		
+		- APAAR ID : Text field
+		
+		- AADHAR NUMBER : Text field
+		
+		- Save - Button
+		
+in the back end Roll Number should be auto assigned to the Student based on the First name Alpabetical order. Roll number can be changed and sorted when a new Student is enrolled for the particular class-div.

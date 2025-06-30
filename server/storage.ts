@@ -1,4 +1,4 @@
-import { users, staff, classMappings, teacherMappings, roles, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole } from "@shared/schema";
+import { users, staff, classMappings, teacherMappings, roles, students, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Student, type InsertStudent } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -24,6 +24,13 @@ export interface IStorage {
   createRole(role: InsertRole): Promise<Role>;
   updateRole(id: number, role: Partial<InsertRole>): Promise<Role | undefined>;
   deleteRole(id: number): Promise<boolean>;
+  getStudent(id: number): Promise<Student | undefined>;
+  getAllStudents(): Promise<Student[]>;
+  getStudentsByClassDivision(classname: string, division: string): Promise<Student[]>;
+  createStudent(student: InsertStudent): Promise<Student>;
+  updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student | undefined>;
+  deleteStudent(id: number): Promise<boolean>;
+  getClassDivisionStats(): Promise<Array<{class: string; division: string; studentCount: number}>>;
 }
 
 export class MemStorage implements IStorage {
@@ -32,11 +39,13 @@ export class MemStorage implements IStorage {
   private classMappings: Map<number, ClassMapping>;
   private teacherMappings: Map<number, TeacherMapping>;
   private roles: Map<number, Role>;
+  private students: Map<number, Student>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
   private currentTeacherMappingId: number;
   private currentRoleId: number;
+  private currentStudentId: number;
 
   constructor() {
     this.users = new Map();
@@ -44,11 +53,13 @@ export class MemStorage implements IStorage {
     this.classMappings = new Map();
     this.teacherMappings = new Map();
     this.roles = new Map();
+    this.students = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
     this.currentTeacherMappingId = 1;
     this.currentRoleId = 1;
+    this.currentStudentId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -203,6 +214,106 @@ export class MemStorage implements IStorage {
 
   async deleteRole(id: number): Promise<boolean> {
     return this.roles.delete(id);
+  }
+
+  // Student methods
+  async getStudent(id: number): Promise<Student | undefined> {
+    return this.students.get(id);
+  }
+
+  async getAllStudents(): Promise<Student[]> {
+    return Array.from(this.students.values());
+  }
+
+  async getStudentsByClassDivision(classname: string, division: string): Promise<Student[]> {
+    return Array.from(this.students.values()).filter(
+      student => student.class === classname && student.division === division
+    );
+  }
+
+  async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    const id = this.currentStudentId++;
+    
+    // Get existing students in the same class-division to determine roll number
+    const existingStudents = await this.getStudentsByClassDivision(insertStudent.class, insertStudent.division);
+    
+    // Sort by first name alphabetically and assign roll number
+    const sortedStudents = existingStudents.sort((a, b) => a.firstName.localeCompare(b.firstName));
+    
+    // Find the appropriate roll number based on alphabetical order
+    let rollNumber = 1;
+    for (const existingStudent of sortedStudents) {
+      if (insertStudent.firstName.localeCompare(existingStudent.firstName) > 0) {
+        rollNumber = existingStudent.rollNumber + 1;
+      } else {
+        break;
+      }
+    }
+    
+    // Adjust roll numbers of students that come after the new student
+    for (const existingStudent of sortedStudents) {
+      if (existingStudent.rollNumber >= rollNumber) {
+        existingStudent.rollNumber++;
+        this.students.set(existingStudent.id, existingStudent);
+      }
+    }
+
+    const student: Student = { 
+      id,
+      firstName: insertStudent.firstName,
+      middleName: insertStudent.middleName || null,
+      lastName: insertStudent.lastName || null,
+      sex: insertStudent.sex,
+      dateOfBirth: insertStudent.dateOfBirth,
+      address: insertStudent.address,
+      contactNumber: insertStudent.contactNumber,
+      emailId: insertStudent.emailId,
+      class: insertStudent.class,
+      division: insertStudent.division,
+      rollNumber,
+      fatherName: insertStudent.fatherName,
+      fatherMobileNumber: insertStudent.fatherMobileNumber,
+      fatherEmailId: insertStudent.fatherEmailId,
+      motherName: insertStudent.motherName,
+      motherMobileNumber: insertStudent.motherMobileNumber,
+      motherEmailId: insertStudent.motherEmailId,
+      apaarId: insertStudent.apaarId,
+      aadharNumber: insertStudent.aadharNumber
+    };
+    this.students.set(id, student);
+    return student;
+  }
+
+  async updateStudent(id: number, updateData: Partial<InsertStudent>): Promise<Student | undefined> {
+    const existing = this.students.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Student = { ...existing, ...updateData };
+    this.students.set(id, updated);
+    return updated;
+  }
+
+  async deleteStudent(id: number): Promise<boolean> {
+    return this.students.delete(id);
+  }
+
+  async getClassDivisionStats(): Promise<Array<{class: string; division: string; studentCount: number}>> {
+    const stats = new Map<string, {class: string; division: string; studentCount: number}>();
+    
+    for (const student of Array.from(this.students.values())) {
+      const key = `${student.class}-${student.division}`;
+      if (stats.has(key)) {
+        stats.get(key)!.studentCount++;
+      } else {
+        stats.set(key, {
+          class: student.class,
+          division: student.division,
+          studentCount: 1
+        });
+      }
+    }
+    
+    return Array.from(stats.values());
   }
 }
 

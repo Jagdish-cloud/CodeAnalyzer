@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertStudentSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -407,6 +407,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete role" });
+    }
+  });
+
+  // Student Routes
+  app.get("/api/students", async (req, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+
+  app.get("/api/students/class/:class/division/:division", async (req, res) => {
+    try {
+      const { class: className, division } = req.params;
+      const students = await storage.getStudentsByClassDivision(className, division);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch students for class-division" });
+    }
+  });
+
+  app.get("/api/students/stats", async (req, res) => {
+    try {
+      const stats = await storage.getClassDivisionStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch class division stats" });
+    }
+  });
+
+  app.post("/api/students", async (req, res) => {
+    try {
+      const result = insertStudentSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const student = await storage.createStudent(result.data);
+      res.status(201).json(student);
+    } catch (error) {
+      console.error("Student creation error:", error);
+      res.status(500).json({ message: "Failed to create student" });
+    }
+  });
+
+  app.get("/api/students/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid student ID" });
+      }
+
+      const student = await storage.getStudent(id);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      
+      res.json(student);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch student" });
+    }
+  });
+
+  app.patch("/api/students/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid student ID" });
+      }
+
+      const result = insertStudentSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const student = await storage.updateStudent(id, result.data);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      
+      res.json(student);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update student" });
+    }
+  });
+
+  app.delete("/api/students/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid student ID" });
+      }
+
+      const deleted = await storage.deleteStudent(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete student" });
     }
   });
 

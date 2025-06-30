@@ -68,6 +68,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-user-check",
           url: "/teacher-mapping",
         },
+        {
+          id: "student-masters",
+          title: "Student Masters",
+          type: "item",
+          icon: "feather icon-book-open",
+          url: "/student-masters",
+        },
       ],
     },
   ],

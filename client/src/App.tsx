@@ -14,6 +14,9 @@ import TeacherMapping from "@/pages/teacher-mapping";
 import AddTeacherMapping from "@/pages/add-teacher-mapping";
 import Roles from "@/pages/roles";
 import AddRole from "@/pages/add-role";
+import StudentMasters from "@/pages/student-masters";
+import StudentsLanding from "@/pages/students-landing";
+import AddStudent from "@/pages/add-student";
 
 function Router() {
   return (
@@ -29,6 +32,9 @@ function Router() {
         <Route path="/add-teacher-mapping" component={AddTeacherMapping} />
         <Route path="/roles" component={Roles} />
         <Route path="/add-role" component={AddRole} />
+        <Route path="/student-masters" component={StudentMasters} />
+        <Route path="/students/:class/:division" component={StudentsLanding} />
+        <Route path="/add-student" component={AddStudent} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
