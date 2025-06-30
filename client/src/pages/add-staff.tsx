@@ -80,11 +80,11 @@ export default function AddStaff() {
     defaultValues: {
       name: "",
       staffId: "",
-      role: "",
-      newRole: "",
+      role: undefined,
+      newRole: undefined,
       mobileNumber: "",
       email: "",
-      managerName: "",
+      managerName: undefined,
       status: "Current working",
       lastWorkingDay: "",
     },
@@ -225,7 +225,7 @@ export default function AddStaff() {
                         <FormLabel>Select Role</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -234,7 +234,7 @@ export default function AddStaff() {
                           </FormControl>
                           <SelectContent>
                             {rolesLoading ? (
-                              <SelectItem value="" disabled>Loading roles...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading roles...</SelectItem>
                             ) : roles && roles.length > 0 ? (
                               roles.map((role) => (
                                 <SelectItem key={role.id.toString()} value={role.roleName}>
@@ -242,7 +242,7 @@ export default function AddStaff() {
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No roles available</SelectItem>
+                              <SelectItem value="no-roles" disabled>No roles available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -295,7 +295,7 @@ export default function AddStaff() {
                         <FormLabel>Manager Name</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -304,7 +304,7 @@ export default function AddStaff() {
                           </FormControl>
                           <SelectContent>
                             {staffLoading ? (
-                              <SelectItem value="" disabled>Loading staff...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading staff...</SelectItem>
                             ) : staff && staff.length > 0 ? (
                               staff.map((staffMember) => (
                                 <SelectItem key={staffMember.id.toString()} value={staffMember.name}>
@@ -312,7 +312,7 @@ export default function AddStaff() {
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No staff members available</SelectItem>
+                              <SelectItem value="no-staff" disabled>No staff members available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -329,7 +329,7 @@ export default function AddStaff() {
                         <FormLabel>Status</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
