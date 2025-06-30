@@ -123,7 +123,7 @@ export default function AddClassMapping() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950">
-      <div className="container mx-auto px-[5px] py-8 flex flex-col items-center">
+      <div className="container mx-auto px-6 py-8 flex flex-col items-center">
         <div className="w-full max-w-4xl space-y-8">
           <div className="flex items-center">
             <Button

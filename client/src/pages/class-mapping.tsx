@@ -23,7 +23,7 @@ export default function ClassMapping() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-[5px] py-8">
+        <div className="container mx-auto px-6 py-8">
           <div className="space-y-6">
             <Skeleton className="h-12 w-80" />
             <Card className="border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
@@ -44,7 +44,7 @@ export default function ClassMapping() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950">
-      <div className="container mx-auto px-[5px] py-8">
+      <div className="container mx-auto px-6 py-8">
         <div className="space-y-8">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

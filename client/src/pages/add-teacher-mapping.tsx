@@ -211,7 +211,7 @@ export default function AddTeacherMapping() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-950 dark:via-cyan-950 dark:to-blue-950">
-      <div className="container mx-auto px-[5px] py-8 flex flex-col items-center">
+      <div className="container mx-auto px-6 py-8 flex flex-col items-center">
         <div className="max-w-6xl w-full space-y-8">
           {/* Header */}
           <div className="flex items-center gap-6">
