@@ -128,7 +128,7 @@ export default function TeacherMapping() {
                 Manage teacher assignments across classes, subjects, and divisions
               </p>
             </div>
-            <Link href="/teacher-mapping/add">
+            <Link href="/add-teacher-mapping">
               <Button size="lg" className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                 <Plus className="h-5 w-5 mr-2" />
                 Add Teacher Mapping
@@ -198,7 +198,7 @@ export default function TeacherMapping() {
                   <p className="text-slate-600 dark:text-slate-400 mb-8">
                     Add your first teacher mapping to get started with subject assignments
                   </p>
-                  <Link href="/teacher-mapping/add">
+                  <Link href="/add-teacher-mapping">
                     <Button size="lg" className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white border-0">
                       <Plus className="h-5 w-5 mr-2" />
                       Add First Teacher Mapping
