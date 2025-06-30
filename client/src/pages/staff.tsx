@@ -16,32 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Eye, Edit, Users } from "lucide-react";
 import type { Staff } from "@shared/schema";
 
-// Function to generate sample staff data structure
-const generateMockStaff = (): Staff[] => {
-  const firstNames = [
-    "John", "Jane", "Michael", "Emily", "David", "Sarah", "Robert", "Lisa", "James", "Emma"
-  ];
-  const lastNames = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Rodriguez", "Wilson"
-  ];
-  const statuses = ["Current working", "On leave", "Terminated", "Retired"];
-  const roles = ["Subject Teacher", "Classroom Teacher", "Librarian", "Administrative Assistant", "Custodian"];
 
-  return Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
-    staffId: `STF${String(i + 1).padStart(3, '0')}`,
-    role: roles[Math.floor(Math.random() * roles.length)],
-    newRole: null,
-    mobileNumber: `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-    email: `staff${i + 1}@example.com`,
-    managerName: "Principal Smith",
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    lastWorkingDay: null,
-  }));
-};
-
-const mockStaff = generateMockStaff();
 
 export default function Staff() {
   const {
@@ -51,19 +26,12 @@ export default function Staff() {
   } = useQuery({
     queryKey: ["/api/staff"],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/staff");
-        if (!response.ok) {
-          throw new Error("Failed to fetch staff");
-        }
-        return response.json() as Promise<Staff[]>;
-      } catch (err) {
-        // Return mock data if API fails
-        return mockStaff;
+      const response = await fetch("/api/staff");
+      if (!response.ok) {
+        throw new Error("Failed to fetch staff");
       }
+      return response.json() as Promise<Staff[]>;
     },
-    // Uncomment this line to always use mock data for testing
-    initialData: mockStaff,
   });
 
   return (
@@ -108,7 +76,7 @@ export default function Staff() {
                   <div>
                     <p className="text-emerald-100 text-sm font-medium">Active Staff</p>
                     <p className="text-3xl font-bold">
-                      {staff?.filter(s => s.status === "Current working").length || 0}
+                      {staff?.filter((s: Staff) => s.status === "Current working").length || 0}
                     </p>
                   </div>
                   <Eye className="h-8 w-8 text-emerald-200" />
@@ -122,7 +90,7 @@ export default function Staff() {
                   <div>
                     <p className="text-purple-100 text-sm font-medium">On Leave</p>
                     <p className="text-3xl font-bold">
-                      {staff?.filter(s => s.status === "On leave").length || 0}
+                      {staff?.filter((s: Staff) => s.status === "On leave").length || 0}
                     </p>
                   </div>
                   <Plus className="h-8 w-8 text-purple-200" />
@@ -136,7 +104,7 @@ export default function Staff() {
                   <div>
                     <p className="text-orange-100 text-sm font-medium">Departments</p>
                     <p className="text-3xl font-bold">
-                      {new Set(staff?.map(s => s.role)).size || 0}
+                      {new Set(staff?.map((s: Staff) => s.role)).size || 0}
                     </p>
                   </div>
                   <Edit className="h-8 w-8 text-orange-200" />
@@ -189,7 +157,7 @@ export default function Staff() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {staff.map((member) => (
+                      {staff.map((member: Staff) => (
                         <TableRow key={member.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                           <TableCell className="py-4">
                             <div className="flex items-center space-x-3">
