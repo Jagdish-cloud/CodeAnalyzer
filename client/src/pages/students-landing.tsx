@@ -20,15 +20,19 @@ export default function StudentsLanding() {
   const divisionParam = params?.division || "";
 
   const { data: students, isLoading } = useQuery({
-    queryKey: ["/api/students/class", classParam, "division", divisionParam],
+    queryKey: ["/api/students", "class", classParam, "division", divisionParam],
     queryFn: async () => {
-      const response = await fetch(`/api/students/class/${classParam}/division/${divisionParam}`);
+      const response = await fetch(
+        `/api/students/class/${classParam}/division/${divisionParam}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch students");
       }
       return response.json() as Promise<Student[]>;
     },
     enabled: !!classParam && !!divisionParam,
+    staleTime: 0, // Always refetch to ensure fresh data
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading) {
@@ -38,7 +42,9 @@ export default function StudentsLanding() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center space-y-4">
               <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-slate-600 dark:text-slate-400">Loading students...</p>
+              <p className="text-slate-600 dark:text-slate-400">
+                Loading students...
+              </p>
             </div>
           </div>
         </div>
@@ -47,7 +53,13 @@ export default function StudentsLanding() {
   }
 
   // Sort students by roll number
-  const sortedStudents = students?.sort((a, b) => a.rollNumber - b.rollNumber) || [];
+  const sortedStudents =
+    students?.sort((a, b) => a.rollNumber - b.rollNumber) || [];
+
+  // Debug logging
+  console.log('Students data:', students);
+  console.log('Sorted students:', sortedStudents);
+  console.log('Students count:', sortedStudents.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950">
@@ -58,7 +70,11 @@ export default function StudentsLanding() {
             <div className="space-y-2">
               <div className="flex items-center gap-4">
                 <Link href="/student-masters">
-                  <Button variant="outline" size="sm" className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Classes
                   </Button>
@@ -72,7 +88,10 @@ export default function StudentsLanding() {
               </p>
             </div>
             <Link href="/add-student">
-              <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
                 <Plus className="h-5 w-5 mr-2" />
                 Add Student
               </Button>
@@ -85,20 +104,28 @@ export default function StudentsLanding() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-emerald-100 text-sm font-medium">Total Students</p>
-                    <p className="text-3xl font-bold">{sortedStudents.length}</p>
+                    <p className="text-emerald-100 text-sm font-medium">
+                      Total Students
+                    </p>
+                    <p className="text-3xl font-bold">
+                      {sortedStudents.length}
+                    </p>
                   </div>
                   <Users className="h-8 w-8 text-emerald-200" />
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-0 shadow-lg bg-gradient-to-br from-teal-500 to-teal-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-teal-100 text-sm font-medium">Class-Division</p>
-                    <p className="text-3xl font-bold">{classParam}-{divisionParam}</p>
+                    <p className="text-teal-100 text-sm font-medium">
+                      Class-Division
+                    </p>
+                    <p className="text-3xl font-bold">
+                      {classParam}-{divisionParam}
+                    </p>
                   </div>
                   <Eye className="h-8 w-8 text-teal-200" />
                 </div>
@@ -123,10 +150,14 @@ export default function StudentsLanding() {
                     No students in this class yet
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400 mb-8">
-                    Add the first student to Class {classParam} - Division {divisionParam}
+                    Add the first student to Class {classParam} - Division{" "}
+                    {divisionParam}
                   </p>
                   <Link href="/add-student">
-                    <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0">
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0"
+                    >
                       <Plus className="h-5 w-5 mr-2" />
                       Add First Student
                     </Button>
@@ -157,7 +188,11 @@ export default function StudentsLanding() {
                           <TableCell className="font-medium text-slate-800 dark:text-slate-200">
                             <div className="space-y-1">
                               <div className="font-semibold">
-                                {student.firstName} {student.middleName ? `${student.middleName} ` : ""}{student.lastName}
+                                {student.firstName}{" "}
+                                {student.middleName
+                                  ? `${student.middleName} `
+                                  : ""}
+                                {student.lastName}
                               </div>
                               <div className="text-sm text-slate-600 dark:text-slate-400">
                                 {student.sex} • {student.contactNumber}

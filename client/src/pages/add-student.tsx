@@ -115,6 +115,8 @@ export default function AddStudent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       queryClient.invalidateQueries({ queryKey: ["/api/students/stats"] });
+      // Force refresh of all student class/division queries
+      queryClient.invalidateQueries({ queryKey: ["/api/students", "class"] });
       toast({
         title: "Success",
         description: "Student added successfully",
