@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +20,7 @@ const formSchema = insertClassMappingSchema.extend({
   year: z.string().min(1, "Year is required"),
   class: z.string().min(1, "Class is required"),
   division: z.string().min(1, "Division is required"),
-  subject: z.string().min(1, "Subject is required"),
+  subjects: z.array(z.string()).min(1, "At least one subject is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,7 +51,7 @@ export default function AddClassMapping() {
       year: "",
       class: "",
       division: "",
-      subject: "",
+      subjects: [],
       status: "Current working",
     },
   });
@@ -60,7 +62,7 @@ export default function AddClassMapping() {
         year: data.year,
         class: data.class,
         division: data.division,
-        subject: data.subject,
+        subjects: data.subjects,
         status: data.status || "Current working",
       };
       
@@ -301,24 +303,56 @@ export default function AddClassMapping() {
 
                 <FormField
                   control={form.control}
-                  name="subject"
+                  name="subjects"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">Select Subject</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                            <SelectValue placeholder="Select subject" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="max-h-60">
+                      <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">Select Subjects</FormLabel>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
+                          {field.value && field.value.length > 0 ? (
+                            field.value.map((subject: string) => (
+                              <Badge key={subject} variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                {subject}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newSubjects = field.value.filter((s: string) => s !== subject);
+                                    field.onChange(newSubjects);
+                                  }}
+                                  className="ml-1 text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400">No subjects selected</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
                           {defaultSubjects.map((subject) => (
-                            <SelectItem key={subject} value={subject}>
-                              {subject}
-                            </SelectItem>
+                            <div key={subject} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={subject}
+                                checked={field.value?.includes(subject) || false}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange([...(field.value || []), subject]);
+                                  } else {
+                                    field.onChange(field.value?.filter((s: string) => s !== subject) || []);
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={subject}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
+                              >
+                                {subject}
+                              </label>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

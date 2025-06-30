@@ -148,6 +148,14 @@ Preferred communication style: Simple, everyday language.
   - Implemented complete CRUD operations for roles in backend storage and API
   - Applied consistent purple-pink gradient design matching application theme
   - Added proper navigation and form validation with success/error handling
+- June 30, 2025: Enhanced Class Mapping with Multi-Select Subjects:
+  - Updated schema to support subjects array instead of single subject string
+  - Implemented multi-select checkbox interface for subject selection in Add Class Mapping
+  - Added selected subjects display with badge removal functionality
+  - Updated landing page to show subjects as comma-separated values (e.g., "English, Mathematics")
+  - Fixed backend API validation to handle subjects array properly
+  - Removed all prepopulated data from Staff Management for authentic data only
+  - Updated Staff Management to integrate with Roles system for dynamic role selection
 
 ## Changelog
 

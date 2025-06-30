@@ -28,7 +28,7 @@ export const classMappings = pgTable("class_mappings", {
   year: text("year").notNull(),
   class: text("class").notNull(),
   division: text("division").notNull(),
-  subject: text("subject").notNull(),
+  subjects: text("subjects").array().notNull(),
   status: text("status").notNull().default("Current working"),
 });
 

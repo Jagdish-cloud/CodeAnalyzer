@@ -164,7 +164,7 @@ export default function ClassMapping() {
                                 Class {mapping.class} - Division {mapping.division}
                               </div>
                               <div className="text-sm text-slate-600 dark:text-slate-400">
-                                Subject: {mapping.subject}
+                                Subject: {Array.isArray(mapping.subjects) ? mapping.subjects.join(', ') : mapping.subjects}
                               </div>
                             </div>
                           </TableCell>
