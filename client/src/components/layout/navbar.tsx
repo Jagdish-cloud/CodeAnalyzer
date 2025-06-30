@@ -26,7 +26,7 @@ interface NavbarProps {
 
 export function Navbar({ onMenuToggle, sidebarOpen, onSidebarClose }: NavbarProps) {
   return (
-    <header className="bg-gradient-to-r from-white/95 via-blue-50/95 to-purple-50/95 dark:from-slate-900/95 dark:via-indigo-900/95 dark:to-purple-900/95 backdrop-blur-xl border-b border-white/20 dark:border-purple-500/20 h-16 flex items-center justify-between px-4 lg:px-6 shadow-lg">
+    <header className="bg-gradient-to-r from-white/95 via-blue-50/95 to-purple-50/95 dark:from-slate-900/95 dark:via-indigo-900/95 dark:to-purple-900/95 backdrop-blur-xl border-b border-white/20 dark:border-purple-500/20 h-16 flex items-center justify-between px-4 lg:px-[5px] shadow-lg">
       {/* Left side */}
       <div className="flex items-center space-x-4">
         <Button

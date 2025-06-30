@@ -144,7 +144,7 @@ export default function AddStaff() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-rose-950 dark:via-pink-950 dark:to-purple-950">
-      <div className="container mx-auto px-6 py-8 flex flex-col items-center">
+      <div className="container mx-auto px-[5px] py-8 flex flex-col items-center">
         <div className="w-full max-w-2xl space-y-8">
           <div className="flex items-center gap-6">
             <Button

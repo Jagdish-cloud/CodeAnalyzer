@@ -51,7 +51,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-violet-950 dark:via-purple-950 dark:to-pink-950">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-[5px] py-8">
         <div className="space-y-8">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

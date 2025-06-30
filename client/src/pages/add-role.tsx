@@ -76,7 +76,7 @@ export default function AddRole() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <div className="container mx-auto py-8 px-[5px] max-w-2xl">
         <div className="mb-8">
           <Button 
             variant="ghost" 

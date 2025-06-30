@@ -38,7 +38,7 @@ export default function StudentsLanding() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950">
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-[5px] py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-center space-y-4">
               <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -63,7 +63,7 @@ export default function StudentsLanding() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-[5px] py-8">
         <div className="space-y-8">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

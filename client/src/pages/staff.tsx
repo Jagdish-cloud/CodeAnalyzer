@@ -36,7 +36,7 @@ export default function Staff() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-amber-950 dark:via-orange-950 dark:to-red-950">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-[5px] py-8">
         <div className="space-y-8">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

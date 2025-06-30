@@ -144,7 +144,7 @@ export default function AddStudent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-fuchsia-50 to-pink-50 dark:from-violet-950 dark:via-fuchsia-950 dark:to-pink-950">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-[5px] py-8">
         <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
           {/* Header Section */}
           <div className="flex items-center gap-4">
