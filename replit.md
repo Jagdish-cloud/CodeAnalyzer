@@ -156,6 +156,13 @@ Preferred communication style: Simple, everyday language.
   - Fixed backend API validation to handle subjects array properly
   - Removed all prepopulated data from Staff Management for authentic data only
   - Updated Staff Management to integrate with Roles system for dynamic role selection
+- June 30, 2025: Redesigned Add Teacher Mapping with Enhanced UX:
+  - Completely redesigned form layout with Class-Division selection dropdown
+  - Implemented subject columns displaying all mapped subjects for selected class-division
+  - Added teacher assignment dropdowns for each subject with "No teacher assigned" option
+  - Integrated class teacher checkbox functionality (single selection enforced)
+  - Updated form to create multiple teacher mappings per subject assignment
+  - Applied consistent teal-cyan gradient theme matching teacher mapping pages
 
 ## Changelog
 
