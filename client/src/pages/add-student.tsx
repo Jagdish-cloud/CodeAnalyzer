@@ -40,6 +40,8 @@ import { Link } from "wouter";
 
 const formSchema = insertStudentSchema.extend({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
+  middleName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -65,8 +67,8 @@ export default function AddStudent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: "",
-      middleName: undefined,
-      lastName: undefined,
+      middleName: "",
+      lastName: "",
       sex: "",
       dateOfBirth: "",
       address: "",
@@ -108,11 +110,7 @@ export default function AddStudent() {
         aadharNumber: data.aadharNumber,
       };
 
-      return apiRequest({
-        url: "/api/students",
-        method: "POST",
-        body: studentData,
-      });
+      return apiRequest("POST", "/api/students", studentData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
