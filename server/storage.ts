@@ -88,7 +88,7 @@ export class MemStorage implements IStorage {
       newRole: insertStaff.newRole || null,
       mobileNumber: insertStaff.mobileNumber,
       email: insertStaff.email,
-      managerName: insertStaff.managerName,
+      managerName: insertStaff.managerName ?? null,
       status: insertStaff.status,
       lastWorkingDay: insertStaff.lastWorkingDay || null,
     };

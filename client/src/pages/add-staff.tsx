@@ -41,7 +41,7 @@ const staffSchema = z
       .max(15, "Mobile number must not exceed 15 digits")
       .regex(/^[0-9+\-\s()]+$/, "Invalid mobile number format"),
     email: z.string().email("Invalid email address"),
-    managerName: z.string().min(1, "Manager name is required"),
+    managerName: z.string().optional(),
     status: z.enum(["Current working", "Resigned"]),
     lastWorkingDay: z.string().optional(),
   })
@@ -101,7 +101,7 @@ export default function AddStaff() {
         newRole: data.newRole || null,
         mobileNumber: data.mobileNumber,
         email: data.email,
-        managerName: data.managerName,
+        managerName: data.managerName && data.managerName !== "none" ? data.managerName : null,
         status: data.status,
         lastWorkingDay: data.lastWorkingDay || null,
       };
@@ -292,17 +292,18 @@ export default function AddStaff() {
                     name="managerName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Manager Name</FormLabel>
+                        <FormLabel>Manager Name (Optional)</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select manager" />
+                              <SelectValue placeholder="Select manager (optional)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="none">No manager</SelectItem>
                             {staffLoading ? (
                               <SelectItem value="loading" disabled>Loading staff...</SelectItem>
                             ) : staff && staff.length > 0 ? (

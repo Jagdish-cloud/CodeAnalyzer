@@ -18,7 +18,7 @@ export const staff = pgTable("staff", {
   newRole: text("new_role"),
   mobileNumber: text("mobile_number").notNull(),
   email: text("email").notNull().unique(),
-  managerName: text("manager_name").notNull(),
+  managerName: text("manager_name"),
   status: text("status").notNull(),
   lastWorkingDay: text("last_working_day"),
 });
