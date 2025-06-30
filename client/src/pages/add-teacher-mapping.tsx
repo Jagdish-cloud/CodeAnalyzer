@@ -37,12 +37,14 @@ import type { ClassMapping, Staff, InsertTeacherMapping } from "@shared/schema";
 
 const formSchema = z.object({
   classDivision: z.string().min(1, "Class-Division is required"),
-  subjectAssignments: z.array(z.object({
-    subject: z.string(),
-    teacherId: z.number().optional(),
-    teacherName: z.string().optional(),
-    isClassTeacher: z.boolean().default(false),
-  })),
+  subjectAssignments: z.array(
+    z.object({
+      subject: z.string(),
+      teacherId: z.number().optional(),
+      teacherName: z.string().optional(),
+      isClassTeacher: z.boolean().default(false),
+    }),
+  ),
   status: z.string().default("Current working"),
 });
 
@@ -58,11 +60,16 @@ interface SubjectAssignment {
 export default function AddTeacherMapping() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [selectedClassDivision, setSelectedClassDivision] = useState<string>("");
-  const [subjectAssignments, setSubjectAssignments] = useState<SubjectAssignment[]>([]);
+  const [selectedClassDivision, setSelectedClassDivision] =
+    useState<string>("");
+  const [subjectAssignments, setSubjectAssignments] = useState<
+    SubjectAssignment[]
+  >([]);
 
   // Fetch class mappings to get available class-division combinations
-  const { data: classMappings, isLoading: classMappingsLoading } = useQuery<ClassMapping[]>({
+  const { data: classMappings, isLoading: classMappingsLoading } = useQuery<
+    ClassMapping[]
+  >({
     queryKey: ["/api/class-mappings"],
   });
 
@@ -83,42 +90,45 @@ export default function AddTeacherMapping() {
   // Get unique class-division combinations
   const classDivisionOptions = Array.from(
     new Set(
-      classMappings?.map(mapping => `${mapping.class}-${mapping.division}`) || []
-    )
-  ).map(classDivision => {
-    const [cls, division] = classDivision.split('-');
+      classMappings?.map((mapping) => `${mapping.class}-${mapping.division}`) ||
+        [],
+    ),
+  ).map((classDivision) => {
+    const [cls, division] = classDivision.split("-");
     return {
       value: classDivision,
       label: `Class ${cls} - Division ${division}`,
       class: cls,
-      division: division
+      division: division,
     };
   });
 
   // When class-division is selected, load available subjects
   useEffect(() => {
     if (selectedClassDivision) {
-      const [selectedClass, selectedDivision] = selectedClassDivision.split("-");
-      
+      const [selectedClass, selectedDivision] =
+        selectedClassDivision.split("-");
+
       // Get all subjects for this class-division combination
-      const relevantMappings = classMappings?.filter(
-        mapping => mapping.class === selectedClass && mapping.division === selectedDivision
-      ) || [];
-      
+      const relevantMappings =
+        classMappings?.filter(
+          (mapping) =>
+            mapping.class === selectedClass &&
+            mapping.division === selectedDivision,
+        ) || [];
+
       // Extract all unique subjects from the mappings
       const subjects = Array.from(
-        new Set(
-          relevantMappings.flatMap(mapping => mapping.subjects || [])
-        )
+        new Set(relevantMappings.flatMap((mapping) => mapping.subjects || [])),
       );
-      
-      const assignments: SubjectAssignment[] = subjects.map(subject => ({
+
+      const assignments: SubjectAssignment[] = subjects.map((subject) => ({
         subject,
         teacherId: undefined,
         teacherName: undefined,
         isClassTeacher: false,
       }));
-      
+
       setSubjectAssignments(assignments);
       form.setValue("classDivision", selectedClassDivision);
       form.setValue("subjectAssignments", assignments);
@@ -129,19 +139,21 @@ export default function AddTeacherMapping() {
     mutationFn: async (data: FormData) => {
       // Convert to the existing teacher mapping format for backend compatibility
       const [selectedClass, selectedDivision] = data.classDivision.split("-");
-      
+
       // Create a teacher mapping for each subject that has a teacher assigned
       const promises = data.subjectAssignments
-        .filter(assignment => assignment.teacherId)
+        .filter((assignment) => assignment.teacherId)
         .map(async (assignment) => {
           const teacherMappingData: InsertTeacherMapping = {
             class: selectedClass,
             subject: assignment.subject,
-            divisions: [{
-              division: selectedDivision,
-              teacherId: assignment.teacherId!,
-              teacherName: assignment.teacherName || "",
-            }],
+            divisions: [
+              {
+                division: selectedDivision,
+                teacherId: assignment.teacherId!,
+                teacherName: assignment.teacherName || "",
+              },
+            ],
             status: data.status || "Current working",
           };
 
@@ -153,7 +165,9 @@ export default function AddTeacherMapping() {
 
           if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || "Failed to create teacher mapping");
+            throw new Error(
+              error.message || "Failed to create teacher mapping",
+            );
           }
 
           return response.json();
@@ -182,7 +196,11 @@ export default function AddTeacherMapping() {
     mutation.mutate(data);
   };
 
-  const updateSubjectTeacher = (subjectIndex: number, teacherId: number, teacherName: string) => {
+  const updateSubjectTeacher = (
+    subjectIndex: number,
+    teacherId: number,
+    teacherName: string,
+  ) => {
     const updatedAssignments = [...subjectAssignments];
     updatedAssignments[subjectIndex] = {
       ...updatedAssignments[subjectIndex],
@@ -193,9 +211,12 @@ export default function AddTeacherMapping() {
     form.setValue("subjectAssignments", updatedAssignments);
   };
 
-  const toggleClassTeacher = (subjectIndex: number, isClassTeacher: boolean) => {
+  const toggleClassTeacher = (
+    subjectIndex: number,
+    isClassTeacher: boolean,
+  ) => {
     const updatedAssignments = [...subjectAssignments];
-    
+
     // If setting as class teacher, unset all others
     if (isClassTeacher) {
       updatedAssignments.forEach((assignment, index) => {
@@ -204,13 +225,13 @@ export default function AddTeacherMapping() {
     } else {
       updatedAssignments[subjectIndex].isClassTeacher = false;
     }
-    
+
     setSubjectAssignments(updatedAssignments);
     form.setValue("subjectAssignments", updatedAssignments);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-950 dark:via-cyan-950 dark:to-blue-950">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-rose-950 dark:via-pink-950 dark:to-purple-950">
       <div className="container mx-auto px-6 py-8 flex flex-col items-center">
         <div className="max-w-6xl w-full space-y-8">
           {/* Header */}
@@ -236,7 +257,7 @@ export default function AddTeacherMapping() {
           </div>
 
           {/* Main Form */}
-          <Card className="max-w-5xl w-full border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+          <Card className="max-w-5xl w-full mx-auto border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
             <CardHeader className="border-b border-slate-200 dark:border-slate-700 pb-6">
               <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 Teacher Assignment Form
@@ -244,7 +265,10 @@ export default function AddTeacherMapping() {
             </CardHeader>
             <CardContent className="p-8">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8"
+                >
                   {/* Class-Division Selection */}
                   <FormField
                     control={form.control}
@@ -268,7 +292,10 @@ export default function AddTeacherMapping() {
                           </FormControl>
                           <SelectContent className="max-h-60">
                             {classDivisionOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -302,7 +329,10 @@ export default function AddTeacherMapping() {
                           </TableHeader>
                           <TableBody>
                             {subjectAssignments.map((assignment, index) => (
-                              <TableRow key={assignment.subject} className="border-slate-200 dark:border-slate-700">
+                              <TableRow
+                                key={assignment.subject}
+                                className="border-slate-200 dark:border-slate-700"
+                              >
                                 <TableCell className="py-4">
                                   <div className="font-medium text-slate-900 dark:text-slate-100">
                                     {assignment.subject}
@@ -312,23 +342,36 @@ export default function AddTeacherMapping() {
                                   <Select
                                     onValueChange={(value) => {
                                       if (value && value !== "none") {
-                                        const teacher = staff?.find(s => s.id.toString() === value);
+                                        const teacher = staff?.find(
+                                          (s) => s.id.toString() === value,
+                                        );
                                         if (teacher) {
-                                          updateSubjectTeacher(index, teacher.id, teacher.name);
+                                          updateSubjectTeacher(
+                                            index,
+                                            teacher.id,
+                                            teacher.name,
+                                          );
                                         }
                                       } else {
                                         updateSubjectTeacher(index, 0, "");
                                       }
                                     }}
-                                    value={assignment.teacherId?.toString() || "none"}
+                                    value={
+                                      assignment.teacherId?.toString() || "none"
+                                    }
                                   >
                                     <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                       <SelectValue placeholder="Select teacher" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="none">No teacher assigned</SelectItem>
+                                      <SelectItem value="none">
+                                        No teacher assigned
+                                      </SelectItem>
                                       {staff?.map((teacher) => (
-                                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                        <SelectItem
+                                          key={teacher.id}
+                                          value={teacher.id.toString()}
+                                        >
                                           {teacher.name}
                                         </SelectItem>
                                       ))}
@@ -338,8 +381,11 @@ export default function AddTeacherMapping() {
                                 <TableCell className="py-4 text-center">
                                   <Checkbox
                                     checked={assignment.isClassTeacher}
-                                    onCheckedChange={(checked) => 
-                                      toggleClassTeacher(index, checked as boolean)
+                                    onCheckedChange={(checked) =>
+                                      toggleClassTeacher(
+                                        index,
+                                        checked as boolean,
+                                      )
                                     }
                                     disabled={!assignment.teacherId}
                                   />
@@ -364,10 +410,14 @@ export default function AddTeacherMapping() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={mutation.isPending || subjectAssignments.length === 0}
+                      disabled={
+                        mutation.isPending || subjectAssignments.length === 0
+                      }
                       className="flex-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white"
                     >
-                      {mutation.isPending ? "Creating..." : "Create Teacher Mappings"}
+                      {mutation.isPending
+                        ? "Creating..."
+                        : "Create Teacher Mappings"}
                     </Button>
                   </div>
                 </form>
