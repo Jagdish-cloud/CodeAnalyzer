@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import {
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { InsertStaff } from "@shared/schema";
+import type { InsertStaff, Role, Staff } from "@shared/schema";
 
 // Validation schema
 const staffSchema = z
@@ -60,37 +60,20 @@ const staffSchema = z
 
 type StaffFormData = z.infer<typeof staffSchema>;
 
-// Sample data for dropdowns
-const roles = [
-  "Software Developer",
-  "Senior Developer",
-  "Team Lead",
-  "Project Manager",
-  "QA Engineer",
-  "DevOps Engineer",
-  "UI/UX Designer",
-  "Business Analyst",
-  "HR Manager",
-  "Finance Manager",
-];
-
-const managers = [
-  "Alice Thompson",
-  "Robert Garcia",
-  "Jennifer Martinez",
-  "William Anderson",
-  "Lisa Rodriguez",
-  "James Wilson",
-  "Maria Lopez",
-  "David Taylor",
-  "Susan Clark",
-  "Christopher Lewis",
-];
-
 export default function AddStaff() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch roles from the Roles system
+  const { data: roles, isLoading: rolesLoading } = useQuery<Role[]>({
+    queryKey: ['/api/roles'],
+  });
+
+  // Fetch staff members to populate manager dropdown
+  const { data: staff, isLoading: staffLoading } = useQuery<Staff[]>({
+    queryKey: ['/api/staff'],
+  });
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
@@ -236,7 +219,7 @@ export default function AddStaff() {
 
                   <FormField
                     control={form.control}
-                    name="newRole"
+                    name="role"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Select Role</FormLabel>
@@ -250,11 +233,17 @@ export default function AddStaff() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {roles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
-                              </SelectItem>
-                            ))}
+                            {rolesLoading ? (
+                              <SelectItem value="" disabled>Loading roles...</SelectItem>
+                            ) : roles && roles.length > 0 ? (
+                              roles.map((role) => (
+                                <SelectItem key={role.id.toString()} value={role.roleName}>
+                                  {role.roleName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No roles available</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -314,11 +303,17 @@ export default function AddStaff() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {managers.map((manager) => (
-                              <SelectItem key={manager} value={manager}>
-                                {manager}
-                              </SelectItem>
-                            ))}
+                            {staffLoading ? (
+                              <SelectItem value="" disabled>Loading staff...</SelectItem>
+                            ) : staff && staff.length > 0 ? (
+                              staff.map((staffMember) => (
+                                <SelectItem key={staffMember.id.toString()} value={staffMember.name}>
+                                  {staffMember.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No staff members available</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
