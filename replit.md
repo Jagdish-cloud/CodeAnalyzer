@@ -141,6 +141,13 @@ Preferred communication style: Simple, everyday language.
   - Created teacher assignment functionality with dropdown for available teachers
   - Added complete CRUD operations for teacher mappings in backend
   - Applied consistent teal-cyan gradient design matching application theme
+- June 30, 2025: Added Roles Management functionality:
+  - Created new "Roles" menu item positioned before Staff data in sidebar
+  - Built roles landing page with table showing Role, Status, and Action columns
+  - Added comprehensive Add Role form with role name field and submit functionality
+  - Implemented complete CRUD operations for roles in backend storage and API
+  - Applied consistent purple-pink gradient design matching application theme
+  - Added proper navigation and form validation with success/error handling
 
 ## Changelog
 

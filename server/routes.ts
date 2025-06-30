@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -314,6 +314,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete teacher mapping" });
+    }
+  });
+
+  // Roles routes
+  app.get("/api/roles", async (req, res) => {
+    try {
+      const roles = await storage.getAllRoles();
+      res.json(roles);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch roles" });
+    }
+  });
+
+  app.post("/api/roles", async (req, res) => {
+    try {
+      const result = insertRoleSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const role = await storage.createRole(result.data);
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Role creation error:", error);
+      res.status(500).json({ message: "Failed to create role" });
+    }
+  });
+
+  app.get("/api/roles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid role ID" });
+      }
+
+      const role = await storage.getRole(id);
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      
+      res.json(role);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch role" });
+    }
+  });
+
+  app.patch("/api/roles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid role ID" });
+      }
+
+      const result = insertRoleSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const role = await storage.updateRole(id, result.data);
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+
+      res.json(role);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
+  app.delete("/api/roles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid role ID" });
+      }
+
+      const deleted = await storage.deleteRole(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete role" });
     }
   });
 

@@ -41,6 +41,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/dashboard",
         },
         {
+          id: "roles",
+          title: "Roles",
+          type: "item",
+          icon: "feather icon-shield",
+          url: "/roles",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

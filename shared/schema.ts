@@ -40,6 +40,12 @@ export const teacherMappings = pgTable("teacher_mappings", {
   status: text("status").notNull().default("Current working"),
 });
 
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  roleName: text("role_name").notNull(),
+  status: text("status").notNull().default("active"),
+});
+
 
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -59,6 +65,10 @@ export const insertTeacherMappingSchema = createInsertSchema(teacherMappings).om
   id: true,
 });
 
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -67,3 +77,5 @@ export type InsertClassMapping = z.infer<typeof insertClassMappingSchema>;
 export type ClassMapping = typeof classMappings.$inferSelect;
 export type InsertTeacherMapping = z.infer<typeof insertTeacherMappingSchema>;
 export type TeacherMapping = typeof teacherMappings.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type Role = typeof roles.$inferSelect;

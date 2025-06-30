@@ -1,4 +1,4 @@
-import { users, staff, classMappings, teacherMappings, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping } from "@shared/schema";
+import { users, staff, classMappings, teacherMappings, roles, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -19,6 +19,11 @@ export interface IStorage {
   createTeacherMapping(mapping: InsertTeacherMapping): Promise<TeacherMapping>;
   updateTeacherMapping(id: number, mapping: Partial<InsertTeacherMapping>): Promise<TeacherMapping | undefined>;
   deleteTeacherMapping(id: number): Promise<boolean>;
+  getRole(id: number): Promise<Role | undefined>;
+  getAllRoles(): Promise<Role[]>;
+  createRole(role: InsertRole): Promise<Role>;
+  updateRole(id: number, role: Partial<InsertRole>): Promise<Role | undefined>;
+  deleteRole(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -26,20 +31,24 @@ export class MemStorage implements IStorage {
   private staff: Map<number, Staff>;
   private classMappings: Map<number, ClassMapping>;
   private teacherMappings: Map<number, TeacherMapping>;
+  private roles: Map<number, Role>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
   private currentTeacherMappingId: number;
+  private currentRoleId: number;
 
   constructor() {
     this.users = new Map();
     this.staff = new Map();
     this.classMappings = new Map();
     this.teacherMappings = new Map();
+    this.roles = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
     this.currentTeacherMappingId = 1;
+    this.currentRoleId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -162,6 +171,38 @@ export class MemStorage implements IStorage {
 
   async deleteTeacherMapping(id: number): Promise<boolean> {
     return this.teacherMappings.delete(id);
+  }
+
+  async getRole(id: number): Promise<Role | undefined> {
+    return this.roles.get(id);
+  }
+
+  async getAllRoles(): Promise<Role[]> {
+    return Array.from(this.roles.values());
+  }
+
+  async createRole(insertRole: InsertRole): Promise<Role> {
+    const id = this.currentRoleId++;
+    const role: Role = { 
+      id,
+      roleName: insertRole.roleName,
+      status: insertRole.status || "active"
+    };
+    this.roles.set(id, role);
+    return role;
+  }
+
+  async updateRole(id: number, updateData: Partial<InsertRole>): Promise<Role | undefined> {
+    const existing = this.roles.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Role = { ...existing, ...updateData };
+    this.roles.set(id, updated);
+    return updated;
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    return this.roles.delete(id);
   }
 }
 
