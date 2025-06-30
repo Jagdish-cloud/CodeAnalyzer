@@ -123,9 +123,10 @@ export default function AddClassMapping() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950">
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center mb-8">
-          <Button
+      <div className="container mx-auto px-6 py-8 flex flex-col items-center">
+        <div className="w-full max-w-4xl space-y-8">
+          <div className="flex items-center">
+            <Button
             variant="outline"
             onClick={() => navigate("/class-mapping")}
             className="mr-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900"
@@ -141,9 +142,9 @@ export default function AddClassMapping() {
               Create a new academic class mapping
             </p>
           </div>
-        </div>
+          </div>
 
-        <Card className="max-w-3xl border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <Card className="max-w-3xl w-full mx-auto border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
           <CardHeader className="border-b border-slate-200 dark:border-slate-700 pb-6">
             <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
               Class Mapping Details
@@ -379,6 +380,7 @@ export default function AddClassMapping() {
             </Form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
