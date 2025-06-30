@@ -156,7 +156,7 @@ export default function AddStaff() {
             Back to Staff
           </Button>
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-2">
               Add Staff Member
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
@@ -165,7 +165,7 @@ export default function AddStaff() {
           </div>
           </div>
 
-        <Card className="glass-morphism card-hover">
+        <Card className="max-w-5xl w-full glass-morphism card-hover">
           <CardHeader>
             <CardTitle className="text-slate-800 dark:text-slate-200 text-xl">Staff Information</CardTitle>
           </CardHeader>

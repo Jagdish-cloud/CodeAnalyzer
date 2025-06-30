@@ -95,7 +95,7 @@ export default function AddRole() {
           </p>
         </div>
 
-        <Card className="backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border-0 shadow-xl">
+        <Card className="max-w-5xl w-full backdrop-blur-sm bg-white/70 dark:bg-gray-800/70 border-0 shadow-xl">
           <CardHeader className="border-b border-gray-200/50 dark:border-gray-700/50">
             <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
               Role Information

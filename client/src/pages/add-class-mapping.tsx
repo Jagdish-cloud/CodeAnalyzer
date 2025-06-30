@@ -135,7 +135,7 @@ export default function AddClassMapping() {
             Back to Mappings
           </Button>
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-2">
               Add Class Mapping
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
@@ -144,7 +144,7 @@ export default function AddClassMapping() {
           </div>
           </div>
 
-        <Card className="max-w-3xl w-full mx-auto border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <Card className="max-w-5xl w-full mx-auto border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
           <CardHeader className="border-b border-slate-200 dark:border-slate-700 pb-6">
             <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
               Class Mapping Details

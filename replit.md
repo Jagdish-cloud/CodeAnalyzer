@@ -179,6 +179,12 @@ Preferred communication style: Simple, everyday language.
   - Added complete CRUD operations for students in backend storage and API
   - Applied vibrant indigo-purple-pink gradient design for student-related pages
   - Integrated with existing class mapping system for class/division selection
+- June 30, 2025: Standardized Form UI and Enhanced UX:
+  - Made all form cards uniform size (max-w-5xl) across the application
+  - Added mb-2 spacing between main headers and sub headers on all pages
+  - Ensured consistent form card centering and layout throughout the system
+  - Updated add-student, add-staff, add-class-mapping, add-teacher-mapping, and add-role pages
+  - Applied consistent styling to all form pages and landing pages
 
 ## Changelog
 
