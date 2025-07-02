@@ -39,13 +39,23 @@ const formSchema = z.object({
   classDivision: z.string().min(1, "Class-Division is required"),
   subjectAssignments: z.array(
     z.object({
-      subject: z.string(),
-      teacherId: z.number().optional(),
-      teacherName: z.string().optional(),
+      subject: z.string().min(1, "Subject is required"),
+      teacherId: z.number({
+        required_error: "Teacher assignment is required for each subject",
+        invalid_type_error: "Please select a teacher",
+      }),
+      teacherName: z.string().min(1, "Teacher name is required"),
       isClassTeacher: z.boolean().default(false),
     }),
-  ),
+  ).min(1, "At least one subject assignment is required"),
   status: z.string().default("Current working"),
+}).refine((data) => {
+  // Ensure at most one class teacher is selected
+  const classTeachers = data.subjectAssignments.filter(assignment => assignment.isClassTeacher);
+  return classTeachers.length <= 1;
+}, {
+  message: "Only one teacher can be designated as class teacher",
+  path: ["subjectAssignments"],
 });
 
 type FormData = z.infer<typeof formSchema>;

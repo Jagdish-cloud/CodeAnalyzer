@@ -1,4 +1,4 @@
-import { users, staff, classMappings, teacherMappings, roles, students, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Student, type InsertStudent } from "@shared/schema";
+import { users, staff, classMappings, teacherMappings, roles, subjects, students, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -24,6 +24,11 @@ export interface IStorage {
   createRole(role: InsertRole): Promise<Role>;
   updateRole(id: number, role: Partial<InsertRole>): Promise<Role | undefined>;
   deleteRole(id: number): Promise<boolean>;
+  getSubject(id: number): Promise<Subject | undefined>;
+  getAllSubjects(): Promise<Subject[]>;
+  createSubject(subject: InsertSubject): Promise<Subject>;
+  updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject | undefined>;
+  deleteSubject(id: number): Promise<boolean>;
   getStudent(id: number): Promise<Student | undefined>;
   getAllStudents(): Promise<Student[]>;
   getStudentsByClassDivision(classname: string, division: string): Promise<Student[]>;
@@ -39,12 +44,14 @@ export class MemStorage implements IStorage {
   private classMappings: Map<number, ClassMapping>;
   private teacherMappings: Map<number, TeacherMapping>;
   private roles: Map<number, Role>;
+  private subjects: Map<number, Subject>;
   private students: Map<number, Student>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
   private currentTeacherMappingId: number;
   private currentRoleId: number;
+  private currentSubjectId: number;
   private currentStudentId: number;
 
   constructor() {
@@ -53,12 +60,14 @@ export class MemStorage implements IStorage {
     this.classMappings = new Map();
     this.teacherMappings = new Map();
     this.roles = new Map();
+    this.subjects = new Map();
     this.students = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
     this.currentTeacherMappingId = 1;
     this.currentRoleId = 1;
+    this.currentSubjectId = 1;
     this.currentStudentId = 1;
   }
 
@@ -216,6 +225,39 @@ export class MemStorage implements IStorage {
     return this.roles.delete(id);
   }
 
+  // Subject methods
+  async getSubject(id: number): Promise<Subject | undefined> {
+    return this.subjects.get(id);
+  }
+
+  async getAllSubjects(): Promise<Subject[]> {
+    return Array.from(this.subjects.values());
+  }
+
+  async createSubject(insertSubject: InsertSubject): Promise<Subject> {
+    const id = this.currentSubjectId++;
+    const subject: Subject = { 
+      id,
+      subjectName: insertSubject.subjectName,
+      status: insertSubject.status || "active"
+    };
+    this.subjects.set(id, subject);
+    return subject;
+  }
+
+  async updateSubject(id: number, updateData: Partial<InsertSubject>): Promise<Subject | undefined> {
+    const existing = this.subjects.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Subject = { ...existing, ...updateData };
+    this.subjects.set(id, updated);
+    return updated;
+  }
+
+  async deleteSubject(id: number): Promise<boolean> {
+    return this.subjects.delete(id);
+  }
+
   // Student methods
   async getStudent(id: number): Promise<Student | undefined> {
     return this.students.get(id);
@@ -265,18 +307,32 @@ export class MemStorage implements IStorage {
       lastName: insertStudent.lastName || null,
       sex: insertStudent.sex,
       dateOfBirth: insertStudent.dateOfBirth,
-      address: insertStudent.address,
-      contactNumber: insertStudent.contactNumber,
-      emailId: insertStudent.emailId,
+      // Address fields
+      flatBuildingNo: insertStudent.flatBuildingNo,
+      areaLocality: insertStudent.areaLocality,
+      city: insertStudent.city,
+      state: insertStudent.state,
+      pincode: insertStudent.pincode,
+      landmark: insertStudent.landmark || null,
+      // Optional contact details
+      contactNumber: insertStudent.contactNumber || null,
+      emailId: insertStudent.emailId || null,
       class: insertStudent.class,
       division: insertStudent.division,
       rollNumber,
-      fatherName: insertStudent.fatherName,
-      fatherMobileNumber: insertStudent.fatherMobileNumber,
-      fatherEmailId: insertStudent.fatherEmailId,
-      motherName: insertStudent.motherName,
-      motherMobileNumber: insertStudent.motherMobileNumber,
-      motherEmailId: insertStudent.motherEmailId,
+      // Father information (optional)
+      fatherName: insertStudent.fatherName || null,
+      fatherMobileNumber: insertStudent.fatherMobileNumber || null,
+      fatherEmailId: insertStudent.fatherEmailId || null,
+      // Mother information (optional)
+      motherName: insertStudent.motherName || null,
+      motherMobileNumber: insertStudent.motherMobileNumber || null,
+      motherEmailId: insertStudent.motherEmailId || null,
+      // Guardian information (optional)
+      guardianName: insertStudent.guardianName || null,
+      guardianMobileNumber: insertStudent.guardianMobileNumber || null,
+      guardianEmailId: insertStudent.guardianEmailId || null,
+      guardianRelation: insertStudent.guardianRelation || null,
       apaarId: insertStudent.apaarId,
       aadharNumber: insertStudent.aadharNumber
     };

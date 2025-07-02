@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertStudentSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -407,6 +407,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete role" });
+    }
+  });
+
+  // Subject Routes
+  app.get("/api/subjects", async (req, res) => {
+    try {
+      const subjects = await storage.getAllSubjects();
+      res.json(subjects);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subjects" });
+    }
+  });
+
+  app.post("/api/subjects", async (req, res) => {
+    try {
+      const result = insertSubjectSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const subject = await storage.createSubject(result.data);
+      res.status(201).json(subject);
+    } catch (error) {
+      console.error("Subject creation error:", error);
+      res.status(500).json({ message: "Failed to create subject" });
+    }
+  });
+
+  app.get("/api/subjects/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subject ID" });
+      }
+
+      const subject = await storage.getSubject(id);
+      if (!subject) {
+        return res.status(404).json({ message: "Subject not found" });
+      }
+      
+      res.json(subject);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subject" });
+    }
+  });
+
+  app.patch("/api/subjects/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subject ID" });
+      }
+
+      const result = insertSubjectSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const subject = await storage.updateSubject(id, result.data);
+      if (!subject) {
+        return res.status(404).json({ message: "Subject not found" });
+      }
+      
+      res.json(subject);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update subject" });
+    }
+  });
+
+  app.delete("/api/subjects/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subject ID" });
+      }
+
+      const deleted = await storage.deleteSubject(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Subject not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete subject" });
     }
   });
 

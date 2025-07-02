@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 
-import { insertRoleSchema, type InsertRole } from "@shared/schema";
+import { insertRoleSchema, type InsertRole, type Role } from "@shared/schema";
 
 const formSchema = insertRoleSchema.extend({
-  roleName: z.string().min(1, "Role name is required"),
+  roleName: z.string().min(1, "Role name is required").trim(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -22,6 +22,18 @@ export default function AddRole() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch existing roles to check for duplicates
+  const { data: existingRoles } = useQuery({
+    queryKey: ["/api/roles"],
+    queryFn: async () => {
+      const response = await fetch("/api/roles");
+      if (!response.ok) {
+        throw new Error("Failed to fetch roles");
+      }
+      return response.json() as Promise<Role[]>;
+    },
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -33,8 +45,19 @@ export default function AddRole() {
 
   const createRoleMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      // Check for duplicate role names
+      if (existingRoles) {
+        const isDuplicate = existingRoles.some(
+          (role) => role.roleName.toLowerCase() === data.roleName.toLowerCase()
+        );
+        
+        if (isDuplicate) {
+          throw new Error("A role with this name already exists. Please choose a different name.");
+        }
+      }
+
       const roleData: InsertRole = {
-        roleName: data.roleName,
+        roleName: data.roleName.trim(),
         status: data.status || "active",
       };
       

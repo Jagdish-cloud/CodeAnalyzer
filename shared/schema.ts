@@ -46,6 +46,12 @@ export const roles = pgTable("roles", {
   status: text("status").notNull().default("active"),
 });
 
+export const subjects = pgTable("subjects", {
+  id: serial("id").primaryKey(),
+  subjectName: text("subject_name").notNull().unique(),
+  status: text("status").notNull().default("active"),
+});
+
 export const students = pgTable("students", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
@@ -53,18 +59,32 @@ export const students = pgTable("students", {
   lastName: text("last_name"),
   sex: text("sex").notNull(),
   dateOfBirth: text("date_of_birth").notNull(),
-  address: text("address").notNull(),
-  contactNumber: text("contact_number").notNull(),
-  emailId: text("email_id").notNull(),
+  // Address fields
+  flatBuildingNo: text("flat_building_no").notNull(),
+  areaLocality: text("area_locality").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  pincode: text("pincode").notNull(),
+  landmark: text("landmark"),
+  // Optional contact details
+  contactNumber: text("contact_number"),
+  emailId: text("email_id"),
   class: text("class").notNull(),
   division: text("division").notNull(),
   rollNumber: integer("roll_number").notNull(),
-  fatherName: text("father_name").notNull(),
-  fatherMobileNumber: text("father_mobile_number").notNull(),
-  fatherEmailId: text("father_email_id").notNull(),
-  motherName: text("mother_name").notNull(),
-  motherMobileNumber: text("mother_mobile_number").notNull(),
-  motherEmailId: text("mother_email_id").notNull(),
+  // Father information (optional)
+  fatherName: text("father_name"),
+  fatherMobileNumber: text("father_mobile_number"),
+  fatherEmailId: text("father_email_id"),
+  // Mother information (optional)
+  motherName: text("mother_name"),
+  motherMobileNumber: text("mother_mobile_number"),
+  motherEmailId: text("mother_email_id"),
+  // Guardian information (optional)
+  guardianName: text("guardian_name"),
+  guardianMobileNumber: text("guardian_mobile_number"),
+  guardianEmailId: text("guardian_email_id"),
+  guardianRelation: text("guardian_relation"),
   apaarId: text("apaar_id").notNull(),
   aadharNumber: text("aadhar_number").notNull(),
 });
@@ -92,6 +112,10 @@ export const insertRoleSchema = createInsertSchema(roles).omit({
   id: true,
 });
 
+export const insertSubjectSchema = createInsertSchema(subjects).omit({
+  id: true,
+});
+
 export const insertStudentSchema = createInsertSchema(students).omit({
   id: true,
   rollNumber: true, // Auto-generated based on alphabetical order
@@ -107,5 +131,7 @@ export type InsertTeacherMapping = z.infer<typeof insertTeacherMappingSchema>;
 export type TeacherMapping = typeof teacherMappings.$inferSelect;
 export type InsertRole = z.infer<typeof insertRoleSchema>;
 export type Role = typeof roles.$inferSelect;
+export type InsertSubject = z.infer<typeof insertSubjectSchema>;
+export type Subject = typeof subjects.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 export type Student = typeof students.$inferSelect;

@@ -42,6 +42,36 @@ const formSchema = insertStudentSchema.extend({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   middleName: z.string().optional(),
   lastName: z.string().optional(),
+  contactNumber: z.string().optional(),
+  emailId: z.string().email("Invalid email format").optional().or(z.literal("")),
+  // Address fields validation
+  flatBuildingNo: z.string().min(1, "Flat/Building No. is required"),
+  areaLocality: z.string().min(1, "Area/Locality is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  pincode: z.string().min(1, "Pincode is required"),
+  landmark: z.string().optional(),
+  // Optional parent/guardian fields
+  fatherName: z.string().optional(),
+  fatherMobileNumber: z.string().optional(),
+  fatherEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
+  motherName: z.string().optional(),
+  motherMobileNumber: z.string().optional(),
+  motherEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
+  guardianName: z.string().optional(),
+  guardianMobileNumber: z.string().optional(),
+  guardianEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
+  guardianRelation: z.string().optional(),
+}).refine((data) => {
+  // At least one of father, mother, or guardian information must be provided
+  const hasFather = data.fatherName && data.fatherName.trim().length > 0;
+  const hasMother = data.motherName && data.motherName.trim().length > 0;
+  const hasGuardian = data.guardianName && data.guardianName.trim().length > 0;
+  
+  return hasFather || hasMother || hasGuardian;
+}, {
+  message: "At least one of Father, Mother, or Guardian information must be provided",
+  path: ["fatherName"], // This will show the error on the father name field
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -71,17 +101,31 @@ export default function AddStudent() {
       lastName: "",
       sex: "",
       dateOfBirth: "",
-      address: "",
+      // Address fields
+      flatBuildingNo: "",
+      areaLocality: "",
+      city: "",
+      state: "",
+      pincode: "",
+      landmark: "",
+      // Optional contact details
       contactNumber: "",
       emailId: "",
       class: "",
       division: "",
+      // Father information
       fatherName: "",
       fatherMobileNumber: "",
       fatherEmailId: "",
+      // Mother information
       motherName: "",
       motherMobileNumber: "",
       motherEmailId: "",
+      // Guardian information
+      guardianName: "",
+      guardianMobileNumber: "",
+      guardianEmailId: "",
+      guardianRelation: "",
       apaarId: "",
       aadharNumber: "",
     },
@@ -95,17 +139,31 @@ export default function AddStudent() {
         lastName: data.lastName || undefined,
         sex: data.sex,
         dateOfBirth: data.dateOfBirth,
-        address: data.address,
-        contactNumber: data.contactNumber,
-        emailId: data.emailId,
+        // Address fields
+        flatBuildingNo: data.flatBuildingNo,
+        areaLocality: data.areaLocality,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
+        landmark: data.landmark || undefined,
+        // Optional contact details
+        contactNumber: data.contactNumber || undefined,
+        emailId: data.emailId || undefined,
         class: data.class,
         division: data.division,
-        fatherName: data.fatherName,
-        fatherMobileNumber: data.fatherMobileNumber,
-        fatherEmailId: data.fatherEmailId,
-        motherName: data.motherName,
-        motherMobileNumber: data.motherMobileNumber,
-        motherEmailId: data.motherEmailId,
+        // Father information (optional)
+        fatherName: data.fatherName || undefined,
+        fatherMobileNumber: data.fatherMobileNumber || undefined,
+        fatherEmailId: data.fatherEmailId || undefined,
+        // Mother information (optional)
+        motherName: data.motherName || undefined,
+        motherMobileNumber: data.motherMobileNumber || undefined,
+        motherEmailId: data.motherEmailId || undefined,
+        // Guardian information (optional)
+        guardianName: data.guardianName || undefined,
+        guardianMobileNumber: data.guardianMobileNumber || undefined,
+        guardianEmailId: data.guardianEmailId || undefined,
+        guardianRelation: data.guardianRelation || undefined,
         apaarId: data.apaarId,
         aadharNumber: data.aadharNumber,
       };
@@ -290,48 +348,136 @@ export default function AddStudent() {
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address *</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Enter complete address" {...field} rows={3} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="contactNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contact Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter contact number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    {/* Address Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                        Address Information
+                      </h4>
                       
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="flatBuildingNo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Flat/Building No. *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter flat/building number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="areaLocality"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Area/Locality *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter area/locality" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter city" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter state" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="pincode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pincode *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter pincode" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
                       <FormField
                         control={form.control}
-                        name="emailId"
+                        name="landmark"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email ID *</FormLabel>
+                            <FormLabel>Landmark (Optional)</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Enter email address" {...field} />
+                              <Input placeholder="Enter nearby landmark" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                        Contact Information (Optional)
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="contactNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Student Mobile No. (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter student contact number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="emailId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Student Email (Optional)</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="Enter student email address" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -374,105 +520,184 @@ export default function AddStudent() {
                     />
                   </div>
 
-                  {/* Father's Information */}
+                  {/* Parent/Guardian Information */}
                   <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
-                      Father's Information
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="fatherName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Father's Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter father's name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="fatherMobileNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Father's Mobile Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter father's mobile number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="fatherEmailId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Father's Email ID *</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="Enter father's email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        Parent/Guardian Information
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                        Please provide at least one of the following: Father's, Mother's, or Guardian's information
+                      </p>
                     </div>
-                  </div>
-
-                  {/* Mother's Information */}
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
-                      Mother's Information
-                    </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="motherName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mother's Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter mother's name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    {/* Father's Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                        Father's Information (Optional)
+                      </h4>
                       
-                      <FormField
-                        control={form.control}
-                        name="motherMobileNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mother's Mobile Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter mother's mobile number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="fatherName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Father's Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter father's name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="fatherMobileNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Father's Mobile Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter father's mobile number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="fatherEmailId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Father's Email ID</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="Enter father's email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mother's Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                        Mother's Information (Optional)
+                      </h4>
                       
-                      <FormField
-                        control={form.control}
-                        name="motherEmailId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mother's Email ID *</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="Enter mother's email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="motherName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mother's Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter mother's name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="motherMobileNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mother's Mobile Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter mother's mobile number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="motherEmailId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mother's Email ID</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="Enter mother's email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Guardian's Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                        Guardian's Information (Optional)
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="guardianName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Guardian's Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter guardian's name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="guardianRelation"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Relation to Student</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g., Uncle, Aunt, Grandfather" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="guardianMobileNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Guardian's Mobile Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter guardian's mobile number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="guardianEmailId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Guardian's Email ID</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="Enter guardian's email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
 

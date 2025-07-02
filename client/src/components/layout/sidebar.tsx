@@ -14,6 +14,7 @@ import {
   UserCheck,
   Menu,
   X,
+  Book,
 } from "lucide-react";
 
 interface MenuItem {
@@ -46,6 +47,13 @@ const menuItems: { items: MenuItem[] } = {
           type: "item",
           icon: "feather icon-shield",
           url: "/roles",
+        },
+        {
+          id: "subjects",
+          title: "Subjects",
+          type: "item",
+          icon: "feather icon-book",
+          url: "/subjects",
         },
         {
           id: "staff-data",
@@ -94,6 +102,8 @@ const getIcon = (iconName: string) => {
       return GraduationCap;
     case "feather icon-user-check":
       return UserCheck;
+    case "feather icon-book":
+      return Book;
     default:
       return Home;
   }

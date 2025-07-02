@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   insertClassMappingSchema,
   type InsertClassMapping,
+  type Subject,
 } from "@shared/schema";
 import { Plus, ArrowLeft } from "lucide-react";
 
@@ -84,6 +85,18 @@ export default function AddClassMapping() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch subjects from API
+  const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
+    queryKey: ["/api/subjects"],
+    queryFn: async () => {
+      const response = await fetch("/api/subjects");
+      if (!response.ok) {
+        throw new Error("Failed to fetch subjects");
+      }
+      return response.json() as Promise<Subject[]>;
+    },
+  });
 
   const [customClasses, setCustomClasses] = useState<string[]>([]);
   const [customDivisions, setCustomDivisions] = useState<string[]>([]);
@@ -434,39 +447,51 @@ export default function AddClassMapping() {
                             )}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
-                            {defaultSubjects.map((subject) => (
-                              <div
-                                key={subject}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={subject}
-                                  checked={
-                                    field.value?.includes(subject) || false
-                                  }
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([
-                                        ...(field.value || []),
-                                        subject,
-                                      ]);
-                                    } else {
-                                      field.onChange(
-                                        field.value?.filter(
-                                          (s: string) => s !== subject,
-                                        ) || [],
-                                      );
-                                    }
-                                  }}
-                                />
-                                <label
-                                  htmlFor={subject}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
-                                >
-                                  {subject}
-                                </label>
+                            {isLoadingSubjects ? (
+                              <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
+                                Loading subjects...
                               </div>
-                            ))}
+                            ) : subjects && subjects.length > 0 ? (
+                              subjects
+                                .filter((subject) => subject.status === "active")
+                                .map((subject) => (
+                                  <div
+                                    key={subject.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={subject.subjectName}
+                                      checked={
+                                        field.value?.includes(subject.subjectName) || false
+                                      }
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          field.onChange([
+                                            ...(field.value || []),
+                                            subject.subjectName,
+                                          ]);
+                                        } else {
+                                          field.onChange(
+                                            field.value?.filter(
+                                              (s: string) => s !== subject.subjectName,
+                                            ) || [],
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={subject.subjectName}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
+                                    >
+                                      {subject.subjectName}
+                                    </label>
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
+                                No subjects available. Please add subjects first.
+                              </div>
+                            )}
                           </div>
                         </div>
                         <FormMessage />
