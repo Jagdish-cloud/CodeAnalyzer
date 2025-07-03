@@ -4,30 +4,53 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { type WorkingDay, type InsertWorkingDay, insertWorkingDaySchema } from "@shared/schema";
+import {
+  type WorkingDay,
+  type InsertWorkingDay,
+  insertWorkingDaySchema,
+} from "@shared/schema";
 
 const days = [
   "Monday",
-  "Tuesday", 
+  "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
-  "Sunday"
+  "Sunday",
 ];
 
 const dayTypeOptions = [
   { value: "FullDay", label: "Full Day" },
   { value: "HalfDay", label: "Half Day" },
   { value: "Holiday", label: "Holiday" },
-  { value: "AlternateWeek", label: "Alternate Week" }
+  { value: "AlternateWeek", label: "Alternate Week" },
 ];
 
 const weekOptions = ["W1", "W2", "W3", "W4", "W5"];
@@ -50,7 +73,9 @@ const workingDayFormSchema = z.object({
 
 export default function WorkingDays() {
   const [isEditing, setIsEditing] = useState(false);
-  const [currentWorkingDays, setCurrentWorkingDays] = useState<WorkingDay[]>([]);
+  const [currentWorkingDays, setCurrentWorkingDays] = useState<WorkingDay[]>(
+    [],
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -93,7 +118,7 @@ export default function WorkingDays() {
   const saveWorkingDaysMutation = useMutation({
     mutationFn: async (data: WorkingDayFormData[]) => {
       const results = [];
-      
+
       for (const dayData of data) {
         try {
           const workingDayData: InsertWorkingDay = {
@@ -103,16 +128,23 @@ export default function WorkingDays() {
             timingFrom: dayData.timingFrom || null,
             timingTo: dayData.timingTo || null,
           };
-          
-          const result = await apiRequest("POST", "/api/working-days", workingDayData);
+
+          const result = await apiRequest(
+            "POST",
+            "/api/working-days",
+            workingDayData,
+          );
           results.push(result);
         } catch (error) {
           console.error(`Error saving ${dayData.dayOfWeek}:`, error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          throw new Error(`Failed to save ${dayData.dayOfWeek}: ${errorMessage}`);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          throw new Error(
+            `Failed to save ${dayData.dayOfWeek}: ${errorMessage}`,
+          );
         }
       }
-      
+
       return results;
     },
     onSuccess: () => {
@@ -134,7 +166,7 @@ export default function WorkingDays() {
   });
 
   const handleSave = () => {
-    const formData = currentWorkingDays.map(day => ({
+    const formData = currentWorkingDays.map((day) => ({
       dayOfWeek: day.dayOfWeek,
       dayType: day.dayType,
       alternateWeeks: day.alternateWeeks,
@@ -153,16 +185,22 @@ export default function WorkingDays() {
     setCurrentWorkingDays(updatedDays);
   };
 
-  const handleAlternateWeeksChange = (dayIndex: number, week: string, checked: boolean) => {
+  const handleAlternateWeeksChange = (
+    dayIndex: number,
+    week: string,
+    checked: boolean,
+  ) => {
     const updatedDays = [...currentWorkingDays];
     const currentWeeks = updatedDays[dayIndex].alternateWeeks || [];
-    
+
     if (checked) {
       updatedDays[dayIndex].alternateWeeks = [...currentWeeks, week];
     } else {
-      updatedDays[dayIndex].alternateWeeks = currentWeeks.filter(w => w !== week);
+      updatedDays[dayIndex].alternateWeeks = currentWeeks.filter(
+        (w) => w !== week,
+      );
     }
-    
+
     setCurrentWorkingDays(updatedDays);
   };
 
@@ -171,7 +209,9 @@ export default function WorkingDays() {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 dark:from-orange-950 dark:via-red-950 dark:to-pink-950 p-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-8">
-            <div className="text-lg text-orange-600 dark:text-orange-400">Loading working days...</div>
+            <div className="text-lg text-orange-600 dark:text-orange-400">
+              Loading working days...
+            </div>
           </div>
         </div>
       </div>
@@ -194,14 +234,16 @@ export default function WorkingDays() {
           <CardHeader className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-t-lg">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-2xl font-bold">Working Days Schedule</CardTitle>
+                <CardTitle className="text-2xl font-bold">
+                  Working Days Schedule
+                </CardTitle>
                 <CardDescription className="text-orange-100">
                   Set up your school's working days and timings
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 {!isEditing ? (
-                  <Button 
+                  <Button
                     onClick={() => setIsEditing(true)}
                     className="bg-white text-orange-600 hover:bg-orange-50 font-medium"
                   >
@@ -209,19 +251,21 @@ export default function WorkingDays() {
                   </Button>
                 ) : (
                   <>
-                    <Button 
+                    <Button
                       onClick={() => setIsEditing(false)}
                       variant="outline"
                       className="bg-white/20 text-white border-white/30 hover:bg-white/30"
                     >
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleSave}
                       disabled={saveWorkingDaysMutation.isPending}
                       className="bg-white text-orange-600 hover:bg-orange-50 font-medium"
                     >
-                      {saveWorkingDaysMutation.isPending ? "Saving..." : "Save Changes"}
+                      {saveWorkingDaysMutation.isPending
+                        ? "Saving..."
+                        : "Save Changes"}
                     </Button>
                   </>
                 )}
@@ -233,16 +277,29 @@ export default function WorkingDays() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-orange-200 dark:border-orange-700">
-                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">Day</th>
-                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">Type</th>
-                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">Alternate Weeks</th>
-                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">Timing From</th>
-                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">Timing To</th>
+                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">
+                      Day
+                    </th>
+                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">
+                      Type
+                    </th>
+                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">
+                      Alternate Weeks
+                    </th>
+                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">
+                      Timing From
+                    </th>
+                    <th className="text-left p-3 font-semibold text-orange-800 dark:text-orange-200">
+                      Timing To
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentWorkingDays.map((day, index) => (
-                    <tr key={day.dayOfWeek} className="border-b border-orange-100 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/30">
+                    <tr
+                      key={day.dayOfWeek}
+                      className="border-b border-orange-100 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/30"
+                    >
                       <td className="p-3 font-medium text-orange-900 dark:text-orange-100">
                         {day.dayOfWeek}
                       </td>
@@ -250,14 +307,19 @@ export default function WorkingDays() {
                         {isEditing ? (
                           <Select
                             value={day.dayType}
-                            onValueChange={(value) => handleDayChange(index, "dayType", value)}
+                            onValueChange={(value) =>
+                              handleDayChange(index, "dayType", value)
+                            }
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               {dayTypeOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -265,7 +327,11 @@ export default function WorkingDays() {
                           </Select>
                         ) : (
                           <span className="text-orange-700 dark:text-orange-300">
-                            {dayTypeOptions.find(opt => opt.value === day.dayType)?.label}
+                            {
+                              dayTypeOptions.find(
+                                (opt) => opt.value === day.dayType,
+                              )?.label
+                            }
                           </span>
                         )}
                       </td>
@@ -274,15 +340,24 @@ export default function WorkingDays() {
                           isEditing ? (
                             <div className="flex gap-2 flex-wrap">
                               {weekOptions.map((week) => (
-                                <div key={week} className="flex items-center space-x-1">
+                                <div
+                                  key={week}
+                                  className="flex items-center space-x-1"
+                                >
                                   <Checkbox
                                     id={`${day.dayOfWeek}-${week}`}
-                                    checked={(day.alternateWeeks || []).includes(week)}
-                                    onCheckedChange={(checked) => 
-                                      handleAlternateWeeksChange(index, week, checked as boolean)
+                                    checked={(
+                                      day.alternateWeeks || []
+                                    ).includes(week)}
+                                    onCheckedChange={(checked) =>
+                                      handleAlternateWeeksChange(
+                                        index,
+                                        week,
+                                        checked as boolean,
+                                      )
                                     }
                                   />
-                                  <label 
+                                  <label
                                     htmlFor={`${day.dayOfWeek}-${week}`}
                                     className="text-sm font-medium text-orange-700 dark:text-orange-300"
                                   >
@@ -297,7 +372,9 @@ export default function WorkingDays() {
                             </span>
                           )
                         ) : (
-                          <span className="text-orange-500 dark:text-orange-400">N/A</span>
+                          <span className="text-orange-500 dark:text-orange-400">
+                            N/A
+                          </span>
                         )}
                       </td>
                       <td className="p-3">
@@ -306,7 +383,13 @@ export default function WorkingDays() {
                             <Input
                               type="time"
                               value={day.timingFrom || ""}
-                              onChange={(e) => handleDayChange(index, "timingFrom", e.target.value)}
+                              onChange={(e) =>
+                                handleDayChange(
+                                  index,
+                                  "timingFrom",
+                                  e.target.value,
+                                )
+                              }
                               className="w-full"
                             />
                           ) : (
@@ -315,7 +398,9 @@ export default function WorkingDays() {
                             </span>
                           )
                         ) : (
-                          <span className="text-orange-500 dark:text-orange-400">N/A</span>
+                          <span className="text-orange-500 dark:text-orange-400">
+                            N/A
+                          </span>
                         )}
                       </td>
                       <td className="p-3">
@@ -324,7 +409,13 @@ export default function WorkingDays() {
                             <Input
                               type="time"
                               value={day.timingTo || ""}
-                              onChange={(e) => handleDayChange(index, "timingTo", e.target.value)}
+                              onChange={(e) =>
+                                handleDayChange(
+                                  index,
+                                  "timingTo",
+                                  e.target.value,
+                                )
+                              }
                               className="w-full"
                             />
                           ) : (
@@ -333,7 +424,9 @@ export default function WorkingDays() {
                             </span>
                           )
                         ) : (
-                          <span className="text-orange-500 dark:text-orange-400">N/A</span>
+                          <span className="text-orange-500 dark:text-orange-400">
+                            N/A
+                          </span>
                         )}
                       </td>
                     </tr>
