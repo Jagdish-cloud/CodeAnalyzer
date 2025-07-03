@@ -104,7 +104,7 @@ export default function WorkingDays() {
             timingTo: dayData.timingTo || null,
           };
           
-          const result = await apiRequest("/api/working-days", "POST", workingDayData);
+          const result = await apiRequest("POST", "/api/working-days", workingDayData);
           results.push(result);
         } catch (error) {
           console.error(`Error saving ${dayData.dayOfWeek}:`, error);
