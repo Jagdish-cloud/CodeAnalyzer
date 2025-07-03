@@ -92,19 +92,28 @@ export default function WorkingDays() {
   // Save working days mutation
   const saveWorkingDaysMutation = useMutation({
     mutationFn: async (data: WorkingDayFormData[]) => {
-      const promises = data.map(async (dayData) => {
-        const workingDayData: InsertWorkingDay = {
-          dayOfWeek: dayData.dayOfWeek,
-          dayType: dayData.dayType,
-          alternateWeeks: dayData.alternateWeeks || null,
-          timingFrom: dayData.timingFrom || null,
-          timingTo: dayData.timingTo || null,
-        };
-        
-        return apiRequest("/api/working-days", "POST", workingDayData);
-      });
+      const results = [];
       
-      return await Promise.all(promises);
+      for (const dayData of data) {
+        try {
+          const workingDayData: InsertWorkingDay = {
+            dayOfWeek: dayData.dayOfWeek,
+            dayType: dayData.dayType,
+            alternateWeeks: dayData.alternateWeeks || null,
+            timingFrom: dayData.timingFrom || null,
+            timingTo: dayData.timingTo || null,
+          };
+          
+          const result = await apiRequest("/api/working-days", "POST", workingDayData);
+          results.push(result);
+        } catch (error) {
+          console.error(`Error saving ${dayData.dayOfWeek}:`, error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          throw new Error(`Failed to save ${dayData.dayOfWeek}: ${errorMessage}`);
+        }
+      }
+      
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/working-days"] });
@@ -118,7 +127,7 @@ export default function WorkingDays() {
       console.error("Error saving working days:", error);
       toast({
         title: "Error",
-        description: "Failed to save working days",
+        description: error.message || "Failed to save working days",
         variant: "destructive",
       });
     },
