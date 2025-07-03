@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -612,6 +612,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete student" });
+    }
+  });
+
+  // Working Days API routes
+  app.get("/api/working-days", async (req, res) => {
+    try {
+      const workingDays = await storage.getAllWorkingDays();
+      res.json(workingDays);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch working days" });
+    }
+  });
+
+  app.post("/api/working-days", async (req, res) => {
+    try {
+      const workingDayData = insertWorkingDaySchema.parse(req.body);
+      const workingDay = await storage.upsertWorkingDay(workingDayData);
+      res.status(201).json(workingDay);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid working day data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create working day" });
+      }
+    }
+  });
+
+  app.get("/api/working-days/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const workingDay = await storage.getWorkingDay(id);
+      
+      if (!workingDay) {
+        return res.status(404).json({ message: "Working day not found" });
+      }
+      
+      res.json(workingDay);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch working day" });
+    }
+  });
+
+  app.put("/api/working-days/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const workingDayData = insertWorkingDaySchema.parse(req.body);
+      const updatedWorkingDay = await storage.updateWorkingDay(id, workingDayData);
+      
+      if (!updatedWorkingDay) {
+        return res.status(404).json({ message: "Working day not found" });
+      }
+      
+      res.json(updatedWorkingDay);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid working day data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update working day" });
+      }
+    }
+  });
+
+  app.delete("/api/working-days/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWorkingDay(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Working day not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete working day" });
     }
   });
 

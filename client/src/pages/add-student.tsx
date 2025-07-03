@@ -35,44 +35,71 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
-import { insertStudentSchema, type InsertStudent, type ClassMapping } from "@shared/schema";
+import {
+  insertStudentSchema,
+  type InsertStudent,
+  type ClassMapping,
+} from "@shared/schema";
 import { Link } from "wouter";
 
-const formSchema = insertStudentSchema.extend({
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  middleName: z.string().optional(),
-  lastName: z.string().optional(),
-  contactNumber: z.string().optional(),
-  emailId: z.string().email("Invalid email format").optional().or(z.literal("")),
-  // Address fields validation
-  flatBuildingNo: z.string().min(1, "Flat/Building No. is required"),
-  areaLocality: z.string().min(1, "Area/Locality is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  pincode: z.string().min(1, "Pincode is required"),
-  landmark: z.string().optional(),
-  // Optional parent/guardian fields
-  fatherName: z.string().optional(),
-  fatherMobileNumber: z.string().optional(),
-  fatherEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
-  motherName: z.string().optional(),
-  motherMobileNumber: z.string().optional(),
-  motherEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
-  guardianName: z.string().optional(),
-  guardianMobileNumber: z.string().optional(),
-  guardianEmailId: z.string().email("Invalid email format").optional().or(z.literal("")),
-  guardianRelation: z.string().optional(),
-}).refine((data) => {
-  // At least one of father, mother, or guardian information must be provided
-  const hasFather = data.fatherName && data.fatherName.trim().length > 0;
-  const hasMother = data.motherName && data.motherName.trim().length > 0;
-  const hasGuardian = data.guardianName && data.guardianName.trim().length > 0;
-  
-  return hasFather || hasMother || hasGuardian;
-}, {
-  message: "At least one of Father, Mother, or Guardian information must be provided",
-  path: ["fatherName"], // This will show the error on the father name field
-});
+const formSchema = insertStudentSchema
+  .extend({
+    dateOfBirth: z.string().min(1, "Date of birth is required"),
+    middleName: z.string().optional(),
+    lastName: z.string().optional(),
+    contactNumber: z.string().optional(),
+    emailId: z
+      .string()
+      .email("Invalid email format")
+      .optional()
+      .or(z.literal("")),
+    // Address fields validation
+    flatBuildingNo: z.string().min(1, "Flat/Building No. is required"),
+    areaLocality: z.string().min(1, "Area/Locality is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    pincode: z.string().min(1, "Pincode is required"),
+    landmark: z.string().optional(),
+    // Optional parent/guardian fields
+    fatherName: z.string().optional(),
+    fatherMobileNumber: z.string().optional(),
+    fatherEmailId: z
+      .string()
+      .email("Invalid email format")
+      .optional()
+      .or(z.literal("")),
+    motherName: z.string().optional(),
+    motherMobileNumber: z.string().optional(),
+    motherEmailId: z
+      .string()
+      .email("Invalid email format")
+      .optional()
+      .or(z.literal("")),
+    guardianName: z.string().optional(),
+    guardianMobileNumber: z.string().optional(),
+    guardianEmailId: z
+      .string()
+      .email("Invalid email format")
+      .optional()
+      .or(z.literal("")),
+    guardianRelation: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // At least one of father, mother, or guardian information must be provided
+      const hasFather = data.fatherName && data.fatherName.trim().length > 0;
+      const hasMother = data.motherName && data.motherName.trim().length > 0;
+      const hasGuardian =
+        data.guardianName && data.guardianName.trim().length > 0;
+
+      return hasFather || hasMother || hasGuardian;
+    },
+    {
+      message:
+        "At least one of Father, Mother, or Guardian information must be provided",
+      path: ["fatherName"], // This will show the error on the father name field
+    },
+  );
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -195,10 +222,11 @@ export default function AddStudent() {
   };
 
   // Get unique class-division combinations
-  const classDivisionOptions = classMappings?.map(mapping => ({
-    value: `${mapping.class}-${mapping.division}`,
-    label: `Class ${mapping.class} - Division ${mapping.division}`
-  })) || [];
+  const classDivisionOptions =
+    classMappings?.map((mapping) => ({
+      value: `${mapping.class}-${mapping.division}`,
+      label: `Class ${mapping.class} - Division ${mapping.division}`,
+    })) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-fuchsia-50 to-pink-50 dark:from-violet-950 dark:via-fuchsia-950 dark:to-pink-950">
@@ -207,7 +235,11 @@ export default function AddStudent() {
           {/* Header Section */}
           <div className="flex items-center gap-4">
             <Link href="/student-masters">
-              <Button variant="outline" size="sm" className="hover:bg-slate-50 dark:hover:bg-slate-800">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Student Masters
               </Button>
@@ -230,13 +262,16 @@ export default function AddStudent() {
             </CardHeader>
             <CardContent className="p-8">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8"
+                >
                   {/* Personal Information */}
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
                       Personal Information
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <FormField
                         control={form.control}
@@ -245,13 +280,16 @@ export default function AddStudent() {
                           <FormItem>
                             <FormLabel>First Name *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter first name" {...field} />
+                              <Input
+                                placeholder="Enter first name"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="middleName"
@@ -259,13 +297,16 @@ export default function AddStudent() {
                           <FormItem>
                             <FormLabel>Middle Name (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter middle name" {...field} />
+                              <Input
+                                placeholder="Enter middle name"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="lastName"
@@ -287,11 +328,14 @@ export default function AddStudent() {
                         name="sex"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sex *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormLabel>Gender *</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select sex" />
+                                  <SelectValue placeholder="Select Gender" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -318,7 +362,7 @@ export default function AddStudent() {
                                     variant={"outline"}
                                     className={cn(
                                       "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
                                     )}
                                   >
                                     {field.value ? (
@@ -330,13 +374,25 @@ export default function AddStudent() {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
-                                  selected={field.value ? new Date(field.value) : undefined}
-                                  onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                                  selected={
+                                    field.value
+                                      ? new Date(field.value)
+                                      : undefined
+                                  }
+                                  onSelect={(date) =>
+                                    field.onChange(
+                                      date ? format(date, "yyyy-MM-dd") : "",
+                                    )
+                                  }
                                   disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
+                                    date > new Date() ||
+                                    date < new Date("1900-01-01")
                                   }
                                   initialFocus
                                 />
@@ -348,12 +404,55 @@ export default function AddStudent() {
                       />
                     </div>
 
+                    {/* Identity Information */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        Identity Information
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="apaarId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>APAAR ID *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter APAAR ID"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="aadharNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Aadhar Number *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter Aadhar number"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
                     {/* Address Section */}
                     <div className="space-y-4">
                       <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
                         Address Information
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
@@ -362,13 +461,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Flat/Building No. *</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter flat/building number" {...field} />
+                                <Input
+                                  placeholder="Enter flat/building number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="areaLocality"
@@ -376,7 +478,10 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Area/Locality *</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter area/locality" {...field} />
+                                <Input
+                                  placeholder="Enter area/locality"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -398,7 +503,7 @@ export default function AddStudent() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="state"
@@ -412,7 +517,7 @@ export default function AddStudent() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="pincode"
@@ -435,7 +540,10 @@ export default function AddStudent() {
                           <FormItem>
                             <FormLabel>Landmark (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter nearby landmark" {...field} />
+                              <Input
+                                placeholder="Enter nearby landmark"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -448,22 +556,27 @@ export default function AddStudent() {
                       <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
                         Contact Information (Optional)
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
                           name="contactNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Student Mobile No. (Optional)</FormLabel>
+                              <FormLabel>
+                                Student Mobile No. (Optional)
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter student contact number" {...field} />
+                                <Input
+                                  placeholder="Enter student contact number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="emailId"
@@ -471,7 +584,11 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Student Email (Optional)</FormLabel>
                               <FormControl>
-                                <Input type="email" placeholder="Enter student email address" {...field} />
+                                <Input
+                                  type="email"
+                                  placeholder="Enter student email address"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -486,20 +603,25 @@ export default function AddStudent() {
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
                       Academic Information
                     </h3>
-                    
+
                     <FormField
                       control={form.control}
                       name="class"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Class/Division *</FormLabel>
-                          <Select 
+                          <Select
                             onValueChange={(value) => {
-                              const [classValue, divisionValue] = value.split('-');
+                              const [classValue, divisionValue] =
+                                value.split("-");
                               field.onChange(classValue);
-                              form.setValue('division', divisionValue);
-                            }} 
-                            defaultValue={field.value ? `${field.value}-${form.watch('division')}` : ""}
+                              form.setValue("division", divisionValue);
+                            }}
+                            defaultValue={
+                              field.value
+                                ? `${field.value}-${form.watch("division")}`
+                                : ""
+                            }
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -508,7 +630,10 @@ export default function AddStudent() {
                             </FormControl>
                             <SelectContent>
                               {classDivisionOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -527,16 +652,17 @@ export default function AddStudent() {
                         Parent/Guardian Information
                       </h3>
                       <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                        Please provide at least one of the following: Father's, Mother's, or Guardian's information
+                        Please provide at least one of the following: Father's,
+                        Mother's, or Guardian's information
                       </p>
                     </div>
-                    
+
                     {/* Father's Information */}
                     <div className="space-y-4">
                       <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
                         Father's Information (Optional)
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
                           control={form.control}
@@ -545,13 +671,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Father's Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter father's name" {...field} />
+                                <Input
+                                  placeholder="Enter father's name"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="fatherMobileNumber"
@@ -559,13 +688,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Father's Mobile Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter father's mobile number" {...field} />
+                                <Input
+                                  placeholder="Enter father's mobile number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="fatherEmailId"
@@ -573,7 +705,11 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Father's Email ID</FormLabel>
                               <FormControl>
-                                <Input type="email" placeholder="Enter father's email" {...field} />
+                                <Input
+                                  type="email"
+                                  placeholder="Enter father's email"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -587,7 +723,7 @@ export default function AddStudent() {
                       <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
                         Mother's Information (Optional)
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
                           control={form.control}
@@ -596,13 +732,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Mother's Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter mother's name" {...field} />
+                                <Input
+                                  placeholder="Enter mother's name"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="motherMobileNumber"
@@ -610,13 +749,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Mother's Mobile Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter mother's mobile number" {...field} />
+                                <Input
+                                  placeholder="Enter mother's mobile number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="motherEmailId"
@@ -624,7 +766,11 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Mother's Email ID</FormLabel>
                               <FormControl>
-                                <Input type="email" placeholder="Enter mother's email" {...field} />
+                                <Input
+                                  type="email"
+                                  placeholder="Enter mother's email"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -638,7 +784,7 @@ export default function AddStudent() {
                       <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
                         Guardian's Information (Optional)
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
@@ -647,13 +793,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Guardian's Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter guardian's name" {...field} />
+                                <Input
+                                  placeholder="Enter guardian's name"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="guardianRelation"
@@ -661,7 +810,10 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Relation to Student</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g., Uncle, Aunt, Grandfather" {...field} />
+                                <Input
+                                  placeholder="e.g., Uncle, Aunt, Grandfather"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -677,13 +829,16 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Guardian's Mobile Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter guardian's mobile number" {...field} />
+                                <Input
+                                  placeholder="Enter guardian's mobile number"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="guardianEmailId"
@@ -691,50 +846,17 @@ export default function AddStudent() {
                             <FormItem>
                               <FormLabel>Guardian's Email ID</FormLabel>
                               <FormControl>
-                                <Input type="email" placeholder="Enter guardian's email" {...field} />
+                                <Input
+                                  type="email"
+                                  placeholder="Enter guardian's email"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Identity Information */}
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
-                      Identity Information
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="apaarId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>APAAR ID *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter APAAR ID" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="aadharNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Aadhar Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter Aadhar number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
                   </div>
 
@@ -745,7 +867,9 @@ export default function AddStudent() {
                       disabled={createStudentMutation.isPending}
                       className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                     >
-                      {createStudentMutation.isPending ? "Saving..." : "Save Student"}
+                      {createStudentMutation.isPending
+                        ? "Saving..."
+                        : "Save Student"}
                     </Button>
                   </div>
                 </form>

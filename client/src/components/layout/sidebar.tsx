@@ -56,6 +56,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/subjects",
         },
         {
+          id: "working-days",
+          title: "Working Days",
+          type: "item",
+          icon: "feather icon-calendar",
+          url: "/working-days",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

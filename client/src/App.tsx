@@ -16,6 +16,7 @@ import Roles from "@/pages/roles";
 import AddRole from "@/pages/add-role";
 import Subjects from "@/pages/subjects";
 import AddSubject from "@/pages/add-subject";
+import WorkingDays from "@/pages/working-days";
 import StudentMasters from "@/pages/student-masters";
 import StudentsLanding from "@/pages/students-landing";
 import AddStudent from "@/pages/add-student";
@@ -36,6 +37,7 @@ function Router() {
         <Route path="/add-role" component={AddRole} />
         <Route path="/subjects" component={Subjects} />
         <Route path="/add-subject" component={AddSubject} />
+        <Route path="/working-days" component={WorkingDays} />
         <Route path="/student-masters" component={StudentMasters} />
         <Route path="/students/:class/:division" component={StudentsLanding} />
         <Route path="/add-student" component={AddStudent} />

@@ -89,7 +89,14 @@ export const students = pgTable("students", {
   aadharNumber: text("aadhar_number").notNull(),
 });
 
-
+export const workingDays = pgTable("working_days", {
+  id: serial("id").primaryKey(),
+  dayOfWeek: text("day_of_week").notNull(), // Monday, Tuesday, etc.
+  dayType: text("day_type").notNull(), // FullDay, HalfDay, Holiday, AlternateWeek
+  alternateWeeks: text("alternate_weeks").array(), // W1, W2, W3, W4, W5
+  timingFrom: text("timing_from"),
+  timingTo: text("timing_to"),
+});
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -121,6 +128,10 @@ export const insertStudentSchema = createInsertSchema(students).omit({
   rollNumber: true, // Auto-generated based on alphabetical order
 });
 
+export const insertWorkingDaySchema = createInsertSchema(workingDays).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -135,3 +146,5 @@ export type InsertSubject = z.infer<typeof insertSubjectSchema>;
 export type Subject = typeof subjects.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 export type Student = typeof students.$inferSelect;
+export type InsertWorkingDay = z.infer<typeof insertWorkingDaySchema>;
+export type WorkingDay = typeof workingDays.$inferSelect;

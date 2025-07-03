@@ -185,6 +185,14 @@ Preferred communication style: Simple, everyday language.
   - Ensured consistent form card centering and layout throughout the system
   - Updated add-student, add-staff, add-class-mapping, add-teacher-mapping, and add-role pages
   - Applied consistent styling to all form pages and landing pages
+- July 3, 2025: Added Working Days Management System:
+  - Created new "Working Days" menu item with comprehensive scheduling functionality
+  - Built editable form supporting FullDay/HalfDay/Holiday/AlternateWeek options for each day
+  - Implemented conditional AlternateWeek checkboxes (W1-W5) with dynamic display
+  - Added timing fields (From/To) with conditional visibility based on day type
+  - Created complete CRUD operations for working days in backend storage and API
+  - Applied orange-red-pink gradient theme matching educational management design
+  - Integrated with existing class mapping system to use subjects from Subjects API
 
 ## Changelog
 

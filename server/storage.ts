@@ -1,4 +1,4 @@
-import { users, staff, classMappings, teacherMappings, roles, subjects, students, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent } from "@shared/schema";
+import { users, staff, classMappings, teacherMappings, roles, subjects, students, workingDays, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent, type WorkingDay, type InsertWorkingDay } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -36,6 +36,13 @@ export interface IStorage {
   updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student | undefined>;
   deleteStudent(id: number): Promise<boolean>;
   getClassDivisionStats(): Promise<Array<{class: string; division: string; studentCount: number}>>;
+  getWorkingDay(id: number): Promise<WorkingDay | undefined>;
+  getAllWorkingDays(): Promise<WorkingDay[]>;
+  createWorkingDay(workingDay: InsertWorkingDay): Promise<WorkingDay>;
+  updateWorkingDay(id: number, workingDay: Partial<InsertWorkingDay>): Promise<WorkingDay | undefined>;
+  deleteWorkingDay(id: number): Promise<boolean>;
+  getWorkingDayByDay(dayOfWeek: string): Promise<WorkingDay | undefined>;
+  upsertWorkingDay(workingDay: InsertWorkingDay): Promise<WorkingDay>;
 }
 
 export class MemStorage implements IStorage {
@@ -46,6 +53,7 @@ export class MemStorage implements IStorage {
   private roles: Map<number, Role>;
   private subjects: Map<number, Subject>;
   private students: Map<number, Student>;
+  private workingDays: Map<number, WorkingDay>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -53,6 +61,7 @@ export class MemStorage implements IStorage {
   private currentRoleId: number;
   private currentSubjectId: number;
   private currentStudentId: number;
+  private currentWorkingDayId: number;
 
   constructor() {
     this.users = new Map();
@@ -62,6 +71,7 @@ export class MemStorage implements IStorage {
     this.roles = new Map();
     this.subjects = new Map();
     this.students = new Map();
+    this.workingDays = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -69,6 +79,7 @@ export class MemStorage implements IStorage {
     this.currentRoleId = 1;
     this.currentSubjectId = 1;
     this.currentStudentId = 1;
+    this.currentWorkingDayId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -370,6 +381,60 @@ export class MemStorage implements IStorage {
     }
     
     return Array.from(stats.values());
+  }
+
+  async getWorkingDay(id: number): Promise<WorkingDay | undefined> {
+    return this.workingDays.get(id);
+  }
+
+  async getAllWorkingDays(): Promise<WorkingDay[]> {
+    return Array.from(this.workingDays.values());
+  }
+
+  async createWorkingDay(insertWorkingDay: InsertWorkingDay): Promise<WorkingDay> {
+    const id = this.currentWorkingDayId++;
+    const workingDay: WorkingDay = { 
+      id,
+      dayOfWeek: insertWorkingDay.dayOfWeek,
+      dayType: insertWorkingDay.dayType,
+      alternateWeeks: insertWorkingDay.alternateWeeks || null,
+      timingFrom: insertWorkingDay.timingFrom || null,
+      timingTo: insertWorkingDay.timingTo || null,
+    };
+    this.workingDays.set(id, workingDay);
+    return workingDay;
+  }
+
+  async updateWorkingDay(id: number, updateData: Partial<InsertWorkingDay>): Promise<WorkingDay | undefined> {
+    const existing = this.workingDays.get(id);
+    if (!existing) return undefined;
+    
+    const updated: WorkingDay = { ...existing, ...updateData };
+    this.workingDays.set(id, updated);
+    return updated;
+  }
+
+  async deleteWorkingDay(id: number): Promise<boolean> {
+    return this.workingDays.delete(id);
+  }
+
+  async getWorkingDayByDay(dayOfWeek: string): Promise<WorkingDay | undefined> {
+    const workingDaysArray = Array.from(this.workingDays.values());
+    for (const workingDay of workingDaysArray) {
+      if (workingDay.dayOfWeek === dayOfWeek) {
+        return workingDay;
+      }
+    }
+    return undefined;
+  }
+
+  async upsertWorkingDay(insertWorkingDay: InsertWorkingDay): Promise<WorkingDay> {
+    const existing = await this.getWorkingDayByDay(insertWorkingDay.dayOfWeek);
+    if (existing) {
+      return await this.updateWorkingDay(existing.id, insertWorkingDay) as WorkingDay;
+    } else {
+      return await this.createWorkingDay(insertWorkingDay);
+    }
   }
 }
 
