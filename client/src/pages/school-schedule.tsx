@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { TimePicker } from "@/components/ui/time-picker";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -427,16 +428,14 @@ export default function SchoolSchedule() {
                           Start Time
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            className="border-orange-200 focus:border-orange-400 dark:border-orange-700"
-                            onChange={(e) => {
-                              field.onChange(e);
+                          <TimePicker
+                            value={field.value}
+                            onChange={(value) => {
+                              field.onChange(value);
                               // Clear any previous validation errors when user changes time
                               const endTime = form.getValues("timingTo");
                               if (endTime && selectedDay) {
-                                const error = validateTimeSlot(selectedDay, e.target.value, endTime);
+                                const error = validateTimeSlot(selectedDay, value, endTime);
                                 if (error) {
                                   form.setError("timingFrom", { message: error });
                                 } else {
@@ -445,6 +444,7 @@ export default function SchoolSchedule() {
                                 }
                               }
                             }}
+                            placeholder="Select start time"
                           />
                         </FormControl>
                         <FormMessage />
@@ -461,16 +461,14 @@ export default function SchoolSchedule() {
                           End Time
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            className="border-orange-200 focus:border-orange-400 dark:border-orange-700"
-                            onChange={(e) => {
-                              field.onChange(e);
+                          <TimePicker
+                            value={field.value}
+                            onChange={(value) => {
+                              field.onChange(value);
                               // Validate when end time changes
                               const startTime = form.getValues("timingFrom");
                               if (startTime && selectedDay) {
-                                const error = validateTimeSlot(selectedDay, startTime, e.target.value);
+                                const error = validateTimeSlot(selectedDay, startTime, value);
                                 if (error) {
                                   form.setError("timingTo", { message: error });
                                 } else {
@@ -479,6 +477,7 @@ export default function SchoolSchedule() {
                                 }
                               }
                             }}
+                            placeholder="Select end time"
                           />
                         </FormControl>
                         <FormMessage />
