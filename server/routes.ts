@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -686,6 +686,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete working day" });
+    }
+  });
+
+  // School Schedule routes
+  app.get("/api/school-schedules", async (req, res) => {
+    try {
+      const schedules = await storage.getAllSchoolSchedules();
+      res.json(schedules);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch school schedules" });
+    }
+  });
+
+  app.get("/api/school-schedules/day/:dayOfWeek", async (req, res) => {
+    try {
+      const { dayOfWeek } = req.params;
+      const schedules = await storage.getSchoolSchedulesByDay(dayOfWeek);
+      res.json(schedules);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch school schedules for day" });
+    }
+  });
+
+  app.post("/api/school-schedules", async (req, res) => {
+    try {
+      const result = insertSchoolScheduleSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const schedule = await storage.createSchoolSchedule(result.data);
+      res.status(201).json(schedule);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create school schedule" });
+    }
+  });
+
+  app.delete("/api/school-schedules/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid schedule ID" });
+      }
+
+      const deleted = await storage.deleteSchoolSchedule(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+      
+      res.json({ message: "Schedule deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete schedule" });
     }
   });
 

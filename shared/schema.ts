@@ -98,6 +98,15 @@ export const workingDays = pgTable("working_days", {
   timingTo: text("timing_to"),
 });
 
+export const schoolSchedule = pgTable("school_schedule", {
+  id: serial("id").primaryKey(),
+  dayOfWeek: text("day_of_week").notNull(),
+  type: text("type").notNull(), // Period, Break
+  name: text("name").notNull(), // Period-1, Morning Break, etc.
+  timingFrom: text("timing_from").notNull(),
+  timingTo: text("timing_to").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -132,6 +141,10 @@ export const insertWorkingDaySchema = createInsertSchema(workingDays).omit({
   id: true,
 });
 
+export const insertSchoolScheduleSchema = createInsertSchema(schoolSchedule).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -148,3 +161,5 @@ export type InsertStudent = z.infer<typeof insertStudentSchema>;
 export type Student = typeof students.$inferSelect;
 export type InsertWorkingDay = z.infer<typeof insertWorkingDaySchema>;
 export type WorkingDay = typeof workingDays.$inferSelect;
+export type InsertSchoolSchedule = z.infer<typeof insertSchoolScheduleSchema>;
+export type SchoolSchedule = typeof schoolSchedule.$inferSelect;

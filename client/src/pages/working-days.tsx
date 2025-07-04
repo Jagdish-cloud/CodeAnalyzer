@@ -107,7 +107,7 @@ export default function WorkingDays() {
       }));
       setCurrentWorkingDays(defaultDays);
     }
-  }, [workingDays]);
+  }, [workingDays.length]);
 
   // Form setup
   const form = useForm<WorkingDayFormData>({

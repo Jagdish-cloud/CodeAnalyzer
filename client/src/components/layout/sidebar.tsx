@@ -63,6 +63,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/working-days",
         },
         {
+          id: "school-schedule",
+          title: "School Schedule",
+          type: "item",
+          icon: "feather icon-clock",
+          url: "/school-schedule",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

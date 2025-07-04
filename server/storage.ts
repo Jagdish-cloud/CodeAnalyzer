@@ -1,4 +1,4 @@
-import { users, staff, classMappings, teacherMappings, roles, subjects, students, workingDays, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent, type WorkingDay, type InsertWorkingDay } from "@shared/schema";
+import { users, staff, classMappings, teacherMappings, roles, subjects, students, workingDays, schoolSchedule, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent, type WorkingDay, type InsertWorkingDay, type SchoolSchedule, type InsertSchoolSchedule } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -43,6 +43,12 @@ export interface IStorage {
   deleteWorkingDay(id: number): Promise<boolean>;
   getWorkingDayByDay(dayOfWeek: string): Promise<WorkingDay | undefined>;
   upsertWorkingDay(workingDay: InsertWorkingDay): Promise<WorkingDay>;
+  getSchoolSchedule(id: number): Promise<SchoolSchedule | undefined>;
+  getAllSchoolSchedules(): Promise<SchoolSchedule[]>;
+  getSchoolSchedulesByDay(dayOfWeek: string): Promise<SchoolSchedule[]>;
+  createSchoolSchedule(schedule: InsertSchoolSchedule): Promise<SchoolSchedule>;
+  updateSchoolSchedule(id: number, schedule: Partial<InsertSchoolSchedule>): Promise<SchoolSchedule | undefined>;
+  deleteSchoolSchedule(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -54,6 +60,7 @@ export class MemStorage implements IStorage {
   private subjects: Map<number, Subject>;
   private students: Map<number, Student>;
   private workingDays: Map<number, WorkingDay>;
+  private schoolSchedules: Map<number, SchoolSchedule>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -62,6 +69,7 @@ export class MemStorage implements IStorage {
   private currentSubjectId: number;
   private currentStudentId: number;
   private currentWorkingDayId: number;
+  private currentSchoolScheduleId: number;
 
   constructor() {
     this.users = new Map();
@@ -72,6 +80,7 @@ export class MemStorage implements IStorage {
     this.subjects = new Map();
     this.students = new Map();
     this.workingDays = new Map();
+    this.schoolSchedules = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -80,6 +89,7 @@ export class MemStorage implements IStorage {
     this.currentSubjectId = 1;
     this.currentStudentId = 1;
     this.currentWorkingDayId = 1;
+    this.currentSchoolScheduleId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -435,6 +445,46 @@ export class MemStorage implements IStorage {
     } else {
       return await this.createWorkingDay(insertWorkingDay);
     }
+  }
+
+  async getSchoolSchedule(id: number): Promise<SchoolSchedule | undefined> {
+    return this.schoolSchedules.get(id);
+  }
+
+  async getAllSchoolSchedules(): Promise<SchoolSchedule[]> {
+    return Array.from(this.schoolSchedules.values());
+  }
+
+  async getSchoolSchedulesByDay(dayOfWeek: string): Promise<SchoolSchedule[]> {
+    const allSchedules = Array.from(this.schoolSchedules.values());
+    return allSchedules.filter(schedule => schedule.dayOfWeek === dayOfWeek);
+  }
+
+  async createSchoolSchedule(insertSchedule: InsertSchoolSchedule): Promise<SchoolSchedule> {
+    const id = this.currentSchoolScheduleId++;
+    const schedule: SchoolSchedule = { 
+      id,
+      dayOfWeek: insertSchedule.dayOfWeek,
+      type: insertSchedule.type,
+      name: insertSchedule.name,
+      timingFrom: insertSchedule.timingFrom,
+      timingTo: insertSchedule.timingTo,
+    };
+    this.schoolSchedules.set(id, schedule);
+    return schedule;
+  }
+
+  async updateSchoolSchedule(id: number, updateData: Partial<InsertSchoolSchedule>): Promise<SchoolSchedule | undefined> {
+    const existing = this.schoolSchedules.get(id);
+    if (!existing) return undefined;
+    
+    const updated: SchoolSchedule = { ...existing, ...updateData };
+    this.schoolSchedules.set(id, updated);
+    return updated;
+  }
+
+  async deleteSchoolSchedule(id: number): Promise<boolean> {
+    return this.schoolSchedules.delete(id);
   }
 }
 
