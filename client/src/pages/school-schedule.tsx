@@ -155,6 +155,18 @@ export default function SchoolSchedule() {
   });
 
   const onSubmit = (data: ScheduleFormData) => {
+    // Validate time slot before submitting
+    const validationError = validateTimeSlot(data.dayOfWeek, data.timingFrom, data.timingTo);
+    
+    if (validationError) {
+      toast({
+        title: "Time Conflict",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+
     createScheduleMutation.mutate(data);
   };
 
@@ -186,6 +198,44 @@ export default function SchoolSchedule() {
   const getBlockedTimes = (dayOfWeek: string) => {
     const daySchedules = schedules.filter(s => s.dayOfWeek === dayOfWeek);
     return daySchedules.map(s => ({ from: s.timingFrom, to: s.timingTo }));
+  };
+
+  const hasTimeConflict = (dayOfWeek: string, startTime: string, endTime: string) => {
+    const daySchedules = schedules.filter(s => s.dayOfWeek === dayOfWeek);
+    
+    for (const schedule of daySchedules) {
+      const existingStart = schedule.timingFrom;
+      const existingEnd = schedule.timingTo;
+      
+      // Check if new time overlaps with existing schedule
+      // Overlap occurs if: (new_start < existing_end) AND (new_end > existing_start)
+      if (startTime < existingEnd && endTime > existingStart) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const validateTimeSlot = (dayOfWeek: string, startTime: string, endTime: string) => {
+    // Check if end time is after start time
+    if (endTime <= startTime) {
+      return "End time must be after start time";
+    }
+
+    // Check for conflicts with existing schedules
+    if (hasTimeConflict(dayOfWeek, startTime, endTime)) {
+      return "This time slot conflicts with an existing period or break";
+    }
+
+    // Check if times are within working day range
+    const workingDay = getWorkingDayInfo(dayOfWeek);
+    if (workingDay?.timingFrom && workingDay?.timingTo) {
+      if (startTime < workingDay.timingFrom || endTime > workingDay.timingTo) {
+        return `Time must be within working hours (${workingDay.timingFrom} - ${workingDay.timingTo})`;
+      }
+    }
+
+    return null;
   };
 
   if (isLoadingWorkingDays || isLoadingSchedules) {
@@ -381,6 +431,20 @@ export default function SchoolSchedule() {
                             {...field}
                             type="time"
                             className="border-orange-200 focus:border-orange-400 dark:border-orange-700"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Clear any previous validation errors when user changes time
+                              const endTime = form.getValues("timingTo");
+                              if (endTime && selectedDay) {
+                                const error = validateTimeSlot(selectedDay, e.target.value, endTime);
+                                if (error) {
+                                  form.setError("timingFrom", { message: error });
+                                } else {
+                                  form.clearErrors("timingFrom");
+                                  form.clearErrors("timingTo");
+                                }
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -401,6 +465,20 @@ export default function SchoolSchedule() {
                             {...field}
                             type="time"
                             className="border-orange-200 focus:border-orange-400 dark:border-orange-700"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Validate when end time changes
+                              const startTime = form.getValues("timingFrom");
+                              if (startTime && selectedDay) {
+                                const error = validateTimeSlot(selectedDay, startTime, e.target.value);
+                                if (error) {
+                                  form.setError("timingTo", { message: error });
+                                } else {
+                                  form.clearErrors("timingFrom");
+                                  form.clearErrors("timingTo");
+                                }
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -408,6 +486,22 @@ export default function SchoolSchedule() {
                     )}
                   />
                 </div>
+
+                {/* Show existing schedules for the day as a reference */}
+                {selectedDay && getSchedulesForDay(selectedDay).length > 0 && (
+                  <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <h4 className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">
+                      Existing Schedule for {selectedDay}:
+                    </h4>
+                    <div className="space-y-1">
+                      {getSchedulesForDay(selectedDay).map((schedule) => (
+                        <div key={schedule.id} className="text-xs text-orange-600 dark:text-orange-400">
+                          {schedule.name}: {schedule.timingFrom} - {schedule.timingTo}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-4">
                   <Button
