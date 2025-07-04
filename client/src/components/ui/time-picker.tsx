@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Clock, ChevronUp, ChevronDown } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TimePickerProps {
@@ -14,6 +14,8 @@ interface TimePickerProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  minTime?: string;
+  maxTime?: string;
 }
 
 export function TimePicker({ 
@@ -21,11 +23,15 @@ export function TimePicker({
   onChange, 
   placeholder = "Select time",
   className,
-  disabled = false
+  disabled = false,
+  minTime = "06:00",
+  maxTime = "23:59"
 }: TimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hours, setHours] = useState(9);
   const [minutes, setMinutes] = useState(0);
+  const hourScrollRef = useRef<HTMLDivElement>(null);
+  const minuteScrollRef = useRef<HTMLDivElement>(null);
 
   // Parse time value when it changes
   useEffect(() => {
@@ -37,6 +43,36 @@ export function TimePicker({
       }
     }
   }, [value]);
+
+  // Generate available hours and minutes based on constraints
+  const [minHour, minMinute] = minTime.split(':').map(Number);
+  const [maxHour, maxMinute] = maxTime.split(':').map(Number);
+
+  const getAvailableHours = () => {
+    const availableHours = [];
+    for (let h = minHour; h <= maxHour; h++) {
+      availableHours.push(h);
+    }
+    return availableHours;
+  };
+
+  const getAvailableMinutes = (selectedHour: number) => {
+    const availableMinutes = [];
+    let startMinute = 0;
+    let endMinute = 59;
+
+    if (selectedHour === minHour) {
+      startMinute = minMinute;
+    }
+    if (selectedHour === maxHour) {
+      endMinute = maxMinute;
+    }
+
+    for (let m = startMinute; m <= endMinute; m++) {
+      availableMinutes.push(m);
+    }
+    return availableMinutes;
+  };
 
   const formatTime = (h: number, m: number) => {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
@@ -54,31 +90,37 @@ export function TimePicker({
     onChange(formatTime(newHours, newMinutes));
   };
 
-  const adjustHours = (increment: boolean) => {
-    const newHours = increment 
-      ? (hours + 1) % 24 
-      : (hours - 1 + 24) % 24;
-    handleTimeChange(newHours, minutes);
+  const handleHourSelect = (hour: number) => {
+    const availableMinutes = getAvailableMinutes(hour);
+    let newMinutes = minutes;
+    
+    // Adjust minutes if current minute is not available for the new hour
+    if (!availableMinutes.includes(minutes)) {
+      newMinutes = availableMinutes[0] || 0;
+    }
+    
+    handleTimeChange(hour, newMinutes);
   };
 
-  const adjustMinutes = (increment: boolean) => {
-    const newMinutes = increment 
-      ? (minutes + 15) % 60 
-      : (minutes - 15 + 60) % 60;
-    handleTimeChange(hours, newMinutes);
-  };
-
-  const quickTimes = [
-    { label: "9:00 AM", value: "09:00" },
-    { label: "10:00 AM", value: "10:00" },
-    { label: "11:00 AM", value: "11:00" },
-    { label: "12:00 PM", value: "12:00" },
-    { label: "1:00 PM", value: "13:00" },
-    { label: "2:00 PM", value: "14:00" },
-    { label: "3:00 PM", value: "15:00" },
-    { label: "4:00 PM", value: "16:00" },
-    { label: "5:00 PM", value: "17:00" },
-  ];
+  // Scroll to selected item when opened
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        if (hourScrollRef.current) {
+          const hourElement = hourScrollRef.current.querySelector(`[data-hour="${hours}"]`);
+          if (hourElement) {
+            hourElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+        if (minuteScrollRef.current) {
+          const minuteElement = minuteScrollRef.current.querySelector(`[data-minute="${minutes}"]`);
+          if (minuteElement) {
+            minuteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 100);
+    }
+  }, [isOpen, hours, minutes]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -96,7 +138,7 @@ export function TimePicker({
             className
           )}
         >
-          <Clock className="mr-2 h-4 w-4 text-orange-500 animate-pulse" />
+          <Clock className="mr-2 h-4 w-4 text-orange-500" />
           <span className="font-medium">
             {value ? formatDisplayTime(hours, minutes) : placeholder}
           </span>
@@ -110,61 +152,68 @@ export function TimePicker({
           </h4>
         </div>
         
-        {/* Custom Time Picker */}
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-center space-x-4">
-            {/* Hours */}
-            <div className="flex flex-col items-center space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => adjustHours(true)}
-                className="h-8 w-8 p-0 hover:bg-gradient-to-b hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900 dark:hover:to-orange-800 transition-all duration-200 hover:scale-110"
+        {/* Scrollable Time Picker */}
+        <div className="p-4">
+          <div className="flex items-center justify-center space-x-6">
+            {/* Hours Column */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Hours</span>
+              <div 
+                ref={hourScrollRef}
+                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800"
               >
-                <ChevronUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </Button>
-              <div className="text-2xl font-mono font-bold text-center w-14 py-3 bg-gradient-to-br from-orange-100 via-orange-50 to-red-50 dark:from-orange-900 dark:via-orange-950 dark:to-red-950 rounded-xl border-2 border-orange-200 dark:border-orange-800 shadow-lg text-orange-700 dark:text-orange-300 transition-all duration-300 hover:shadow-xl">
-                {hours.toString().padStart(2, '0')}
+                <div className="py-2">
+                  {getAvailableHours().map((hour) => (
+                    <div
+                      key={hour}
+                      data-hour={hour}
+                      onClick={() => handleHourSelect(hour)}
+                      className={cn(
+                        "text-center py-2 mx-1 rounded-lg cursor-pointer transition-all duration-200 font-mono text-sm font-bold",
+                        hour === hours
+                          ? "bg-gradient-to-r from-orange-200 to-red-200 dark:from-orange-800 dark:to-red-800 text-orange-700 dark:text-orange-300 shadow-md scale-105"
+                          : "hover:bg-orange-100 dark:hover:bg-orange-900 hover:scale-105 text-gray-600 dark:text-gray-400"
+                      )}
+                    >
+                      {hour.toString().padStart(2, '0')}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => adjustHours(false)}
-                className="h-8 w-8 p-0 hover:bg-gradient-to-b hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900 dark:hover:to-orange-800 transition-all duration-200 hover:scale-110"
-              >
-                <ChevronDown className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </Button>
-              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">Hours</span>
             </div>
 
-            <div className="text-3xl font-bold text-transparent bg-gradient-to-b from-orange-500 to-red-500 bg-clip-text animate-pulse">:</div>
+            <div className="text-2xl font-bold text-transparent bg-gradient-to-b from-orange-500 to-red-500 bg-clip-text">:</div>
 
-            {/* Minutes */}
-            <div className="flex flex-col items-center space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => adjustMinutes(true)}
-                className="h-8 w-8 p-0 hover:bg-gradient-to-b hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900 dark:hover:to-orange-800 transition-all duration-200 hover:scale-110"
+            {/* Minutes Column */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Minutes</span>
+              <div 
+                ref={minuteScrollRef}
+                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800"
               >
-                <ChevronUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </Button>
-              <div className="text-2xl font-mono font-bold text-center w-14 py-3 bg-gradient-to-br from-orange-100 via-orange-50 to-red-50 dark:from-orange-900 dark:via-orange-950 dark:to-red-950 rounded-xl border-2 border-orange-200 dark:border-orange-800 shadow-lg text-orange-700 dark:text-orange-300 transition-all duration-300 hover:shadow-xl">
-                {minutes.toString().padStart(2, '0')}
+                <div className="py-2">
+                  {getAvailableMinutes(hours).map((minute) => (
+                    <div
+                      key={minute}
+                      data-minute={minute}
+                      onClick={() => handleTimeChange(hours, minute)}
+                      className={cn(
+                        "text-center py-2 mx-1 rounded-lg cursor-pointer transition-all duration-200 font-mono text-sm font-bold",
+                        minute === minutes
+                          ? "bg-gradient-to-r from-orange-200 to-red-200 dark:from-orange-800 dark:to-red-800 text-orange-700 dark:text-orange-300 shadow-md scale-105"
+                          : "hover:bg-orange-100 dark:hover:bg-orange-900 hover:scale-105 text-gray-600 dark:text-gray-400"
+                      )}
+                    >
+                      {minute.toString().padStart(2, '0')}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => adjustMinutes(false)}
-                className="h-8 w-8 p-0 hover:bg-gradient-to-b hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900 dark:hover:to-orange-800 transition-all duration-200 hover:scale-110"
-              >
-                <ChevronDown className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </Button>
-              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">Minutes</span>
             </div>
           </div>
 
-          <div className="text-center p-3 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-xl border border-orange-200 dark:border-orange-800">
+          {/* Selected Time Display */}
+          <div className="mt-4 text-center p-3 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-xl border border-orange-200 dark:border-orange-800">
             <div className="text-xl font-bold text-transparent bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text">
               {formatDisplayTime(hours, minutes)}
             </div>
@@ -172,32 +221,8 @@ export function TimePicker({
           </div>
         </div>
 
-        {/* Quick Time Selection */}
-        <div className="p-4 border-t border-orange-100 dark:border-orange-900 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950">
-          <h5 className="text-sm font-medium text-orange-700 dark:text-orange-300 mb-3 flex items-center">
-            <Clock className="mr-1 h-3 w-3" />
-            Quick Select
-          </h5>
-          <div className="grid grid-cols-3 gap-2">
-            {quickTimes.map((time) => (
-              <Button
-                key={time.value}
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  onChange(time.value);
-                  setIsOpen(false);
-                }}
-                className="text-xs font-medium bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-900 dark:hover:to-orange-800 hover:text-orange-700 dark:hover:text-orange-300 border border-orange-200 dark:border-orange-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-              >
-                {time.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         {/* Action Buttons */}
-        <div className="p-4 border-t border-orange-100 dark:border-orange-900 flex justify-end space-x-2">
+        <div className="p-4 border-t border-orange-100 dark:border-orange-900 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 flex justify-end space-x-2">
           <Button
             variant="outline"
             size="sm"

@@ -445,6 +445,8 @@ export default function SchoolSchedule() {
                               }
                             }}
                             placeholder="Select start time"
+                            minTime={getWorkingDayInfo(selectedDay)?.timingFrom || "06:00"}
+                            maxTime={getWorkingDayInfo(selectedDay)?.timingTo || "23:59"}
                           />
                         </FormControl>
                         <FormMessage />
@@ -478,6 +480,8 @@ export default function SchoolSchedule() {
                               }
                             }}
                             placeholder="Select end time"
+                            minTime={getWorkingDayInfo(selectedDay)?.timingFrom || "06:00"}
+                            maxTime={getWorkingDayInfo(selectedDay)?.timingTo || "23:59"}
                           />
                         </FormControl>
                         <FormMessage />
