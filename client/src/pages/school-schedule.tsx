@@ -58,7 +58,7 @@ const days = [
 
 const scheduleFormSchema = z.object({
   dayOfWeek: z.string().min(1, "Day of week is required"),
-  type: z.enum(["Period", "Break"], {
+  type: z.enum(["Period", "Break", "Others"], {
     required_error: "Type is required",
   }),
   name: z.string().min(1, "Name is required"),
@@ -71,7 +71,7 @@ type ScheduleFormData = z.infer<typeof scheduleFormSchema>;
 export default function SchoolSchedule() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
-  const [modalType, setModalType] = useState<"Period" | "Break">("Period");
+  const [modalType, setModalType] = useState<"Period" | "Break" | "Others">("Period");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -193,14 +193,23 @@ export default function SchoolSchedule() {
     setIsModalOpen(true);
   };
 
-  const handleTypeChange = (type: "Period" | "Break") => {
+  const handleTypeChange = (type: "Period" | "Break" | "Others") => {
     setModalType(type);
     form.setValue("type", type);
     
     // Auto-generate name based on type and existing count
     const daySchedules = schedules.filter(s => s.dayOfWeek === selectedDay && s.type === type);
     const nextNumber = daySchedules.length + 1;
-    const defaultName = type === "Period" ? `Period-${nextNumber}` : `Break-${nextNumber}`;
+    let defaultName = "";
+    
+    if (type === "Period") {
+      defaultName = `Period-${nextNumber}`;
+    } else if (type === "Break") {
+      defaultName = `Break-${nextNumber}`;
+    } else if (type === "Others") {
+      defaultName = `Activity-${nextNumber}`;
+    }
+    
     form.setValue("name", defaultName);
   };
 
@@ -344,7 +353,9 @@ export default function SchoolSchedule() {
                           className={`p-3 rounded-lg border flex justify-between items-center ${
                             schedule.type === "Period"
                               ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
-                              : "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                              : schedule.type === "Break"
+                              ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                              : "bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800"
                           }`}
                         >
                           <div>
@@ -417,7 +428,7 @@ export default function SchoolSchedule() {
                       <FormControl>
                         <Select
                           value={field.value}
-                          onValueChange={(value: "Period" | "Break") => {
+                          onValueChange={(value: "Period" | "Break" | "Others") => {
                             field.onChange(value);
                             handleTypeChange(value);
                           }}
@@ -428,6 +439,7 @@ export default function SchoolSchedule() {
                           <SelectContent>
                             <SelectItem value="Period">Period</SelectItem>
                             <SelectItem value="Break">Break</SelectItem>
+                            <SelectItem value="Others">Others (Assembly, Prayer, etc.)</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>

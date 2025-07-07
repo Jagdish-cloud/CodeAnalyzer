@@ -101,7 +101,7 @@ export const workingDays = pgTable("working_days", {
 export const schoolSchedule = pgTable("school_schedule", {
   id: serial("id").primaryKey(),
   dayOfWeek: text("day_of_week").notNull(),
-  type: text("type").notNull(), // Period, Break
+  type: text("type").notNull(), // Period, Break, Others
   name: text("name").notNull(), // Period-1, Morning Break, etc.
   timingFrom: text("timing_from").notNull(),
   timingTo: text("timing_to").notNull(),
