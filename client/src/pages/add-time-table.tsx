@@ -208,7 +208,7 @@ export default function AddTimeTable() {
     return uniqueSlots;
   };
 
-  // Generate teacher-subject options based on teacher mappings
+  // Generate teacher-subject options based on teacher mappings - only show assigned teachers
   const getTeacherSubjectOptions = (): TeacherSubjectOption[] => {
     if (!selectedClassDivision) return [];
     
@@ -230,6 +230,7 @@ export default function AddTimeTable() {
         // Find the specific division
         const divisionData = divisions.find((div: any) => div.division === division);
         
+        // Only add if teacher is assigned - no unassigned subjects in dropdown
         if (divisionData && divisionData.teacherId) {
           // Get teacher details
           const teacher = staff.find(s => s.id === divisionData.teacherId);
@@ -242,14 +243,6 @@ export default function AddTimeTable() {
               teacherId: teacher.id,
             });
           }
-        } else {
-          // Subject without assigned teacher for this division
-          options.push({
-            value: `subject-${subject.id}`,
-            label: `${mapping.subject} (No teacher assigned)`,
-            subjectId: subject.id,
-            teacherId: null,
-          });
         }
       }
     });
