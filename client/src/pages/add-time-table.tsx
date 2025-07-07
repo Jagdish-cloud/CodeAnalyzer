@@ -166,11 +166,13 @@ export default function AddTimeTable() {
   });
 
   // Generate class division options
-  const classDivisionOptions = classMappings.map(mapping => ({
-    value: `${mapping.class}-${mapping.division}`,
-    label: `Class ${mapping.class} - Division ${mapping.division}`,
-    subjects: mapping.subjects || [],
-  }));
+  const classDivisionOptions = classMappings
+    .filter(mapping => mapping.class && mapping.division) // Filter out empty values
+    .map(mapping => ({
+      value: `${mapping.class}-${mapping.division}`,
+      label: `Class ${mapping.class} - Division ${mapping.division}`,
+      subjects: mapping.subjects || [],
+    }));
 
   // Get schedule slots for the selected class division
   const getScheduleSlots = () => {
@@ -205,7 +207,7 @@ export default function AddTimeTable() {
     if (!mapping || !mapping.subjects) return [];
 
     const options: TeacherSubjectOption[] = [
-      { value: "", label: "No assignment", subjectId: null, teacherId: null }
+      { value: "no-assignment", label: "No assignment", subjectId: null, teacherId: null }
     ];
 
     // Add subject-teacher combinations
@@ -260,11 +262,11 @@ export default function AddTimeTable() {
     const entries: InsertTimeTableEntry[] = [];
     
     Object.entries(scheduleEntries).forEach(([key, value]) => {
-      if (value) {
+      if (value && value !== "no-assignment") {
         const [day, slot] = key.split('-');
         const option = getTeacherSubjectOptions().find(opt => opt.value === value);
         
-        if (option) {
+        if (option && option.subjectId) {
           entries.push({
             timeTableId: 0, // Will be set after time table creation
             dayOfWeek: day,
