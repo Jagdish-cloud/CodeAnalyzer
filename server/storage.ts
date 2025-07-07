@@ -1,4 +1,32 @@
-import { users, staff, classMappings, teacherMappings, roles, subjects, students, workingDays, schoolSchedule, type User, type InsertUser, type Staff, type InsertStaff, type ClassMapping, type InsertClassMapping, type TeacherMapping, type InsertTeacherMapping, type Role, type InsertRole, type Subject, type InsertSubject, type Student, type InsertStudent, type WorkingDay, type InsertWorkingDay, type SchoolSchedule, type InsertSchoolSchedule } from "@shared/schema";
+import {
+  users,
+  staff,
+  classMappings,
+  teacherMappings,
+  roles,
+  subjects,
+  students,
+  workingDays,
+  schoolSchedule,
+  type User,
+  type InsertUser,
+  type Staff,
+  type InsertStaff,
+  type ClassMapping,
+  type InsertClassMapping,
+  type TeacherMapping,
+  type InsertTeacherMapping,
+  type Role,
+  type InsertRole,
+  type Subject,
+  type InsertSubject,
+  type Student,
+  type InsertStudent,
+  type WorkingDay,
+  type InsertWorkingDay,
+  type SchoolSchedule,
+  type InsertSchoolSchedule,
+} from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -7,17 +35,26 @@ export interface IStorage {
   getStaff(id: number): Promise<Staff | undefined>;
   getAllStaff(): Promise<Staff[]>;
   createStaff(staff: InsertStaff): Promise<Staff>;
-  updateStaff(id: number, staff: Partial<InsertStaff>): Promise<Staff | undefined>;
+  updateStaff(
+    id: number,
+    staff: Partial<InsertStaff>,
+  ): Promise<Staff | undefined>;
   deleteStaff(id: number): Promise<boolean>;
   getClassMapping(id: number): Promise<ClassMapping | undefined>;
   getAllClassMappings(): Promise<ClassMapping[]>;
   createClassMapping(mapping: InsertClassMapping): Promise<ClassMapping>;
-  updateClassMapping(id: number, mapping: Partial<InsertClassMapping>): Promise<ClassMapping | undefined>;
+  updateClassMapping(
+    id: number,
+    mapping: Partial<InsertClassMapping>,
+  ): Promise<ClassMapping | undefined>;
   deleteClassMapping(id: number): Promise<boolean>;
   getTeacherMapping(id: number): Promise<TeacherMapping | undefined>;
   getAllTeacherMappings(): Promise<TeacherMapping[]>;
   createTeacherMapping(mapping: InsertTeacherMapping): Promise<TeacherMapping>;
-  updateTeacherMapping(id: number, mapping: Partial<InsertTeacherMapping>): Promise<TeacherMapping | undefined>;
+  updateTeacherMapping(
+    id: number,
+    mapping: Partial<InsertTeacherMapping>,
+  ): Promise<TeacherMapping | undefined>;
   deleteTeacherMapping(id: number): Promise<boolean>;
   getRole(id: number): Promise<Role | undefined>;
   getAllRoles(): Promise<Role[]>;
@@ -27,19 +64,33 @@ export interface IStorage {
   getSubject(id: number): Promise<Subject | undefined>;
   getAllSubjects(): Promise<Subject[]>;
   createSubject(subject: InsertSubject): Promise<Subject>;
-  updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject | undefined>;
+  updateSubject(
+    id: number,
+    subject: Partial<InsertSubject>,
+  ): Promise<Subject | undefined>;
   deleteSubject(id: number): Promise<boolean>;
   getStudent(id: number): Promise<Student | undefined>;
   getAllStudents(): Promise<Student[]>;
-  getStudentsByClassDivision(classname: string, division: string): Promise<Student[]>;
+  getStudentsByClassDivision(
+    classname: string,
+    division: string,
+  ): Promise<Student[]>;
   createStudent(student: InsertStudent): Promise<Student>;
-  updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student | undefined>;
+  updateStudent(
+    id: number,
+    student: Partial<InsertStudent>,
+  ): Promise<Student | undefined>;
   deleteStudent(id: number): Promise<boolean>;
-  getClassDivisionStats(): Promise<Array<{class: string; division: string; studentCount: number}>>;
+  getClassDivisionStats(): Promise<
+    Array<{ class: string; division: string; studentCount: number }>
+  >;
   getWorkingDay(id: number): Promise<WorkingDay | undefined>;
   getAllWorkingDays(): Promise<WorkingDay[]>;
   createWorkingDay(workingDay: InsertWorkingDay): Promise<WorkingDay>;
-  updateWorkingDay(id: number, workingDay: Partial<InsertWorkingDay>): Promise<WorkingDay | undefined>;
+  updateWorkingDay(
+    id: number,
+    workingDay: Partial<InsertWorkingDay>,
+  ): Promise<WorkingDay | undefined>;
   deleteWorkingDay(id: number): Promise<boolean>;
   getWorkingDayByDay(dayOfWeek: string): Promise<WorkingDay | undefined>;
   upsertWorkingDay(workingDay: InsertWorkingDay): Promise<WorkingDay>;
@@ -47,20 +98,39 @@ export interface IStorage {
   getAllSchoolSchedules(): Promise<SchoolSchedule[]>;
   getSchoolSchedulesByDay(dayOfWeek: string): Promise<SchoolSchedule[]>;
   createSchoolSchedule(schedule: InsertSchoolSchedule): Promise<SchoolSchedule>;
-  updateSchoolSchedule(id: number, schedule: Partial<InsertSchoolSchedule>): Promise<SchoolSchedule | undefined>;
+  updateSchoolSchedule(
+    id: number,
+    schedule: Partial<InsertSchoolSchedule>,
+  ): Promise<SchoolSchedule | undefined>;
   deleteSchoolSchedule(id: number): Promise<boolean>;
   getTimeTable(id: number): Promise<TimeTable | undefined>;
   getAllTimeTables(): Promise<TimeTable[]>;
-  getTimeTableByClassDivision(className: string, division: string): Promise<TimeTable | undefined>;
+  getTimeTableByClassDivision(
+    className: string,
+    division: string,
+  ): Promise<TimeTable | undefined>;
   createTimeTable(timeTable: InsertTimeTable): Promise<TimeTable>;
-  updateTimeTable(id: number, timeTable: Partial<InsertTimeTable>): Promise<TimeTable | undefined>;
+  updateTimeTable(
+    id: number,
+    timeTable: Partial<InsertTimeTable>,
+  ): Promise<TimeTable | undefined>;
   deleteTimeTable(id: number): Promise<boolean>;
   getTimeTableEntries(timeTableId: number): Promise<TimeTableEntry[]>;
   createTimeTableEntry(entry: InsertTimeTableEntry): Promise<TimeTableEntry>;
-  updateTimeTableEntry(id: number, entry: Partial<InsertTimeTableEntry>): Promise<TimeTableEntry | undefined>;
+  updateTimeTableEntry(
+    id: number,
+    entry: Partial<InsertTimeTableEntry>,
+  ): Promise<TimeTableEntry | undefined>;
   deleteTimeTableEntry(id: number): Promise<boolean>;
-  getTimeTableEntriesByTimeTable(timeTableId: number): Promise<TimeTableEntry[]>;
-  checkTeacherConflict(dayOfWeek: string, scheduleSlot: string, teacherId: number, excludeTimeTableId?: number): Promise<boolean>;
+  getTimeTableEntriesByTimeTable(
+    timeTableId: number,
+  ): Promise<TimeTableEntry[]>;
+  checkTeacherConflict(
+    dayOfWeek: string,
+    scheduleSlot: string,
+    teacherId: number,
+    excludeTimeTableId?: number,
+  ): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -129,8 +199,6 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-
-
   async getStaff(id: number): Promise<Staff | undefined> {
     return this.staff.get(id);
   }
@@ -141,7 +209,7 @@ export class MemStorage implements IStorage {
 
   async createStaff(insertStaff: InsertStaff): Promise<Staff> {
     const id = this.currentStaffId++;
-    const staffMember: Staff = { 
+    const staffMember: Staff = {
       id,
       name: insertStaff.name,
       staffId: insertStaff.staffId,
@@ -157,10 +225,13 @@ export class MemStorage implements IStorage {
     return staffMember;
   }
 
-  async updateStaff(id: number, updateData: Partial<InsertStaff>): Promise<Staff | undefined> {
+  async updateStaff(
+    id: number,
+    updateData: Partial<InsertStaff>,
+  ): Promise<Staff | undefined> {
     const existing = this.staff.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Staff = { ...existing, ...updateData };
     this.staff.set(id, updated);
     return updated;
@@ -178,21 +249,26 @@ export class MemStorage implements IStorage {
     return Array.from(this.classMappings.values());
   }
 
-  async createClassMapping(insertMapping: InsertClassMapping): Promise<ClassMapping> {
+  async createClassMapping(
+    insertMapping: InsertClassMapping,
+  ): Promise<ClassMapping> {
     const id = this.currentClassMappingId++;
-    const mapping: ClassMapping = { 
-      ...insertMapping, 
+    const mapping: ClassMapping = {
+      ...insertMapping,
       id,
-      status: insertMapping.status || "Current working"
+      status: insertMapping.status || "Current working",
     };
     this.classMappings.set(id, mapping);
     return mapping;
   }
 
-  async updateClassMapping(id: number, updateData: Partial<InsertClassMapping>): Promise<ClassMapping | undefined> {
+  async updateClassMapping(
+    id: number,
+    updateData: Partial<InsertClassMapping>,
+  ): Promise<ClassMapping | undefined> {
     const existing = this.classMappings.get(id);
     if (!existing) return undefined;
-    
+
     const updated: ClassMapping = { ...existing, ...updateData };
     this.classMappings.set(id, updated);
     return updated;
@@ -210,21 +286,26 @@ export class MemStorage implements IStorage {
     return Array.from(this.teacherMappings.values());
   }
 
-  async createTeacherMapping(insertMapping: InsertTeacherMapping): Promise<TeacherMapping> {
+  async createTeacherMapping(
+    insertMapping: InsertTeacherMapping,
+  ): Promise<TeacherMapping> {
     const id = this.currentTeacherMappingId++;
-    const mapping: TeacherMapping = { 
-      ...insertMapping, 
+    const mapping: TeacherMapping = {
+      ...insertMapping,
       id,
-      status: insertMapping.status || "Current working"
+      status: insertMapping.status || "Current working",
     };
     this.teacherMappings.set(id, mapping);
     return mapping;
   }
 
-  async updateTeacherMapping(id: number, updateData: Partial<InsertTeacherMapping>): Promise<TeacherMapping | undefined> {
+  async updateTeacherMapping(
+    id: number,
+    updateData: Partial<InsertTeacherMapping>,
+  ): Promise<TeacherMapping | undefined> {
     const existing = this.teacherMappings.get(id);
     if (!existing) return undefined;
-    
+
     const updated: TeacherMapping = { ...existing, ...updateData };
     this.teacherMappings.set(id, updated);
     return updated;
@@ -244,19 +325,22 @@ export class MemStorage implements IStorage {
 
   async createRole(insertRole: InsertRole): Promise<Role> {
     const id = this.currentRoleId++;
-    const role: Role = { 
+    const role: Role = {
       id,
       roleName: insertRole.roleName,
-      status: insertRole.status || "active"
+      status: insertRole.status || "active",
     };
     this.roles.set(id, role);
     return role;
   }
 
-  async updateRole(id: number, updateData: Partial<InsertRole>): Promise<Role | undefined> {
+  async updateRole(
+    id: number,
+    updateData: Partial<InsertRole>,
+  ): Promise<Role | undefined> {
     const existing = this.roles.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Role = { ...existing, ...updateData };
     this.roles.set(id, updated);
     return updated;
@@ -277,19 +361,22 @@ export class MemStorage implements IStorage {
 
   async createSubject(insertSubject: InsertSubject): Promise<Subject> {
     const id = this.currentSubjectId++;
-    const subject: Subject = { 
+    const subject: Subject = {
       id,
       subjectName: insertSubject.subjectName,
-      status: insertSubject.status || "active"
+      status: insertSubject.status || "active",
     };
     this.subjects.set(id, subject);
     return subject;
   }
 
-  async updateSubject(id: number, updateData: Partial<InsertSubject>): Promise<Subject | undefined> {
+  async updateSubject(
+    id: number,
+    updateData: Partial<InsertSubject>,
+  ): Promise<Subject | undefined> {
     const existing = this.subjects.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Subject = { ...existing, ...updateData };
     this.subjects.set(id, updated);
     return updated;
@@ -308,31 +395,41 @@ export class MemStorage implements IStorage {
     return Array.from(this.students.values());
   }
 
-  async getStudentsByClassDivision(classname: string, division: string): Promise<Student[]> {
+  async getStudentsByClassDivision(
+    classname: string,
+    division: string,
+  ): Promise<Student[]> {
     return Array.from(this.students.values()).filter(
-      student => student.class === classname && student.division === division
+      (student) => student.class === classname && student.division === division,
     );
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
     const id = this.currentStudentId++;
-    
+
     // Get existing students in the same class-division to determine roll number
-    const existingStudents = await this.getStudentsByClassDivision(insertStudent.class, insertStudent.division);
-    
+    const existingStudents = await this.getStudentsByClassDivision(
+      insertStudent.class,
+      insertStudent.division,
+    );
+
     // Sort by first name alphabetically and assign roll number
-    const sortedStudents = existingStudents.sort((a, b) => a.firstName.localeCompare(b.firstName));
-    
+    const sortedStudents = existingStudents.sort((a, b) =>
+      a.firstName.localeCompare(b.firstName),
+    );
+
     // Find the appropriate roll number based on alphabetical order
     let rollNumber = 1;
     for (const existingStudent of sortedStudents) {
-      if (insertStudent.firstName.localeCompare(existingStudent.firstName) > 0) {
+      if (
+        insertStudent.firstName.localeCompare(existingStudent.firstName) > 0
+      ) {
         rollNumber = existingStudent.rollNumber + 1;
       } else {
         break;
       }
     }
-    
+
     // Adjust roll numbers of students that come after the new student
     for (const existingStudent of sortedStudents) {
       if (existingStudent.rollNumber >= rollNumber) {
@@ -341,7 +438,7 @@ export class MemStorage implements IStorage {
       }
     }
 
-    const student: Student = { 
+    const student: Student = {
       id,
       firstName: insertStudent.firstName,
       middleName: insertStudent.middleName || null,
@@ -375,16 +472,19 @@ export class MemStorage implements IStorage {
       guardianEmailId: insertStudent.guardianEmailId || null,
       guardianRelation: insertStudent.guardianRelation || null,
       apaarId: insertStudent.apaarId,
-      aadharNumber: insertStudent.aadharNumber
+      aadharNumber: insertStudent.aadharNumber,
     };
     this.students.set(id, student);
     return student;
   }
 
-  async updateStudent(id: number, updateData: Partial<InsertStudent>): Promise<Student | undefined> {
+  async updateStudent(
+    id: number,
+    updateData: Partial<InsertStudent>,
+  ): Promise<Student | undefined> {
     const existing = this.students.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Student = { ...existing, ...updateData };
     this.students.set(id, updated);
     return updated;
@@ -394,9 +494,14 @@ export class MemStorage implements IStorage {
     return this.students.delete(id);
   }
 
-  async getClassDivisionStats(): Promise<Array<{class: string; division: string; studentCount: number}>> {
-    const stats = new Map<string, {class: string; division: string; studentCount: number}>();
-    
+  async getClassDivisionStats(): Promise<
+    Array<{ class: string; division: string; studentCount: number }>
+  > {
+    const stats = new Map<
+      string,
+      { class: string; division: string; studentCount: number }
+    >();
+
     for (const student of Array.from(this.students.values())) {
       const key = `${student.class}-${student.division}`;
       if (stats.has(key)) {
@@ -405,11 +510,11 @@ export class MemStorage implements IStorage {
         stats.set(key, {
           class: student.class,
           division: student.division,
-          studentCount: 1
+          studentCount: 1,
         });
       }
     }
-    
+
     return Array.from(stats.values());
   }
 
@@ -421,9 +526,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.workingDays.values());
   }
 
-  async createWorkingDay(insertWorkingDay: InsertWorkingDay): Promise<WorkingDay> {
+  async createWorkingDay(
+    insertWorkingDay: InsertWorkingDay,
+  ): Promise<WorkingDay> {
     const id = this.currentWorkingDayId++;
-    const workingDay: WorkingDay = { 
+    const workingDay: WorkingDay = {
       id,
       dayOfWeek: insertWorkingDay.dayOfWeek,
       dayType: insertWorkingDay.dayType,
@@ -435,10 +542,13 @@ export class MemStorage implements IStorage {
     return workingDay;
   }
 
-  async updateWorkingDay(id: number, updateData: Partial<InsertWorkingDay>): Promise<WorkingDay | undefined> {
+  async updateWorkingDay(
+    id: number,
+    updateData: Partial<InsertWorkingDay>,
+  ): Promise<WorkingDay | undefined> {
     const existing = this.workingDays.get(id);
     if (!existing) return undefined;
-    
+
     const updated: WorkingDay = { ...existing, ...updateData };
     this.workingDays.set(id, updated);
     return updated;
@@ -458,10 +568,15 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
-  async upsertWorkingDay(insertWorkingDay: InsertWorkingDay): Promise<WorkingDay> {
+  async upsertWorkingDay(
+    insertWorkingDay: InsertWorkingDay,
+  ): Promise<WorkingDay> {
     const existing = await this.getWorkingDayByDay(insertWorkingDay.dayOfWeek);
     if (existing) {
-      return await this.updateWorkingDay(existing.id, insertWorkingDay) as WorkingDay;
+      return (await this.updateWorkingDay(
+        existing.id,
+        insertWorkingDay,
+      )) as WorkingDay;
     } else {
       return await this.createWorkingDay(insertWorkingDay);
     }
@@ -477,12 +592,14 @@ export class MemStorage implements IStorage {
 
   async getSchoolSchedulesByDay(dayOfWeek: string): Promise<SchoolSchedule[]> {
     const allSchedules = Array.from(this.schoolSchedules.values());
-    return allSchedules.filter(schedule => schedule.dayOfWeek === dayOfWeek);
+    return allSchedules.filter((schedule) => schedule.dayOfWeek === dayOfWeek);
   }
 
-  async createSchoolSchedule(insertSchedule: InsertSchoolSchedule): Promise<SchoolSchedule> {
+  async createSchoolSchedule(
+    insertSchedule: InsertSchoolSchedule,
+  ): Promise<SchoolSchedule> {
     const id = this.currentSchoolScheduleId++;
-    const schedule: SchoolSchedule = { 
+    const schedule: SchoolSchedule = {
       id,
       dayOfWeek: insertSchedule.dayOfWeek,
       type: insertSchedule.type,
@@ -494,10 +611,13 @@ export class MemStorage implements IStorage {
     return schedule;
   }
 
-  async updateSchoolSchedule(id: number, updateData: Partial<InsertSchoolSchedule>): Promise<SchoolSchedule | undefined> {
+  async updateSchoolSchedule(
+    id: number,
+    updateData: Partial<InsertSchoolSchedule>,
+  ): Promise<SchoolSchedule | undefined> {
     const existing = this.schoolSchedules.get(id);
     if (!existing) return undefined;
-    
+
     const updated: SchoolSchedule = { ...existing, ...updateData };
     this.schoolSchedules.set(id, updated);
     return updated;
@@ -516,9 +636,15 @@ export class MemStorage implements IStorage {
     return Array.from(this.timeTables.values());
   }
 
-  async getTimeTableByClassDivision(className: string, division: string): Promise<TimeTable | undefined> {
+  async getTimeTableByClassDivision(
+    className: string,
+    division: string,
+  ): Promise<TimeTable | undefined> {
     for (const timeTable of this.timeTables.values()) {
-      if (timeTable.className === className && timeTable.division === division) {
+      if (
+        timeTable.className === className &&
+        timeTable.division === division
+      ) {
         return timeTable;
       }
     }
@@ -527,19 +653,22 @@ export class MemStorage implements IStorage {
 
   async createTimeTable(insertTimeTable: InsertTimeTable): Promise<TimeTable> {
     const id = this.currentTimeTableId++;
-    const timeTable: TimeTable = { 
-      ...insertTimeTable, 
+    const timeTable: TimeTable = {
+      ...insertTimeTable,
       id,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     this.timeTables.set(id, timeTable);
     return timeTable;
   }
 
-  async updateTimeTable(id: number, updateData: Partial<InsertTimeTable>): Promise<TimeTable | undefined> {
+  async updateTimeTable(
+    id: number,
+    updateData: Partial<InsertTimeTable>,
+  ): Promise<TimeTable | undefined> {
     const existing = this.timeTables.get(id);
     if (!existing) return undefined;
-    
+
     const updated: TimeTable = { ...existing, ...updateData };
     this.timeTables.set(id, updated);
     return updated;
@@ -553,27 +682,32 @@ export class MemStorage implements IStorage {
         this.timeTableEntries.delete(entry.id);
       }
     }
-    
+
     const result = this.timeTables.delete(id);
     return result;
   }
 
   async getTimeTableEntries(timeTableId: number): Promise<TimeTableEntry[]> {
     const entries = Array.from(this.timeTableEntries.values());
-    return entries.filter(entry => entry.timeTableId === timeTableId);
+    return entries.filter((entry) => entry.timeTableId === timeTableId);
   }
 
-  async createTimeTableEntry(insertEntry: InsertTimeTableEntry): Promise<TimeTableEntry> {
+  async createTimeTableEntry(
+    insertEntry: InsertTimeTableEntry,
+  ): Promise<TimeTableEntry> {
     const id = this.currentTimeTableEntryId++;
     const entry: TimeTableEntry = { ...insertEntry, id };
     this.timeTableEntries.set(id, entry);
     return entry;
   }
 
-  async updateTimeTableEntry(id: number, updateData: Partial<InsertTimeTableEntry>): Promise<TimeTableEntry | undefined> {
+  async updateTimeTableEntry(
+    id: number,
+    updateData: Partial<InsertTimeTableEntry>,
+  ): Promise<TimeTableEntry | undefined> {
     const existing = this.timeTableEntries.get(id);
     if (!existing) return undefined;
-    
+
     const updated: TimeTableEntry = { ...existing, ...updateData };
     this.timeTableEntries.set(id, updated);
     return updated;
@@ -584,28 +718,37 @@ export class MemStorage implements IStorage {
     return result;
   }
 
-  async getTimeTableEntriesByTimeTable(timeTableId: number): Promise<TimeTableEntry[]> {
+  async getTimeTableEntriesByTimeTable(
+    timeTableId: number,
+  ): Promise<TimeTableEntry[]> {
     const entries = Array.from(this.timeTableEntries.values());
-    return entries.filter(entry => entry.timeTableId === timeTableId);
+    return entries.filter((entry) => entry.timeTableId === timeTableId);
   }
 
-  async checkTeacherConflict(dayOfWeek: string, scheduleSlot: string, teacherId: number, excludeTimeTableId?: number): Promise<boolean> {
+  async checkTeacherConflict(
+    dayOfWeek: string,
+    scheduleSlot: string,
+    teacherId: number,
+    excludeTimeTableId?: number,
+  ): Promise<boolean> {
     const allEntries = Array.from(this.timeTableEntries.values());
-    
+
     for (const entry of allEntries) {
       // Skip entries from excluded time table (for updates)
       if (excludeTimeTableId && entry.timeTableId === excludeTimeTableId) {
         continue;
       }
-      
+
       // Check if same teacher is assigned to same day and schedule slot
-      if (entry.dayOfWeek === dayOfWeek && 
-          entry.scheduleSlot === scheduleSlot && 
-          entry.teacherId === teacherId) {
+      if (
+        entry.dayOfWeek === dayOfWeek &&
+        entry.scheduleSlot === scheduleSlot &&
+        entry.teacherId === teacherId
+      ) {
         return true; // Conflict found
       }
     }
-    
+
     return false; // No conflict
   }
 }

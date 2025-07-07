@@ -43,6 +43,7 @@ import type {
   SchoolSchedule, 
   Subject, 
   Staff, 
+  TeacherMapping,
   InsertTimeTable, 
   InsertTimeTableEntry 
 } from "@shared/schema";
@@ -115,6 +116,16 @@ export default function AddTimeTable() {
       const response = await fetch("/api/staff");
       if (!response.ok) throw new Error("Failed to fetch staff");
       return response.json() as Promise<Staff[]>;
+    },
+  });
+
+  // Fetch teacher mappings
+  const { data: teacherMappings = [] } = useQuery({
+    queryKey: ["/api/teacher-mappings"],
+    queryFn: async () => {
+      const response = await fetch("/api/teacher-mappings");
+      if (!response.ok) throw new Error("Failed to fetch teacher mappings");
+      return response.json() as Promise<TeacherMapping[]>;
     },
   });
 
@@ -197,40 +208,49 @@ export default function AddTimeTable() {
     return uniqueSlots;
   };
 
-  // Generate teacher-subject options
+  // Generate teacher-subject options based on teacher mappings
   const getTeacherSubjectOptions = (): TeacherSubjectOption[] => {
     if (!selectedClassDivision) return [];
     
     const [className, division] = selectedClassDivision.split('-');
-    const mapping = classMappings.find(m => m.class === className && m.division === division);
     
-    if (!mapping || !mapping.subjects) return [];
-
     const options: TeacherSubjectOption[] = [
       { value: "no-assignment", label: "No assignment", subjectId: null, teacherId: null }
     ];
 
-    // Add subject-teacher combinations
-    mapping.subjects.forEach(subjectName => {
-      const subject = subjects.find(s => s.subjectName === subjectName);
-      if (subject) {
-        // Add subject without teacher
-        options.push({
-          value: `subject-${subject.id}`,
-          label: `${subjectName} (No teacher assigned)`,
-          subjectId: subject.id,
-          teacherId: null,
-        });
+    // Get teacher mappings for the selected class
+    const relevantMappings = teacherMappings.filter(mapping => mapping.class === className);
 
-        // Add subject with each available teacher
-        staff.forEach(teacher => {
+    relevantMappings.forEach(mapping => {
+      const subject = subjects.find(s => s.subjectName === mapping.subject);
+      if (subject && mapping.divisions) {
+        // Check if the mapping has divisions data
+        const divisions = Array.isArray(mapping.divisions) ? mapping.divisions : [];
+        
+        // Find the specific division
+        const divisionData = divisions.find((div: any) => div.division === division);
+        
+        if (divisionData && divisionData.teacherId) {
+          // Get teacher details
+          const teacher = staff.find(s => s.id === divisionData.teacherId);
+          
+          if (teacher) {
+            options.push({
+              value: `subject-${subject.id}-teacher-${teacher.id}`,
+              label: `${mapping.subject} - ${teacher.name}`,
+              subjectId: subject.id,
+              teacherId: teacher.id,
+            });
+          }
+        } else {
+          // Subject without assigned teacher for this division
           options.push({
-            value: `subject-${subject.id}-teacher-${teacher.id}`,
-            label: `${subjectName} - ${teacher.name}`,
+            value: `subject-${subject.id}`,
+            label: `${mapping.subject} (No teacher assigned)`,
             subjectId: subject.id,
-            teacherId: teacher.id,
+            teacherId: null,
           });
-        });
+        }
       }
     });
 
@@ -422,17 +442,22 @@ export default function AddTimeTable() {
                               </TableCell>
                               {scheduleSlots.map((slot) => (
                                 <TableCell key={`${day}-${slot.name}`} className="p-2">
-                                  <Select
-                                    value={scheduleEntries[`${day}-${slot.name}`] || ""}
-                                    onValueChange={(value) => 
-                                      handleScheduleEntryChange(day, slot.name, value)
-                                    }
-                                  >
-                                    <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
-                                      <SelectValue placeholder="Select assignment" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {teacherSubjectOptions.map((option) => (
+                                  {slot.type === "Break" ? (
+                                    <div className="text-center text-gray-500 dark:text-gray-400 py-2">
+                                      {slot.name}
+                                    </div>
+                                  ) : (
+                                    <Select
+                                      value={scheduleEntries[`${day}-${slot.name}`] || ""}
+                                      onValueChange={(value) => 
+                                        handleScheduleEntryChange(day, slot.name, value)
+                                      }
+                                    >
+                                      <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
+                                        <SelectValue placeholder="Select assignment" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {teacherSubjectOptions.map((option) => (
                                         <SelectItem key={option.value} value={option.value}>
                                           {option.label}
                                         </SelectItem>
