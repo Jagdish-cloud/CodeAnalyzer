@@ -1,0 +1,32 @@
+Create a new menu item called : Create Time Table
+
+Based on the Schedules created in the School Schedule page this should be created.
+
+This section should consist of 2 pages
+1. Time Table Landing Page 
+2. Add Time table page
+
+1. The Landing should consist of the table with the following data	
+	- Colunmn 1 : Class Division
+	- Columnn 2 : Status
+	- Columnn 3 : Action(View/Edit)
+	
+	And provide a Add Time table button at the top of the table.
+
+2.Add Time table page will have a form and the should consist of the 
+	- Choose Academic Year(Select).
+	- Choose Class Division (Data from the class/Div/Sub Mapping).
+	- On Selection of Class Division the below table should be displayed(The columns should be fetched from the previous screen School Scheduling based).
+	  Days     | Prayer (Timing)					   | Period-1 (Timing) 					 | Period-2 (Timing) 					 | Break-1 (Timing) 					| Period-3 (Timing)                    | Period-4 (Timing)  
+	  Monday   | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Tuesday  | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Wednesday| Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Thursday | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Friday   | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Saturday | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  Sunday   | Drop Down (Subject-with Teacher name) |Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name) | Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)| Drop Down (Subject-with Teacher name)
+	  
+	  
+	-Save Button 
+	
+Note : !IMPORTANT! the teachers schedule should not get into conflict. For example the If Teacher A is assigned to Period-1 of Class II Divison A, then that teacher should not be available for any class and division for the Period-1.

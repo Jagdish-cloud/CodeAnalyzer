@@ -18,6 +18,8 @@ import Subjects from "@/pages/subjects";
 import AddSubject from "@/pages/add-subject";
 import WorkingDays from "@/pages/working-days";
 import SchoolSchedule from "@/pages/school-schedule";
+import TimeTableLanding from "@/pages/time-table";
+import AddTimeTable from "@/pages/add-time-table";
 import StudentMasters from "@/pages/student-masters";
 import StudentsLanding from "@/pages/students-landing";
 import AddStudent from "@/pages/add-student";
@@ -40,6 +42,8 @@ function Router() {
         <Route path="/add-subject" component={AddSubject} />
         <Route path="/working-days" component={WorkingDays} />
         <Route path="/school-schedule" component={SchoolSchedule} />
+        <Route path="/time-table" component={TimeTableLanding} />
+        <Route path="/add-time-table" component={AddTimeTable} />
         <Route path="/student-masters" component={StudentMasters} />
         <Route path="/students/:class/:division" component={StudentsLanding} />
         <Route path="/add-student" component={AddStudent} />

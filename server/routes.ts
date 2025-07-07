@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -742,6 +742,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete schedule" });
+    }
+  });
+
+  // Time Table routes
+  app.get("/api/time-tables", async (req, res) => {
+    try {
+      const timeTables = await storage.getAllTimeTables();
+      res.json(timeTables);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/time-tables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const timeTable = await storage.getTimeTable(id);
+      
+      if (!timeTable) {
+        return res.status(404).json({ error: "Time table not found" });
+      }
+      
+      res.json(timeTable);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/time-tables/:id/entries", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const entries = await storage.getTimeTableEntriesByTimeTable(id);
+      res.json(entries);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/time-tables", async (req, res) => {
+    try {
+      const validatedData = insertTimeTableSchema.parse(req.body);
+      
+      // Check if time table already exists for this class-division
+      const existing = await storage.getTimeTableByClassDivision(
+        validatedData.className, 
+        validatedData.division
+      );
+      
+      if (existing) {
+        return res.status(400).json({ 
+          error: "Time table already exists for this class-division" 
+        });
+      }
+      
+      const timeTable = await storage.createTimeTable(validatedData);
+      res.status(201).json(timeTable);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/time-table-entries", async (req, res) => {
+    try {
+      const validatedData = insertTimeTableEntrySchema.parse(req.body);
+      
+      // Check for teacher conflicts if teacherId is provided
+      if (validatedData.teacherId) {
+        const hasConflict = await storage.checkTeacherConflict(
+          validatedData.dayOfWeek,
+          validatedData.scheduleSlot,
+          validatedData.teacherId
+        );
+        
+        if (hasConflict) {
+          return res.status(409).json({ 
+            error: "Teacher conflict: This teacher is already assigned to another class at the same time" 
+          });
+        }
+      }
+      
+      const entry = await storage.createTimeTableEntry(validatedData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/time-table-entries/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertTimeTableEntrySchema.partial().parse(req.body);
+      
+      // Check for teacher conflicts if teacherId is being updated
+      if (validatedData.teacherId && validatedData.dayOfWeek && validatedData.scheduleSlot) {
+        const existing = await storage.getTimeTableEntries(0).then(entries => 
+          entries.find(e => e.id === id)
+        );
+        
+        if (existing) {
+          const hasConflict = await storage.checkTeacherConflict(
+            validatedData.dayOfWeek,
+            validatedData.scheduleSlot,
+            validatedData.teacherId,
+            existing.timeTableId // Exclude current time table from conflict check
+          );
+          
+          if (hasConflict) {
+            return res.status(409).json({ 
+              error: "Teacher conflict: This teacher is already assigned to another class at the same time" 
+            });
+          }
+        }
+      }
+      
+      const entry = await storage.updateTimeTableEntry(id, validatedData);
+      
+      if (!entry) {
+        return res.status(404).json({ error: "Time table entry not found" });
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/time-tables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteTimeTable(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Time table not found" });
+      }
+      
+      res.status(200).json({ message: "Time table deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

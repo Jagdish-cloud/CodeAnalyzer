@@ -49,6 +49,18 @@ export interface IStorage {
   createSchoolSchedule(schedule: InsertSchoolSchedule): Promise<SchoolSchedule>;
   updateSchoolSchedule(id: number, schedule: Partial<InsertSchoolSchedule>): Promise<SchoolSchedule | undefined>;
   deleteSchoolSchedule(id: number): Promise<boolean>;
+  getTimeTable(id: number): Promise<TimeTable | undefined>;
+  getAllTimeTables(): Promise<TimeTable[]>;
+  getTimeTableByClassDivision(className: string, division: string): Promise<TimeTable | undefined>;
+  createTimeTable(timeTable: InsertTimeTable): Promise<TimeTable>;
+  updateTimeTable(id: number, timeTable: Partial<InsertTimeTable>): Promise<TimeTable | undefined>;
+  deleteTimeTable(id: number): Promise<boolean>;
+  getTimeTableEntries(timeTableId: number): Promise<TimeTableEntry[]>;
+  createTimeTableEntry(entry: InsertTimeTableEntry): Promise<TimeTableEntry>;
+  updateTimeTableEntry(id: number, entry: Partial<InsertTimeTableEntry>): Promise<TimeTableEntry | undefined>;
+  deleteTimeTableEntry(id: number): Promise<boolean>;
+  getTimeTableEntriesByTimeTable(timeTableId: number): Promise<TimeTableEntry[]>;
+  checkTeacherConflict(dayOfWeek: string, scheduleSlot: string, teacherId: number, excludeTimeTableId?: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -61,6 +73,8 @@ export class MemStorage implements IStorage {
   private students: Map<number, Student>;
   private workingDays: Map<number, WorkingDay>;
   private schoolSchedules: Map<number, SchoolSchedule>;
+  private timeTables: Map<number, TimeTable>;
+  private timeTableEntries: Map<number, TimeTableEntry>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -70,6 +84,8 @@ export class MemStorage implements IStorage {
   private currentStudentId: number;
   private currentWorkingDayId: number;
   private currentSchoolScheduleId: number;
+  private currentTimeTableId: number;
+  private currentTimeTableEntryId: number;
 
   constructor() {
     this.users = new Map();
@@ -81,6 +97,8 @@ export class MemStorage implements IStorage {
     this.students = new Map();
     this.workingDays = new Map();
     this.schoolSchedules = new Map();
+    this.timeTables = new Map();
+    this.timeTableEntries = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -90,6 +108,8 @@ export class MemStorage implements IStorage {
     this.currentStudentId = 1;
     this.currentWorkingDayId = 1;
     this.currentSchoolScheduleId = 1;
+    this.currentTimeTableId = 1;
+    this.currentTimeTableEntryId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -485,6 +505,108 @@ export class MemStorage implements IStorage {
 
   async deleteSchoolSchedule(id: number): Promise<boolean> {
     return this.schoolSchedules.delete(id);
+  }
+
+  // Time Table methods
+  async getTimeTable(id: number): Promise<TimeTable | undefined> {
+    return this.timeTables.get(id);
+  }
+
+  async getAllTimeTables(): Promise<TimeTable[]> {
+    return Array.from(this.timeTables.values());
+  }
+
+  async getTimeTableByClassDivision(className: string, division: string): Promise<TimeTable | undefined> {
+    for (const timeTable of this.timeTables.values()) {
+      if (timeTable.className === className && timeTable.division === division) {
+        return timeTable;
+      }
+    }
+    return undefined;
+  }
+
+  async createTimeTable(insertTimeTable: InsertTimeTable): Promise<TimeTable> {
+    const id = this.currentTimeTableId++;
+    const timeTable: TimeTable = { 
+      ...insertTimeTable, 
+      id,
+      createdAt: new Date().toISOString()
+    };
+    this.timeTables.set(id, timeTable);
+    return timeTable;
+  }
+
+  async updateTimeTable(id: number, updateData: Partial<InsertTimeTable>): Promise<TimeTable | undefined> {
+    const existing = this.timeTables.get(id);
+    if (!existing) return undefined;
+    
+    const updated: TimeTable = { ...existing, ...updateData };
+    this.timeTables.set(id, updated);
+    return updated;
+  }
+
+  async deleteTimeTable(id: number): Promise<boolean> {
+    // Delete associated entries first
+    const entries = Array.from(this.timeTableEntries.values());
+    for (const entry of entries) {
+      if (entry.timeTableId === id) {
+        this.timeTableEntries.delete(entry.id);
+      }
+    }
+    
+    const result = this.timeTables.delete(id);
+    return result;
+  }
+
+  async getTimeTableEntries(timeTableId: number): Promise<TimeTableEntry[]> {
+    const entries = Array.from(this.timeTableEntries.values());
+    return entries.filter(entry => entry.timeTableId === timeTableId);
+  }
+
+  async createTimeTableEntry(insertEntry: InsertTimeTableEntry): Promise<TimeTableEntry> {
+    const id = this.currentTimeTableEntryId++;
+    const entry: TimeTableEntry = { ...insertEntry, id };
+    this.timeTableEntries.set(id, entry);
+    return entry;
+  }
+
+  async updateTimeTableEntry(id: number, updateData: Partial<InsertTimeTableEntry>): Promise<TimeTableEntry | undefined> {
+    const existing = this.timeTableEntries.get(id);
+    if (!existing) return undefined;
+    
+    const updated: TimeTableEntry = { ...existing, ...updateData };
+    this.timeTableEntries.set(id, updated);
+    return updated;
+  }
+
+  async deleteTimeTableEntry(id: number): Promise<boolean> {
+    const result = this.timeTableEntries.delete(id);
+    return result;
+  }
+
+  async getTimeTableEntriesByTimeTable(timeTableId: number): Promise<TimeTableEntry[]> {
+    const entries = Array.from(this.timeTableEntries.values());
+    return entries.filter(entry => entry.timeTableId === timeTableId);
+  }
+
+  async checkTeacherConflict(dayOfWeek: string, scheduleSlot: string, teacherId: number, excludeTimeTableId?: number): Promise<boolean> {
+    const allEntries = Array.from(this.timeTableEntries.values());
+    
+    for (const entry of allEntries) {
+      // Skip entries from excluded time table (for updates)
+      if (excludeTimeTableId && entry.timeTableId === excludeTimeTableId) {
+        continue;
+      }
+      
+      // Check if same teacher is assigned to same day and schedule slot
+      if (entry.dayOfWeek === dayOfWeek && 
+          entry.scheduleSlot === scheduleSlot && 
+          entry.teacherId === teacherId) {
+        return true; // Conflict found
+      }
+    }
+    
+    return false; // No conflict
   }
 }
 

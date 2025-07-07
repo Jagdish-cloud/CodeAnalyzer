@@ -107,6 +107,24 @@ export const schoolSchedule = pgTable("school_schedule", {
   timingTo: text("timing_to").notNull(),
 });
 
+export const timeTables = pgTable("time_tables", {
+  id: serial("id").primaryKey(),
+  academicYear: text("academic_year").notNull(),
+  className: text("class_name").notNull(),
+  division: text("division").notNull(),
+  status: text("status").notNull().default("active"), // active, inactive
+  createdAt: text("created_at").notNull(),
+});
+
+export const timeTableEntries = pgTable("time_table_entries", {
+  id: serial("id").primaryKey(),
+  timeTableId: integer("time_table_id").references(() => timeTables.id).notNull(),
+  dayOfWeek: text("day_of_week").notNull(),
+  scheduleSlot: text("schedule_slot").notNull(), // Maps to schedule name like "Period-1", "Break-1", etc.
+  subjectId: integer("subject_id").references(() => subjects.id),
+  teacherId: integer("teacher_id").references(() => staff.id),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -145,6 +163,14 @@ export const insertSchoolScheduleSchema = createInsertSchema(schoolSchedule).omi
   id: true,
 });
 
+export const insertTimeTableSchema = createInsertSchema(timeTables).omit({
+  id: true,
+});
+
+export const insertTimeTableEntrySchema = createInsertSchema(timeTableEntries).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -163,3 +189,7 @@ export type InsertWorkingDay = z.infer<typeof insertWorkingDaySchema>;
 export type WorkingDay = typeof workingDays.$inferSelect;
 export type InsertSchoolSchedule = z.infer<typeof insertSchoolScheduleSchema>;
 export type SchoolSchedule = typeof schoolSchedule.$inferSelect;
+export type InsertTimeTable = z.infer<typeof insertTimeTableSchema>;
+export type TimeTable = typeof timeTables.$inferSelect;
+export type InsertTimeTableEntry = z.infer<typeof insertTimeTableEntrySchema>;
+export type TimeTableEntry = typeof timeTableEntries.$inferSelect;

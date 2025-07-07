@@ -15,6 +15,8 @@ import {
   Menu,
   X,
   Book,
+  Calendar,
+  Clock,
 } from "lucide-react";
 
 interface MenuItem {
@@ -70,6 +72,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/school-schedule",
         },
         {
+          id: "time-table",
+          title: "Create Time Table",
+          type: "item",
+          icon: "feather icon-calendar",
+          url: "/time-table",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",
@@ -118,6 +127,10 @@ const getIcon = (iconName: string) => {
       return UserCheck;
     case "feather icon-book":
       return Book;
+    case "feather icon-calendar":
+      return Calendar;
+    case "feather icon-clock":
+      return Clock;
     default:
       return Home;
   }
