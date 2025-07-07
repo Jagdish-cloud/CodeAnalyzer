@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Clock } from "lucide-react";
+import { Clock, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TimePickerProps {
@@ -102,6 +102,85 @@ export function TimePicker({
     handleTimeChange(hour, newMinutes);
   };
 
+  // Handle mouse wheel scrolling
+  const handleWheelScroll = useCallback((e: WheelEvent, type: 'hour' | 'minute') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (type === 'hour') {
+      const availableHours = getAvailableHours();
+      const currentIndex = availableHours.indexOf(hours);
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const newIndex = Math.max(0, Math.min(availableHours.length - 1, currentIndex + direction));
+      handleHourSelect(availableHours[newIndex]);
+    } else {
+      const availableMinutes = getAvailableMinutes(hours);
+      const currentIndex = availableMinutes.indexOf(minutes);
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const newIndex = Math.max(0, Math.min(availableMinutes.length - 1, currentIndex + direction));
+      handleTimeChange(hours, availableMinutes[newIndex]);
+    }
+  }, [hours, minutes, handleTimeChange, getAvailableHours, getAvailableMinutes]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent, type: 'hour' | 'minute') => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      
+      if (type === 'hour') {
+        const availableHours = getAvailableHours();
+        const currentIndex = availableHours.indexOf(hours);
+        const direction = e.key === 'ArrowUp' ? -1 : 1;
+        const newIndex = Math.max(0, Math.min(availableHours.length - 1, currentIndex + direction));
+        handleHourSelect(availableHours[newIndex]);
+      } else {
+        const availableMinutes = getAvailableMinutes(hours);
+        const currentIndex = availableMinutes.indexOf(minutes);
+        const direction = e.key === 'ArrowUp' ? -1 : 1;
+        const newIndex = Math.max(0, Math.min(availableMinutes.length - 1, currentIndex + direction));
+        handleTimeChange(hours, availableMinutes[newIndex]);
+      }
+    }
+  }, [hours, minutes, handleTimeChange, getAvailableHours, getAvailableMinutes]);
+
+  // Attach wheel and keyboard event listeners
+  useEffect(() => {
+    const hourElement = hourScrollRef.current;
+    const minuteElement = minuteScrollRef.current;
+
+    if (hourElement) {
+      const hourWheelHandler = (e: WheelEvent) => handleWheelScroll(e, 'hour');
+      const hourKeyHandler = (e: KeyboardEvent) => handleKeyDown(e, 'hour');
+      
+      hourElement.addEventListener('wheel', hourWheelHandler, { passive: false });
+      hourElement.addEventListener('keydown', hourKeyHandler);
+      hourElement.setAttribute('tabindex', '0');
+      
+      return () => {
+        hourElement.removeEventListener('wheel', hourWheelHandler);
+        hourElement.removeEventListener('keydown', hourKeyHandler);
+      };
+    }
+  }, [handleWheelScroll, handleKeyDown]);
+
+  useEffect(() => {
+    const minuteElement = minuteScrollRef.current;
+
+    if (minuteElement) {
+      const minuteWheelHandler = (e: WheelEvent) => handleWheelScroll(e, 'minute');
+      const minuteKeyHandler = (e: KeyboardEvent) => handleKeyDown(e, 'minute');
+      
+      minuteElement.addEventListener('wheel', minuteWheelHandler, { passive: false });
+      minuteElement.addEventListener('keydown', minuteKeyHandler);
+      minuteElement.setAttribute('tabindex', '0');
+      
+      return () => {
+        minuteElement.removeEventListener('wheel', minuteWheelHandler);
+        minuteElement.removeEventListener('keydown', minuteKeyHandler);
+      };
+    }
+  }, [handleWheelScroll, handleKeyDown]);
+
   // Scroll to selected item when opened
   useEffect(() => {
     if (isOpen) {
@@ -157,10 +236,45 @@ export function TimePicker({
           <div className="flex items-center justify-center space-x-6">
             {/* Hours Column */}
             <div className="flex flex-col items-center">
-              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Hours</span>
+              <div className="flex items-center justify-between w-full mb-2">
+                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Hours</span>
+                <div className="flex flex-col space-y-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const availableHours = getAvailableHours();
+                      const currentIndex = availableHours.indexOf(hours);
+                      if (currentIndex > 0) {
+                        handleHourSelect(availableHours[currentIndex - 1]);
+                      }
+                    }}
+                    disabled={getAvailableHours().indexOf(hours) === 0}
+                    className="h-6 w-6 p-0 hover:bg-orange-100 dark:hover:bg-orange-900"
+                  >
+                    <ChevronUp className="h-3 w-3 text-orange-600" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const availableHours = getAvailableHours();
+                      const currentIndex = availableHours.indexOf(hours);
+                      if (currentIndex < availableHours.length - 1) {
+                        handleHourSelect(availableHours[currentIndex + 1]);
+                      }
+                    }}
+                    disabled={getAvailableHours().indexOf(hours) === getAvailableHours().length - 1}
+                    className="h-6 w-6 p-0 hover:bg-orange-100 dark:hover:bg-orange-900"
+                  >
+                    <ChevronDown className="h-3 w-3 text-orange-600" />
+                  </Button>
+                </div>
+              </div>
               <div 
                 ref={hourScrollRef}
-                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800"
+                tabIndex={0}
+                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-600"
               >
                 <div className="py-2">
                   {getAvailableHours().map((hour) => (
@@ -180,16 +294,54 @@ export function TimePicker({
                   ))}
                 </div>
               </div>
+              <div className="text-xs text-orange-500 dark:text-orange-400 mt-1 text-center">
+                Scroll or use ↑↓
+              </div>
             </div>
 
             <div className="text-2xl font-bold text-transparent bg-gradient-to-b from-orange-500 to-red-500 bg-clip-text">:</div>
 
             {/* Minutes Column */}
             <div className="flex flex-col items-center">
-              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Minutes</span>
+              <div className="flex items-center justify-between w-full mb-2">
+                <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Minutes</span>
+                <div className="flex flex-col space-y-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const availableMinutes = getAvailableMinutes(hours);
+                      const currentIndex = availableMinutes.indexOf(minutes);
+                      if (currentIndex > 0) {
+                        handleTimeChange(hours, availableMinutes[currentIndex - 1]);
+                      }
+                    }}
+                    disabled={getAvailableMinutes(hours).indexOf(minutes) === 0}
+                    className="h-6 w-6 p-0 hover:bg-orange-100 dark:hover:bg-orange-900"
+                  >
+                    <ChevronUp className="h-3 w-3 text-orange-600" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const availableMinutes = getAvailableMinutes(hours);
+                      const currentIndex = availableMinutes.indexOf(minutes);
+                      if (currentIndex < availableMinutes.length - 1) {
+                        handleTimeChange(hours, availableMinutes[currentIndex + 1]);
+                      }
+                    }}
+                    disabled={getAvailableMinutes(hours).indexOf(minutes) === getAvailableMinutes(hours).length - 1}
+                    className="h-6 w-6 p-0 hover:bg-orange-100 dark:hover:bg-orange-900"
+                  >
+                    <ChevronDown className="h-3 w-3 text-orange-600" />
+                  </Button>
+                </div>
+              </div>
               <div 
                 ref={minuteScrollRef}
-                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800"
+                tabIndex={0}
+                className="h-32 w-16 overflow-y-auto scrollbar-thin scrollbar-track-orange-100 scrollbar-thumb-orange-300 dark:scrollbar-track-orange-900 dark:scrollbar-thumb-orange-700 bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-lg border border-orange-200 dark:border-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-600"
               >
                 <div className="py-2">
                   {getAvailableMinutes(hours).map((minute) => (
@@ -208,6 +360,9 @@ export function TimePicker({
                     </div>
                   ))}
                 </div>
+              </div>
+              <div className="text-xs text-orange-500 dark:text-orange-400 mt-1 text-center">
+                Scroll or use ↑↓
               </div>
             </div>
           </div>
