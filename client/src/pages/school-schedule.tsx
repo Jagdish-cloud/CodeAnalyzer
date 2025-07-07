@@ -25,6 +25,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { TimePicker } from "@/components/ui/time-picker";
 import { useToast } from "@/hooks/use-toast";
@@ -171,19 +178,30 @@ export default function SchoolSchedule() {
     createScheduleMutation.mutate(data);
   };
 
-  const openModal = (day: string, type: "Period" | "Break") => {
+  const openModal = (day: string) => {
     setSelectedDay(day);
-    setModalType(type);
+    setModalType("Period"); // Default to Period
     form.setValue("dayOfWeek", day);
-    form.setValue("type", type);
+    form.setValue("type", "Period");
     
     // Auto-generate name based on existing count
-    const daySchedules = schedules.filter(s => s.dayOfWeek === day && s.type === type);
+    const daySchedules = schedules.filter(s => s.dayOfWeek === day && s.type === "Period");
     const nextNumber = daySchedules.length + 1;
-    const defaultName = type === "Period" ? `Period-${nextNumber}` : `Break-${nextNumber}`;
+    const defaultName = `Period-${nextNumber}`;
     form.setValue("name", defaultName);
     
     setIsModalOpen(true);
+  };
+
+  const handleTypeChange = (type: "Period" | "Break") => {
+    setModalType(type);
+    form.setValue("type", type);
+    
+    // Auto-generate name based on type and existing count
+    const daySchedules = schedules.filter(s => s.dayOfWeek === selectedDay && s.type === type);
+    const nextNumber = daySchedules.length + 1;
+    const defaultName = type === "Period" ? `Period-${nextNumber}` : `Break-${nextNumber}`;
+    form.setValue("name", defaultName);
   };
 
   const getWorkingDayInfo = (dayOfWeek: string) => {
@@ -304,25 +322,15 @@ export default function SchoolSchedule() {
                         }
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
+                    <div>
                       <Button
-                        onClick={() => openModal(day, "Period")}
+                        onClick={() => openModal(day)}
                         size="sm"
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
                         disabled={!workingDayInfo.timingFrom || !workingDayInfo.timingTo}
                       >
                         <Plus className="h-4 w-4 mr-1" />
-                        Add Period
-                      </Button>
-                      <Button
-                        onClick={() => openModal(day, "Break")}
-                        size="sm"
-                        variant="outline"
-                        className="border-orange-300 hover:bg-orange-50 dark:border-orange-700 dark:hover:bg-orange-950"
-                        disabled={!workingDayInfo.timingFrom || !workingDayInfo.timingTo}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Break
+                        Add Schedule
                       </Button>
                     </div>
                   </div>
@@ -389,15 +397,45 @@ export default function SchoolSchedule() {
           <DialogContent className="sm:max-w-md bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-800">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                Add {modalType}
+                Add Schedule
               </DialogTitle>
               <DialogDescription className="text-orange-600 dark:text-orange-400">
-                Add a new {modalType.toLowerCase()} for {selectedDay}
+                Add a new period or break for {selectedDay}
               </DialogDescription>
             </DialogHeader>
             
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-orange-700 dark:text-orange-300">
+                        Schedule Type
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value: "Period" | "Break") => {
+                            field.onChange(value);
+                            handleTypeChange(value);
+                          }}
+                        >
+                          <SelectTrigger className="border-orange-200 focus:border-orange-400 dark:border-orange-700">
+                            <SelectValue placeholder="Select schedule type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Period">Period</SelectItem>
+                            <SelectItem value="Break">Break</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={form.control}
                   name="name"
