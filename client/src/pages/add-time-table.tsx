@@ -464,6 +464,7 @@ export default function AddTimeTable() {
                                       ))}
                                     </SelectContent>
                                   </Select>
+                                  )}
                                 </TableCell>
                               ))}
                             </TableRow>
