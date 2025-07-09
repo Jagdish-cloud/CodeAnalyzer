@@ -44,6 +44,7 @@ import type {
   Subject, 
   Staff, 
   TeacherMapping,
+  WorkingDay,
   InsertTimeTable, 
   InsertTimeTableEntry 
 } from "@shared/schema";
@@ -129,6 +130,16 @@ export default function AddTimeTable() {
     },
   });
 
+  // Fetch working days
+  const { data: workingDays = [] } = useQuery({
+    queryKey: ["/api/working-days"],
+    queryFn: async () => {
+      const response = await fetch("/api/working-days");
+      if (!response.ok) throw new Error("Failed to fetch working days");
+      return response.json() as Promise<WorkingDay[]>;
+    },
+  });
+
   const form = useForm<TimeTableFormData>({
     resolver: zodResolver(timeTableFormSchema),
     defaultValues: {
@@ -178,6 +189,19 @@ export default function AddTimeTable() {
       label: `Class ${mapping.class} - Division ${mapping.division}`,
       subjects: mapping.subjects || [],
     }));
+
+  // Get working days that have schedules configured
+  const getWorkingDaysWithSchedules = () => {
+    // Get days that have school schedules configured
+    const daysWithSchedules = Array.from(new Set(schedules.map(s => s.dayOfWeek)));
+    
+    // Filter working days to only include those with schedules and are not holidays
+    const validWorkingDays = workingDays.filter(wd => 
+      daysWithSchedules.includes(wd.dayOfWeek) && wd.dayType !== "Holiday"
+    );
+    
+    return validWorkingDays.map(wd => wd.dayOfWeek);
+  };
 
   // Get schedule slots for the selected class division
   const getScheduleSlots = () => {
@@ -419,7 +443,7 @@ export default function AddTimeTable() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {days.map((day) => (
+                          {getWorkingDaysWithSchedules().map((day) => (
                             <TableRow 
                               key={day}
                               className="hover:bg-blue-50 dark:hover:bg-blue-950/50"
@@ -427,33 +451,50 @@ export default function AddTimeTable() {
                               <TableCell className="font-medium text-blue-700 dark:text-blue-300">
                                 {day}
                               </TableCell>
-                              {scheduleSlots.map((slot) => (
-                                <TableCell key={`${day}-${slot.name}`} className="p-2">
-                                  {slot.type === "Break" ? (
-                                    <div className="text-center text-gray-500 dark:text-gray-400 py-2">
-                                      {slot.name}
-                                    </div>
-                                  ) : (
-                                    <Select
-                                      value={scheduleEntries[`${day}-${slot.name}`] || ""}
-                                      onValueChange={(value) => 
-                                        handleScheduleEntryChange(day, slot.name, value)
-                                      }
-                                    >
-                                      <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
-                                        <SelectValue placeholder="Select assignment" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {teacherSubjectOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                          {option.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  )}
-                                </TableCell>
-                              ))}
+                              {scheduleSlots.map((slot) => {
+                                // Check if this slot exists for this specific day
+                                const slotExistsForDay = schedules.some(s => 
+                                  s.dayOfWeek === day && s.name === slot.name
+                                );
+                                
+                                if (!slotExistsForDay) {
+                                  return (
+                                    <TableCell key={`${day}-${slot.name}`} className="p-2">
+                                      <div className="text-center text-gray-400 dark:text-gray-600 py-2 italic">
+                                        Not scheduled
+                                      </div>
+                                    </TableCell>
+                                  );
+                                }
+                                
+                                return (
+                                  <TableCell key={`${day}-${slot.name}`} className="p-2">
+                                    {slot.type === "Break" ? (
+                                      <div className="text-center text-gray-500 dark:text-gray-400 py-2">
+                                        {slot.name}
+                                      </div>
+                                    ) : (
+                                      <Select
+                                        value={scheduleEntries[`${day}-${slot.name}`] || ""}
+                                        onValueChange={(value) => 
+                                          handleScheduleEntryChange(day, slot.name, value)
+                                        }
+                                      >
+                                        <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
+                                          <SelectValue placeholder="Select assignment" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {teacherSubjectOptions.map((option) => (
+                                          <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    )}
+                                  </TableCell>
+                                );
+                              })}
                             </TableRow>
                           ))}
                         </TableBody>
