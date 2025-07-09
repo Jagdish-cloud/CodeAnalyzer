@@ -180,6 +180,230 @@ export class MemStorage implements IStorage {
     this.currentSchoolScheduleId = 1;
     this.currentTimeTableId = 1;
     this.currentTimeTableEntryId = 1;
+
+    // Initialize with pre-defined data
+    this.initializeRoles();
+    this.initializeSubjects();
+    this.initializeStaff();
+  }
+
+  private initializeRoles() {
+    const predefinedRoles = [
+      { roleName: "Principal", status: "active" },
+      { roleName: "Vice Principal", status: "active" },
+      { roleName: "Head of Department", status: "active" },
+      { roleName: "Senior Teacher", status: "active" },
+      { roleName: "Teacher", status: "active" },
+      { roleName: "Assistant Teacher", status: "active" },
+      { roleName: "Librarian", status: "active" },
+      { roleName: "Lab Assistant", status: "active" },
+      { roleName: "Administrative Officer", status: "active" },
+      { roleName: "Office Assistant", status: "active" },
+      { roleName: "Counselor", status: "active" },
+      { roleName: "Sports Coordinator", status: "active" },
+    ];
+
+    predefinedRoles.forEach((roleData) => {
+      const id = this.currentRoleId++;
+      const role: Role = { id, ...roleData };
+      this.roles.set(id, role);
+    });
+  }
+
+  private initializeSubjects() {
+    const predefinedSubjects = [
+      { subjectName: "Mathematics", status: "active" },
+      { subjectName: "English", status: "active" },
+      { subjectName: "Science", status: "active" },
+      { subjectName: "Social Studies", status: "active" },
+      { subjectName: "Hindi", status: "active" },
+      { subjectName: "Physics", status: "active" },
+      { subjectName: "Chemistry", status: "active" },
+      { subjectName: "Biology", status: "active" },
+      { subjectName: "History", status: "active" },
+      { subjectName: "Geography", status: "active" },
+      { subjectName: "Economics", status: "active" },
+      { subjectName: "Political Science", status: "active" },
+      { subjectName: "Computer Science", status: "active" },
+      { subjectName: "Physical Education", status: "active" },
+      { subjectName: "Art & Craft", status: "active" },
+      { subjectName: "Music", status: "active" },
+      { subjectName: "Dance", status: "active" },
+      { subjectName: "Sanskrit", status: "active" },
+      { subjectName: "French", status: "active" },
+      { subjectName: "German", status: "active" },
+    ];
+
+    predefinedSubjects.forEach((subjectData) => {
+      const id = this.currentSubjectId++;
+      const subject: Subject = { id, ...subjectData };
+      this.subjects.set(id, subject);
+    });
+  }
+
+  private initializeStaff() {
+    const predefinedStaff = [
+      {
+        name: "Dr. Rajesh Kumar",
+        staffId: "ST001",
+        role: "Principal",
+        mobileNumber: "+91-9876543210",
+        email: "rajesh.kumar@school.edu",
+        managerName: null,
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mrs. Priya Sharma",
+        staffId: "ST002",
+        role: "Vice Principal",
+        mobileNumber: "+91-9876543211",
+        email: "priya.sharma@school.edu",
+        managerName: "Dr. Rajesh Kumar",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Amit Singh",
+        staffId: "ST003",
+        role: "Head of Department",
+        mobileNumber: "+91-9876543212",
+        email: "amit.singh@school.edu",
+        managerName: "Mrs. Priya Sharma",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Ms. Kavya Patel",
+        staffId: "ST004",
+        role: "Senior Teacher",
+        mobileNumber: "+91-9876543213",
+        email: "kavya.patel@school.edu",
+        managerName: "Mr. Amit Singh",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Vikram Gupta",
+        staffId: "ST005",
+        role: "Teacher",
+        mobileNumber: "+91-9876543214",
+        email: "vikram.gupta@school.edu",
+        managerName: "Ms. Kavya Patel",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mrs. Meera Joshi",
+        staffId: "ST006",
+        role: "Teacher",
+        mobileNumber: "+91-9876543215",
+        email: "meera.joshi@school.edu",
+        managerName: "Ms. Kavya Patel",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Arjun Reddy",
+        staffId: "ST007",
+        role: "Teacher",
+        mobileNumber: "+91-9876543216",
+        email: "arjun.reddy@school.edu",
+        managerName: "Ms. Kavya Patel",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Ms. Sunita Verma",
+        staffId: "ST008",
+        role: "Assistant Teacher",
+        mobileNumber: "+91-9876543217",
+        email: "sunita.verma@school.edu",
+        managerName: "Mrs. Meera Joshi",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Rohit Agarwal",
+        staffId: "ST009",
+        role: "Librarian",
+        mobileNumber: "+91-9876543218",
+        email: "rohit.agarwal@school.edu",
+        managerName: "Mrs. Priya Sharma",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Ms. Neha Kapoor",
+        staffId: "ST010",
+        role: "Lab Assistant",
+        mobileNumber: "+91-9876543219",
+        email: "neha.kapoor@school.edu",
+        managerName: "Mr. Arjun Reddy",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Deepak Malhotra",
+        staffId: "ST011",
+        role: "Administrative Officer",
+        mobileNumber: "+91-9876543220",
+        email: "deepak.malhotra@school.edu",
+        managerName: "Dr. Rajesh Kumar",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mrs. Renu Saxena",
+        staffId: "ST012",
+        role: "Office Assistant",
+        mobileNumber: "+91-9876543221",
+        email: "renu.saxena@school.edu",
+        managerName: "Mr. Deepak Malhotra",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Dr. Anita Rao",
+        staffId: "ST013",
+        role: "Counselor",
+        mobileNumber: "+91-9876543222",
+        email: "anita.rao@school.edu",
+        managerName: "Mrs. Priya Sharma",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Mr. Sanjay Kumar",
+        staffId: "ST014",
+        role: "Sports Coordinator",
+        mobileNumber: "+91-9876543223",
+        email: "sanjay.kumar@school.edu",
+        managerName: "Mrs. Priya Sharma",
+        status: "Active",
+        lastWorkingDay: null
+      },
+      {
+        name: "Ms. Pooja Bansal",
+        staffId: "ST015",
+        role: "Teacher",
+        mobileNumber: "+91-9876543224",
+        email: "pooja.bansal@school.edu",
+        managerName: "Ms. Kavya Patel",
+        status: "On Leave",
+        lastWorkingDay: "2025-07-01"
+      }
+    ];
+
+    predefinedStaff.forEach((staffData) => {
+      const id = this.currentStaffId++;
+      const staff: Staff = { 
+        id, 
+        ...staffData,
+        newRole: null
+      };
+      this.staff.set(id, staff);
+    });
   }
 
   async getUser(id: number): Promise<User | undefined> {
