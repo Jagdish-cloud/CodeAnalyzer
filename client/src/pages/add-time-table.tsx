@@ -141,19 +141,13 @@ export default function AddTimeTable() {
   const createTimeTableMutation = useMutation({
     mutationFn: async (data: { timeTable: InsertTimeTable; entries: InsertTimeTableEntry[] }) => {
       // First create the time table
-      const timeTableResponse = await apiRequest("/api/time-tables", {
-        method: "POST",
-        body: JSON.stringify(data.timeTable),
-      });
+      const timeTableResponse = await apiRequest("POST", "/api/time-tables", data.timeTable);
 
       const timeTable = await timeTableResponse.json();
 
       // Then create all the entries
       const entryPromises = data.entries.map(entry => 
-        apiRequest("/api/time-table-entries", {
-          method: "POST",
-          body: JSON.stringify({ ...entry, timeTableId: timeTable.id }),
-        })
+        apiRequest("POST", "/api/time-table-entries", { ...entry, timeTableId: timeTable.id })
       );
 
       await Promise.all(entryPromises);
