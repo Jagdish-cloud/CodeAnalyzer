@@ -219,7 +219,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl",
+          "fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         style={{
@@ -246,9 +246,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 p-4">
-          <nav className="space-y-2">{menuItems.items.map(renderMenuItem)}</nav>
-        </ScrollArea>
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full p-4">
+            <nav className="space-y-2">{menuItems.items.map(renderMenuItem)}</nav>
+          </ScrollArea>
+        </div>
       </div>
     </>
   );
