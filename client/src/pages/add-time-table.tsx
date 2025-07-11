@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -203,31 +203,37 @@ export default function AddTimeTable() {
     return validWorkingDays.map(wd => wd.dayOfWeek);
   };
 
-  // Get schedule slots for the selected class division
-  const getScheduleSlots = () => {
-    if (!selectedClassDivision) return [];
+  // Get schedule slots for the selected class division - organized by day
+  const getScheduleSlotsForDay = (day: string) => {
+    // Get schedules for this specific day, sorted by timing
+    const daySchedules = schedules
+      .filter(s => s.dayOfWeek === day)
+      .sort((a, b) => a.timingFrom.localeCompare(b.timingFrom));
     
-    // Get unique schedule slots across all days, sorted by timing
-    const uniqueSlots = Array.from(new Set(schedules.map(s => s.name)))
-      .map(name => {
-        const schedule = schedules.find(s => s.name === name);
-        return { 
-          name, 
-          timing: schedule ? `${schedule.timingFrom} - ${schedule.timingTo}` : "",
-          type: schedule?.type || ""
-        };
-      })
-      .sort((a, b) => {
-        const timeA = schedules.find(s => s.name === a.name)?.timingFrom || "";
-        const timeB = schedules.find(s => s.name === b.name)?.timingFrom || "";
-        return timeA.localeCompare(timeB);
-      });
-
-    return uniqueSlots;
+    return daySchedules.map(schedule => ({
+      name: schedule.name,
+      timing: `${schedule.timingFrom} - ${schedule.timingTo}`,
+      type: schedule.type,
+      timingFrom: schedule.timingFrom,
+      timingTo: schedule.timingTo
+    }));
   };
 
-  // Generate teacher-subject options based on teacher mappings - only show assigned teachers
-  const getTeacherSubjectOptions = (): TeacherSubjectOption[] => {
+  // Get maximum number of schedule slots across all days for table structure
+  const getMaxScheduleSlots = () => {
+    const workingDays = getWorkingDaysWithSchedules();
+    let maxSlots = 0;
+    
+    workingDays.forEach(day => {
+      const daySlots = getScheduleSlotsForDay(day);
+      maxSlots = Math.max(maxSlots, daySlots.length);
+    });
+    
+    return maxSlots;
+  };
+
+  // Generate teacher-subject options with conflict detection
+  const getTeacherSubjectOptions = (day: string, timeFrom: string, timeTo: string): TeacherSubjectOption[] => {
     if (!selectedClassDivision) return [];
     
     const [className, division] = selectedClassDivision.split('-');
@@ -248,15 +254,20 @@ export default function AddTimeTable() {
         // Find the specific division
         const divisionData = divisions.find((div: any) => div.division === division);
         
-        // Only add if teacher is assigned - no unassigned subjects in dropdown
+        // Only add if teacher is assigned
         if (divisionData && divisionData.teacherId) {
           // Get teacher details
           const teacher = staff.find(s => s.id === divisionData.teacherId);
           
           if (teacher) {
+            // Check for teacher conflicts on the same day and time
+            const hasConflict = checkTeacherConflict(teacher.id, day, timeFrom, timeTo);
+            
             options.push({
               value: `subject-${subject.id}-teacher-${teacher.id}`,
-              label: `${mapping.subject} - ${teacher.name}`,
+              label: hasConflict 
+                ? `${mapping.subject} - ${teacher.name} (Conflict!)` 
+                : `${mapping.subject} - ${teacher.name}`,
               subjectId: subject.id,
               teacherId: teacher.id,
             });
@@ -266,6 +277,32 @@ export default function AddTimeTable() {
     });
 
     return options;
+  };
+
+  // Check if teacher has a conflict at the given time
+  const checkTeacherConflict = (teacherId: number, day: string, timeFrom: string, timeTo: string): boolean => {
+    // Check existing schedule entries for conflicts
+    for (const [key, value] of Object.entries(scheduleEntries)) {
+      if (value && value.includes(`teacher-${teacherId}`)) {
+        const [entryDay, slotName] = key.split('-');
+        if (entryDay === day) {
+          // Find the schedule for this slot to get timing
+          const slotSchedule = schedules.find(s => s.dayOfWeek === day && s.name === slotName);
+          if (slotSchedule) {
+            // Check for time overlap
+            if (timesOverlap(timeFrom, timeTo, slotSchedule.timingFrom, slotSchedule.timingTo)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Helper function to check if two time ranges overlap
+  const timesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+    return start1 < end2 && start2 < end1;
   };
 
   const onSubmit = (data: TimeTableFormData) => {
@@ -413,7 +450,7 @@ export default function AddTimeTable() {
                 </div>
 
                 {/* Schedule Grid */}
-                {selectedClassDivision && scheduleSlots.length > 0 && (
+                {selectedClassDivision && getMaxScheduleSlots() > 0 && (
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300 mb-4 flex items-center">
                       <Clock className="mr-2 h-5 w-5" />
@@ -421,82 +458,114 @@ export default function AddTimeTable() {
                     </h3>
                     
                     <div className="overflow-x-auto">
-                      <Table className="min-w-full">
+                      <Table className="min-w-full border border-blue-200 dark:border-blue-700">
                         <TableHeader>
+                          {/* Header Row 1: Schedule Numbers */}
                           <TableRow className="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900">
-                            <TableHead className="text-blue-700 dark:text-blue-300 font-semibold min-w-[100px]">
+                            <TableHead className="text-blue-700 dark:text-blue-300 font-semibold min-w-[100px] border-r border-blue-200 dark:border-blue-700">
                               Days
                             </TableHead>
-                            {scheduleSlots.map((slot) => (
+                            {Array.from({ length: getMaxScheduleSlots() }, (_, index) => (
                               <TableHead 
-                                key={slot.name} 
-                                className="text-blue-700 dark:text-blue-300 font-semibold min-w-[200px] text-center"
+                                key={`schedule-${index + 1}`}
+                                className="text-blue-700 dark:text-blue-300 font-semibold min-w-[200px] text-center border-r border-blue-200 dark:border-blue-700"
                               >
-                                <div className="flex flex-col">
-                                  <span>{slot.name}</span>
-                                  <span className="text-xs font-normal text-blue-600 dark:text-blue-400">
-                                    ({slot.timing})
-                                  </span>
-                                </div>
+                                Schedule-{index + 1}
                               </TableHead>
                             ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {getWorkingDaysWithSchedules().map((day) => (
-                            <TableRow 
-                              key={day}
-                              className="hover:bg-blue-50 dark:hover:bg-blue-950/50"
-                            >
-                              <TableCell className="font-medium text-blue-700 dark:text-blue-300">
-                                {day}
-                              </TableCell>
-                              {scheduleSlots.map((slot) => {
-                                // Check if this slot exists for this specific day
-                                const slotExistsForDay = schedules.some(s => 
-                                  s.dayOfWeek === day && s.name === slot.name
-                                );
-                                
-                                if (!slotExistsForDay) {
-                                  return (
-                                    <TableCell key={`${day}-${slot.name}`} className="p-2">
-                                      <div className="text-center text-gray-400 dark:text-gray-600 py-2 italic">
-                                        Not scheduled
-                                      </div>
-                                    </TableCell>
-                                  );
-                                }
-                                
-                                return (
-                                  <TableCell key={`${day}-${slot.name}`} className="p-2">
-                                    {slot.type === "Break" ? (
-                                      <div className="text-center text-gray-500 dark:text-gray-400 py-2">
-                                        {slot.name}
-                                      </div>
-                                    ) : (
-                                      <Select
-                                        value={scheduleEntries[`${day}-${slot.name}`] || ""}
-                                        onValueChange={(value) => 
-                                          handleScheduleEntryChange(day, slot.name, value)
-                                        }
-                                      >
-                                        <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
-                                          <SelectValue placeholder="Select assignment" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {teacherSubjectOptions.map((option) => (
-                                          <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    )}
+                          {getWorkingDaysWithSchedules().map((day) => {
+                            const daySlots = getScheduleSlotsForDay(day);
+                            return (
+                              <React.Fragment key={day}>
+                                {/* Period/Break Names Row */}
+                                <TableRow className="bg-blue-50 dark:bg-blue-950/30">
+                                  <TableCell className="border-r border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 font-medium text-center py-1">
+                                    
                                   </TableCell>
-                                );
-                              })}
-                            </TableRow>
-                          ))}
+                                  {Array.from({ length: getMaxScheduleSlots() }, (_, index) => {
+                                    const slot = daySlots[index];
+                                    return (
+                                      <TableCell 
+                                        key={`${day}-period-${index}`}
+                                        className="border-r border-blue-200 dark:border-blue-700 text-center py-1 text-sm font-medium text-blue-600 dark:text-blue-400"
+                                      >
+                                        {slot ? slot.name : ''}
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                                
+                                {/* Timing Row */}
+                                <TableRow className="bg-blue-50 dark:bg-blue-950/30">
+                                  <TableCell className="border-r border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 font-medium text-center py-1">
+                                    
+                                  </TableCell>
+                                  {Array.from({ length: getMaxScheduleSlots() }, (_, index) => {
+                                    const slot = daySlots[index];
+                                    return (
+                                      <TableCell 
+                                        key={`${day}-timing-${index}`}
+                                        className="border-r border-blue-200 dark:border-blue-700 text-center py-1 text-xs text-blue-500 dark:text-blue-400"
+                                      >
+                                        {slot ? slot.timing : ''}
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                                
+                                {/* Assignment Row */}
+                                <TableRow className="hover:bg-blue-50 dark:hover:bg-blue-950/50 border-b-2 border-blue-200 dark:border-blue-700">
+                                  <TableCell className="font-bold text-blue-700 dark:text-blue-300 border-r border-blue-200 dark:border-blue-700 py-3">
+                                    {day}
+                                  </TableCell>
+                                  {Array.from({ length: getMaxScheduleSlots() }, (_, index) => {
+                                    const slot = daySlots[index];
+                                    return (
+                                      <TableCell 
+                                        key={`${day}-assignment-${index}`}
+                                        className="p-2 border-r border-blue-200 dark:border-blue-700"
+                                      >
+                                        {!slot ? (
+                                          <div className="text-center text-gray-400 dark:text-gray-600 py-2 italic text-sm">
+                                            No schedule
+                                          </div>
+                                        ) : slot.type === "Break" ? (
+                                          <div className="text-center text-gray-500 dark:text-gray-400 py-2 font-medium">
+                                            No Assignment
+                                          </div>
+                                        ) : (
+                                          <Select
+                                            value={scheduleEntries[`${day}-${slot.name}`] || ""}
+                                            onValueChange={(value) => 
+                                              handleScheduleEntryChange(day, slot.name, value)
+                                            }
+                                          >
+                                            <SelectTrigger className="w-full border-blue-200 focus:border-blue-400 dark:border-blue-700">
+                                              <SelectValue placeholder="Select Teacher & Subject" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {getTeacherSubjectOptions(day, slot.timingFrom, slot.timingTo).map((option) => (
+                                                <SelectItem 
+                                                  key={option.value} 
+                                                  value={option.value}
+                                                  className={option.label.includes('Conflict!') ? 'text-red-600 dark:text-red-400' : ''}
+                                                >
+                                                  {option.label}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        )}
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                              </React.Fragment>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>

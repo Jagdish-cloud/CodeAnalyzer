@@ -1,0 +1,23 @@
+in add-time-table screen
+
+- let the table be in the following format :
+
+Days   |   Schedule-1 			 |    Schedule-2 		  |   Schedule-3 		   |   Schedule -4 		    | (....and so on)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+       |   Period-1 	                 |    Period-2   	          |    Period-3   	           |    Period-4   	            | (....according to school-schedule)
+       | 9:00 to 10:00                   |  10:00 to 11:00	          |  11:00 to 12:00	           |  12:00 to 13:00	            | (....according to school-schedule)
+Monday | Dropdown with Teacher n Subject |Dropdown with Teacher n Subject |Dropdown with Teacher n Subject |Dropdown with Teacher n Subject | (....according to Teacher Subject/Class/Div Mapping)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        |   Period-1 	                  |    Period-2   	           |    Period-3   	            |    Activity-1   	             | (....according to school-schedule)
+        | 9:00 to 10:00                   |  10:00 to 11:00	           |  11:00 to 12:00	            |  12:00 to 13:00	             | (....according to school-schedule)
+Tuesday | Dropdown with Teacher n Subject |Dropdown with Teacher n Subject |Dropdown with Teacher n Subject |Dropdown with Teacher n Subject | (....according to Teacher Subject/Class/Div Mapping)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          |   Period-1 	                    |    Period-2   	             |    Break-1     	              |    Period-3   	               | (....according to school-schedule)
+          | 9:00 to 10:00                   |  10:00 to 11:00	             |  11:00 to 12:00 	              |  12:00 to 13:00	               | (....according to school-schedule)
+Wednwsday | Dropdown with Teacher n Subject |Dropdown with Teacher n Subject |No Assignment 		      |Dropdown with Teacher n Subject | (....according to Teacher Subject/Class/Div Mapping)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+...for all the days in the weeks
+
+- if break then no assignment
+- if the time is for and a Teacher 1 is assigned fa  Class[any_1] and Division[any_1] @ h1:m1m1 to h2:m2:m2 on Day X , then Teacher 1 should not be avaible to any other Class and Division @h1:m1m1 to h2:m2:m2 on the same day (Day X)
