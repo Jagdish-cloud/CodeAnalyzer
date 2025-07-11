@@ -187,8 +187,6 @@ export class MemStorage implements IStorage {
     this.initializeStaff();
     this.initializeWorkingDays();
     this.initializeSchoolSchedules();
-    this.initializeClassMappings();
-    this.initializeTeacherMappings();
   }
 
   private initializeRoles() {
@@ -505,98 +503,6 @@ export class MemStorage implements IStorage {
       const id = this.currentSchoolScheduleId++;
       const schedule: SchoolSchedule = { id, ...scheduleData };
       this.schoolSchedules.set(id, schedule);
-    });
-  }
-
-  private initializeClassMappings() {
-    const predefinedClassMappings = [
-      { class: "1", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Art & Craft"] },
-      { class: "1", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Physical Education"] },
-      { class: "2", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Music"] },
-      { class: "2", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Art & Craft"] },
-      { class: "3", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer Science"] },
-      { class: "3", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Physical Education"] },
-      { class: "4", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Music", "Art & Craft"] },
-      { class: "4", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer Science", "Physical Education"] },
-      { class: "5", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Computer Science", "Music"] },
-      { class: "5", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"] },
-      { class: "6", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science"] },
-      { class: "6", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Art & Craft"] },
-      { class: "7", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"] },
-      { class: "7", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Art & Craft", "Music"] },
-      { class: "8", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science"] },
-      { class: "8", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Physical Education"] },
-      { class: "9", division: "A", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi"] },
-      { class: "9", division: "B", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "Economics", "Political Science", "Hindi"] },
-      { class: "10", division: "A", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi"] },
-      { class: "10", division: "B", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "Economics", "Political Science", "Hindi"] }
-    ];
-
-    predefinedClassMappings.forEach((mappingData) => {
-      const id = this.currentClassMappingId++;
-      const mapping: ClassMapping = { id, ...mappingData };
-      this.classMappings.set(id, mapping);
-    });
-  }
-
-  private initializeTeacherMappings() {
-    const predefinedTeacherMappings = [
-      // Class 1 A
-      { className: "1", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
-      { className: "1", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
-      { className: "1", division: "A", subjectName: "Science", teacherId: 6, isClassTeacher: false },
-      { className: "1", division: "A", subjectName: "Social Science", teacherId: 7, isClassTeacher: false },
-      { className: "1", division: "A", subjectName: "Hindi", teacherId: 8, isClassTeacher: false },
-      { className: "1", division: "A", subjectName: "Art & Craft", teacherId: 15, isClassTeacher: false },
-
-      // Class 1 B
-      { className: "1", division: "B", subjectName: "English", teacherId: 5, isClassTeacher: true },
-      { className: "1", division: "B", subjectName: "Mathematics", teacherId: 6, isClassTeacher: false },
-      { className: "1", division: "B", subjectName: "Science", teacherId: 7, isClassTeacher: false },
-      { className: "1", division: "B", subjectName: "Social Science", teacherId: 8, isClassTeacher: false },
-      { className: "1", division: "B", subjectName: "Hindi", teacherId: 4, isClassTeacher: false },
-      { className: "1", division: "B", subjectName: "Physical Education", teacherId: 14, isClassTeacher: false },
-
-      // Class 2 A
-      { className: "2", division: "A", subjectName: "English", teacherId: 6, isClassTeacher: true },
-      { className: "2", division: "A", subjectName: "Mathematics", teacherId: 7, isClassTeacher: false },
-      { className: "2", division: "A", subjectName: "Science", teacherId: 8, isClassTeacher: false },
-      { className: "2", division: "A", subjectName: "Social Science", teacherId: 4, isClassTeacher: false },
-      { className: "2", division: "A", subjectName: "Hindi", teacherId: 5, isClassTeacher: false },
-      { className: "2", division: "A", subjectName: "Music", teacherId: 13, isClassTeacher: false },
-
-      // Class 3 A
-      { className: "3", division: "A", subjectName: "English", teacherId: 7, isClassTeacher: true },
-      { className: "3", division: "A", subjectName: "Mathematics", teacherId: 8, isClassTeacher: false },
-      { className: "3", division: "A", subjectName: "Science", teacherId: 4, isClassTeacher: false },
-      { className: "3", division: "A", subjectName: "Social Science", teacherId: 5, isClassTeacher: false },
-      { className: "3", division: "A", subjectName: "Hindi", teacherId: 6, isClassTeacher: false },
-      { className: "3", division: "A", subjectName: "Computer Science", teacherId: 11, isClassTeacher: false },
-
-      // Class 5 A
-      { className: "5", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
-      { className: "5", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
-      { className: "5", division: "A", subjectName: "Science", teacherId: 6, isClassTeacher: false },
-      { className: "5", division: "A", subjectName: "Social Studies", teacherId: 7, isClassTeacher: false },
-      { className: "5", division: "A", subjectName: "Hindi", teacherId: 8, isClassTeacher: false },
-      { className: "5", division: "A", subjectName: "Computer Science", teacherId: 11, isClassTeacher: false },
-      { className: "5", division: "A", subjectName: "Music", teacherId: 13, isClassTeacher: false },
-
-      // Class 9 A
-      { className: "9", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
-      { className: "9", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "Physics", teacherId: 6, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "Chemistry", teacherId: 7, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "Biology", teacherId: 8, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "History", teacherId: 15, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "Geography", teacherId: 4, isClassTeacher: false },
-      { className: "9", division: "A", subjectName: "Hindi", teacherId: 5, isClassTeacher: false }
-    ];
-
-    predefinedTeacherMappings.forEach((mappingData) => {
-      const id = this.currentTeacherMappingId++;
-      const mapping: TeacherMapping = { id, ...mappingData };
-      this.teacherMappings.set(id, mapping);
     });
   }
 
