@@ -72,20 +72,19 @@ export default function TeacherMapping() {
 
   // Group teacher mappings by class-division combinations
   const groupedMappings = teacherMappings?.reduce((acc, mapping) => {
-    const divisions = mapping.divisions as Array<{ division: string; teacherId?: number; teacherName?: string }>;
-    const classDivisionKey = `${mapping.class}-${divisions[0]?.division || ''}`;
+    const classDivisionKey = `${mapping.className}-${mapping.division}`;
     
     if (!acc[classDivisionKey]) {
       acc[classDivisionKey] = {
-        class: mapping.class,
-        division: divisions[0]?.division || '',
+        class: mapping.className,
+        division: mapping.division,
         subjects: [],
-        status: mapping.status,
+        status: "active", // Default status since individual mappings don't have status
         mappingIds: []
       };
     }
     
-    acc[classDivisionKey].subjects.push(mapping.subject);
+    acc[classDivisionKey].subjects.push(mapping.subjectName);
     acc[classDivisionKey].mappingIds.push(mapping.id);
     
     return acc;
