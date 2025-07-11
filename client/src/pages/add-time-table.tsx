@@ -332,15 +332,17 @@ export default function AddTimeTable() {
     Object.entries(scheduleEntries).forEach(([key, value]) => {
       if (value && value !== "no-assignment") {
         const [day, slot] = key.split('-');
-        const option = getTeacherSubjectOptions().find(opt => opt.value === value);
         
-        if (option && option.subjectId) {
+        // Parse teacher and subject IDs from the value
+        const match = value.match(/subject-(\d+)-teacher-(\d+)/);
+        if (match) {
+          const [, subjectId, teacherId] = match;
           entries.push({
             timeTableId: 0, // Will be set after time table creation
             dayOfWeek: day,
             scheduleSlot: slot,
-            subjectId: option.subjectId,
-            teacherId: option.teacherId,
+            subjectId: parseInt(subjectId),
+            teacherId: parseInt(teacherId),
           });
         }
       }
@@ -363,8 +365,7 @@ export default function AddTimeTable() {
     }));
   };
 
-  const scheduleSlots = getScheduleSlots();
-  const teacherSubjectOptions = getTeacherSubjectOptions();
+  // Schedule slots and teacher options are now calculated dynamically per day/slot in the table
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 p-4">
