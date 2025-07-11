@@ -185,6 +185,10 @@ export class MemStorage implements IStorage {
     this.initializeRoles();
     this.initializeSubjects();
     this.initializeStaff();
+    this.initializeWorkingDays();
+    this.initializeSchoolSchedules();
+    this.initializeClassMappings();
+    this.initializeTeacherMappings();
   }
 
   private initializeRoles() {
@@ -403,6 +407,196 @@ export class MemStorage implements IStorage {
         newRole: null
       };
       this.staff.set(id, staff);
+    });
+  }
+
+  private initializeWorkingDays() {
+    const predefinedWorkingDays = [
+      { dayOfWeek: "Monday", dayType: "FullDay", timingFrom: "08:00", timingTo: "15:30", alternateWeeks: [] },
+      { dayOfWeek: "Tuesday", dayType: "FullDay", timingFrom: "08:00", timingTo: "15:30", alternateWeeks: [] },
+      { dayOfWeek: "Wednesday", dayType: "FullDay", timingFrom: "08:00", timingTo: "15:30", alternateWeeks: [] },
+      { dayOfWeek: "Thursday", dayType: "FullDay", timingFrom: "08:00", timingTo: "15:30", alternateWeeks: [] },
+      { dayOfWeek: "Friday", dayType: "FullDay", timingFrom: "08:00", timingTo: "15:30", alternateWeeks: [] },
+      { dayOfWeek: "Saturday", dayType: "HalfDay", timingFrom: "08:00", timingTo: "12:00", alternateWeeks: [] },
+      { dayOfWeek: "Sunday", dayType: "Holiday", timingFrom: "", timingTo: "", alternateWeeks: [] }
+    ];
+
+    predefinedWorkingDays.forEach((workingDayData) => {
+      const id = this.currentWorkingDayId++;
+      const workingDay: WorkingDay = { id, ...workingDayData };
+      this.workingDays.set(id, workingDay);
+    });
+  }
+
+  private initializeSchoolSchedules() {
+    const predefinedSchedules = [
+      // Monday
+      { dayOfWeek: "Monday", type: "Others", name: "Prayer Assembly", timingFrom: "08:00", timingTo: "08:30" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-1", timingFrom: "08:30", timingTo: "09:15" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-2", timingFrom: "09:15", timingTo: "10:00" },
+      { dayOfWeek: "Monday", type: "Break", name: "Break-1", timingFrom: "10:00", timingTo: "10:15" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-3", timingFrom: "10:15", timingTo: "11:00" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-4", timingFrom: "11:00", timingTo: "11:45" },
+      { dayOfWeek: "Monday", type: "Break", name: "Lunch Break", timingFrom: "11:45", timingTo: "12:30" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-5", timingFrom: "12:30", timingTo: "13:15" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-6", timingFrom: "13:15", timingTo: "14:00" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-7", timingFrom: "14:00", timingTo: "14:45" },
+      { dayOfWeek: "Monday", type: "Period", name: "Period-8", timingFrom: "14:45", timingTo: "15:30" },
+
+      // Tuesday
+      { dayOfWeek: "Tuesday", type: "Others", name: "General Assembly", timingFrom: "08:00", timingTo: "08:20" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-1", timingFrom: "08:20", timingTo: "09:05" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-2", timingFrom: "09:05", timingTo: "09:50" },
+      { dayOfWeek: "Tuesday", type: "Break", name: "Break-1", timingFrom: "09:50", timingTo: "10:05" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-3", timingFrom: "10:05", timingTo: "10:50" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-4", timingFrom: "10:50", timingTo: "11:35" },
+      { dayOfWeek: "Tuesday", type: "Break", name: "Lunch Break", timingFrom: "11:35", timingTo: "12:20" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-5", timingFrom: "12:20", timingTo: "13:05" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-6", timingFrom: "13:05", timingTo: "13:50" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-7", timingFrom: "13:50", timingTo: "14:35" },
+      { dayOfWeek: "Tuesday", type: "Period", name: "Period-8", timingFrom: "14:35", timingTo: "15:20" },
+
+      // Wednesday
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-1", timingFrom: "08:00", timingTo: "08:45" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-2", timingFrom: "08:45", timingTo: "09:30" },
+      { dayOfWeek: "Wednesday", type: "Break", name: "Break-1", timingFrom: "09:30", timingTo: "09:45" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-3", timingFrom: "09:45", timingTo: "10:30" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-4", timingFrom: "10:30", timingTo: "11:15" },
+      { dayOfWeek: "Wednesday", type: "Break", name: "Lunch Break", timingFrom: "11:15", timingTo: "12:00" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-5", timingFrom: "12:00", timingTo: "12:45" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-6", timingFrom: "12:45", timingTo: "13:30" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-7", timingFrom: "13:30", timingTo: "14:15" },
+      { dayOfWeek: "Wednesday", type: "Period", name: "Period-8", timingFrom: "14:15", timingTo: "15:00" },
+
+      // Thursday
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-1", timingFrom: "08:00", timingTo: "08:45" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-2", timingFrom: "08:45", timingTo: "09:30" },
+      { dayOfWeek: "Thursday", type: "Break", name: "Break-1", timingFrom: "09:30", timingTo: "09:45" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-3", timingFrom: "09:45", timingTo: "10:30" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-4", timingFrom: "10:30", timingTo: "11:15" },
+      { dayOfWeek: "Thursday", type: "Break", name: "Lunch Break", timingFrom: "11:15", timingTo: "12:00" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-5", timingFrom: "12:00", timingTo: "12:45" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-6", timingFrom: "12:45", timingTo: "13:30" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-7", timingFrom: "13:30", timingTo: "14:15" },
+      { dayOfWeek: "Thursday", type: "Period", name: "Period-8", timingFrom: "14:15", timingTo: "15:00" },
+
+      // Friday
+      { dayOfWeek: "Friday", type: "Period", name: "Period-1", timingFrom: "08:00", timingTo: "08:45" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-2", timingFrom: "08:45", timingTo: "09:30" },
+      { dayOfWeek: "Friday", type: "Break", name: "Break-1", timingFrom: "09:30", timingTo: "09:45" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-3", timingFrom: "09:45", timingTo: "10:30" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-4", timingFrom: "10:30", timingTo: "11:15" },
+      { dayOfWeek: "Friday", type: "Break", name: "Lunch Break", timingFrom: "11:15", timingTo: "12:00" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-5", timingFrom: "12:00", timingTo: "12:45" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-6", timingFrom: "12:45", timingTo: "13:30" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-7", timingFrom: "13:30", timingTo: "14:15" },
+      { dayOfWeek: "Friday", type: "Period", name: "Period-8", timingFrom: "14:15", timingTo: "15:00" },
+
+      // Saturday
+      { dayOfWeek: "Saturday", type: "Period", name: "Period-1", timingFrom: "08:00", timingTo: "08:45" },
+      { dayOfWeek: "Saturday", type: "Period", name: "Period-2", timingFrom: "08:45", timingTo: "09:30" },
+      { dayOfWeek: "Saturday", type: "Break", name: "Break-1", timingFrom: "09:30", timingTo: "09:45" },
+      { dayOfWeek: "Saturday", type: "Period", name: "Period-3", timingFrom: "09:45", timingTo: "10:30" },
+      { dayOfWeek: "Saturday", type: "Period", name: "Period-4", timingFrom: "10:30", timingTo: "11:15" },
+      { dayOfWeek: "Saturday", type: "Period", name: "Period-5", timingFrom: "11:15", timingTo: "12:00" }
+    ];
+
+    predefinedSchedules.forEach((scheduleData) => {
+      const id = this.currentSchoolScheduleId++;
+      const schedule: SchoolSchedule = { id, ...scheduleData };
+      this.schoolSchedules.set(id, schedule);
+    });
+  }
+
+  private initializeClassMappings() {
+    const predefinedClassMappings = [
+      { class: "1", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Art & Craft"] },
+      { class: "1", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Physical Education"] },
+      { class: "2", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Music"] },
+      { class: "2", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Art & Craft"] },
+      { class: "3", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer Science"] },
+      { class: "3", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Physical Education"] },
+      { class: "4", division: "A", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Music", "Art & Craft"] },
+      { class: "4", division: "B", subjects: ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer Science", "Physical Education"] },
+      { class: "5", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Computer Science", "Music"] },
+      { class: "5", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"] },
+      { class: "6", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science"] },
+      { class: "6", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Art & Craft"] },
+      { class: "7", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"] },
+      { class: "7", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Art & Craft", "Music"] },
+      { class: "8", division: "A", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science"] },
+      { class: "8", division: "B", subjects: ["English", "Mathematics", "Science", "Social Studies", "Hindi", "French", "Physical Education"] },
+      { class: "9", division: "A", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi"] },
+      { class: "9", division: "B", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "Economics", "Political Science", "Hindi"] },
+      { class: "10", division: "A", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi"] },
+      { class: "10", division: "B", subjects: ["English", "Mathematics", "Physics", "Chemistry", "Biology", "Economics", "Political Science", "Hindi"] }
+    ];
+
+    predefinedClassMappings.forEach((mappingData) => {
+      const id = this.currentClassMappingId++;
+      const mapping: ClassMapping = { id, ...mappingData };
+      this.classMappings.set(id, mapping);
+    });
+  }
+
+  private initializeTeacherMappings() {
+    const predefinedTeacherMappings = [
+      // Class 1 A
+      { className: "1", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
+      { className: "1", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
+      { className: "1", division: "A", subjectName: "Science", teacherId: 6, isClassTeacher: false },
+      { className: "1", division: "A", subjectName: "Social Science", teacherId: 7, isClassTeacher: false },
+      { className: "1", division: "A", subjectName: "Hindi", teacherId: 8, isClassTeacher: false },
+      { className: "1", division: "A", subjectName: "Art & Craft", teacherId: 15, isClassTeacher: false },
+
+      // Class 1 B
+      { className: "1", division: "B", subjectName: "English", teacherId: 5, isClassTeacher: true },
+      { className: "1", division: "B", subjectName: "Mathematics", teacherId: 6, isClassTeacher: false },
+      { className: "1", division: "B", subjectName: "Science", teacherId: 7, isClassTeacher: false },
+      { className: "1", division: "B", subjectName: "Social Science", teacherId: 8, isClassTeacher: false },
+      { className: "1", division: "B", subjectName: "Hindi", teacherId: 4, isClassTeacher: false },
+      { className: "1", division: "B", subjectName: "Physical Education", teacherId: 14, isClassTeacher: false },
+
+      // Class 2 A
+      { className: "2", division: "A", subjectName: "English", teacherId: 6, isClassTeacher: true },
+      { className: "2", division: "A", subjectName: "Mathematics", teacherId: 7, isClassTeacher: false },
+      { className: "2", division: "A", subjectName: "Science", teacherId: 8, isClassTeacher: false },
+      { className: "2", division: "A", subjectName: "Social Science", teacherId: 4, isClassTeacher: false },
+      { className: "2", division: "A", subjectName: "Hindi", teacherId: 5, isClassTeacher: false },
+      { className: "2", division: "A", subjectName: "Music", teacherId: 13, isClassTeacher: false },
+
+      // Class 3 A
+      { className: "3", division: "A", subjectName: "English", teacherId: 7, isClassTeacher: true },
+      { className: "3", division: "A", subjectName: "Mathematics", teacherId: 8, isClassTeacher: false },
+      { className: "3", division: "A", subjectName: "Science", teacherId: 4, isClassTeacher: false },
+      { className: "3", division: "A", subjectName: "Social Science", teacherId: 5, isClassTeacher: false },
+      { className: "3", division: "A", subjectName: "Hindi", teacherId: 6, isClassTeacher: false },
+      { className: "3", division: "A", subjectName: "Computer Science", teacherId: 11, isClassTeacher: false },
+
+      // Class 5 A
+      { className: "5", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
+      { className: "5", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
+      { className: "5", division: "A", subjectName: "Science", teacherId: 6, isClassTeacher: false },
+      { className: "5", division: "A", subjectName: "Social Studies", teacherId: 7, isClassTeacher: false },
+      { className: "5", division: "A", subjectName: "Hindi", teacherId: 8, isClassTeacher: false },
+      { className: "5", division: "A", subjectName: "Computer Science", teacherId: 11, isClassTeacher: false },
+      { className: "5", division: "A", subjectName: "Music", teacherId: 13, isClassTeacher: false },
+
+      // Class 9 A
+      { className: "9", division: "A", subjectName: "English", teacherId: 4, isClassTeacher: true },
+      { className: "9", division: "A", subjectName: "Mathematics", teacherId: 5, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "Physics", teacherId: 6, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "Chemistry", teacherId: 7, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "Biology", teacherId: 8, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "History", teacherId: 15, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "Geography", teacherId: 4, isClassTeacher: false },
+      { className: "9", division: "A", subjectName: "Hindi", teacherId: 5, isClassTeacher: false }
+    ];
+
+    predefinedTeacherMappings.forEach((mappingData) => {
+      const id = this.currentTeacherMappingId++;
+      const mapping: TeacherMapping = { id, ...mappingData };
+      this.teacherMappings.set(id, mapping);
     });
   }
 
