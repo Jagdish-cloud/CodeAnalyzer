@@ -113,6 +113,12 @@ export default function AddTeacherMapping() {
     };
   });
 
+  // Debug logging
+  console.log("Class mappings:", classMappings);
+  console.log("Staff data:", staff);
+  console.log("Class division options:", classDivisionOptions);
+  console.log("Subject assignments:", subjectAssignments);
+
   // When class-division is selected, load available subjects
   useEffect(() => {
     if (selectedClassDivision) {
@@ -239,6 +245,22 @@ export default function AddTeacherMapping() {
     setSubjectAssignments(updatedAssignments);
     form.setValue("subjectAssignments", updatedAssignments);
   };
+
+  // Show loading state while data is being fetched
+  if (classMappingsLoading || staffLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-rose-950 dark:via-pink-950 dark:to-purple-950">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-slate-600 dark:text-slate-400">Loading class and staff data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-rose-950 dark:via-pink-950 dark:to-purple-950">
