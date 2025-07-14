@@ -11,6 +11,7 @@ import {
   timeTables,
   timeTableEntries,
   syllabusMasters,
+  periodicTests,
   type User,
   type InsertUser,
   type Staff,
@@ -35,6 +36,8 @@ import {
   type InsertTimeTableEntry,
   type SyllabusMaster,
   type InsertSyllabusMaster,
+  type PeriodicTest,
+  type InsertPeriodicTest,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -152,6 +155,14 @@ export interface IStorage {
     syllabus: Partial<InsertSyllabusMaster>,
   ): Promise<SyllabusMaster | undefined>;
   deleteSyllabusMaster(id: number): Promise<boolean>;
+  getPeriodicTest(id: number): Promise<PeriodicTest | undefined>;
+  getAllPeriodicTests(): Promise<PeriodicTest[]>;
+  createPeriodicTest(test: InsertPeriodicTest): Promise<PeriodicTest>;
+  updatePeriodicTest(
+    id: number,
+    test: Partial<InsertPeriodicTest>,
+  ): Promise<PeriodicTest | undefined>;
+  deletePeriodicTest(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -167,6 +178,7 @@ export class MemStorage implements IStorage {
   private timeTables: Map<number, TimeTable>;
   private timeTableEntries: Map<number, TimeTableEntry>;
   private syllabusMasters: Map<number, SyllabusMaster>;
+  private periodicTests: Map<number, PeriodicTest>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -179,6 +191,7 @@ export class MemStorage implements IStorage {
   private currentTimeTableId: number;
   private currentTimeTableEntryId: number;
   private currentSyllabusMasterId: number;
+  private currentPeriodicTestId: number;
 
   constructor() {
     this.users = new Map();
@@ -193,6 +206,7 @@ export class MemStorage implements IStorage {
     this.timeTables = new Map();
     this.timeTableEntries = new Map();
     this.syllabusMasters = new Map();
+    this.periodicTests = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -205,6 +219,7 @@ export class MemStorage implements IStorage {
     this.currentTimeTableId = 1;
     this.currentTimeTableEntryId = 1;
     this.currentSyllabusMasterId = 1;
+    this.currentPeriodicTestId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1146,6 +1161,48 @@ export class MemStorage implements IStorage {
 
   async deleteSyllabusMaster(id: number): Promise<boolean> {
     return this.syllabusMasters.delete(id);
+  }
+
+  // Periodic Test methods
+  async getPeriodicTest(id: number): Promise<PeriodicTest | undefined> {
+    return this.periodicTests.get(id);
+  }
+
+  async getAllPeriodicTests(): Promise<PeriodicTest[]> {
+    return Array.from(this.periodicTests.values());
+  }
+
+  async createPeriodicTest(insertTest: InsertPeriodicTest): Promise<PeriodicTest> {
+    const id = this.currentPeriodicTestId++;
+    const test: PeriodicTest = {
+      ...insertTest,
+      id,
+      status: insertTest.status || "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.periodicTests.set(id, test);
+    return test;
+  }
+
+  async updatePeriodicTest(
+    id: number,
+    updateData: Partial<InsertPeriodicTest>,
+  ): Promise<PeriodicTest | undefined> {
+    const existing = this.periodicTests.get(id);
+    if (!existing) return undefined;
+
+    const updated: PeriodicTest = { 
+      ...existing, 
+      ...updateData,
+      updatedAt: new Date(),
+    };
+    this.periodicTests.set(id, updated);
+    return updated;
+  }
+
+  async deletePeriodicTest(id: number): Promise<boolean> {
+    return this.periodicTests.delete(id);
   }
 }
 

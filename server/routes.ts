@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -982,6 +982,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete syllabus master" });
+    }
+  });
+
+  // Periodic Test routes
+  app.get("/api/periodic-tests", async (req, res) => {
+    try {
+      const tests = await storage.getAllPeriodicTests();
+      res.json(tests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch periodic tests" });
+    }
+  });
+
+  app.post("/api/periodic-tests", async (req, res) => {
+    try {
+      const result = insertPeriodicTestSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const test = await storage.createPeriodicTest(result.data);
+      res.status(201).json(test);
+    } catch (error) {
+      console.error("Periodic test creation error:", error);
+      res.status(500).json({ message: "Failed to create periodic test" });
+    }
+  });
+
+  app.get("/api/periodic-tests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid periodic test ID" });
+      }
+
+      const test = await storage.getPeriodicTest(id);
+      if (!test) {
+        return res.status(404).json({ message: "Periodic test not found" });
+      }
+      
+      res.json(test);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch periodic test" });
+    }
+  });
+
+  app.patch("/api/periodic-tests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid periodic test ID" });
+      }
+
+      const result = insertPeriodicTestSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const test = await storage.updatePeriodicTest(id, result.data);
+      if (!test) {
+        return res.status(404).json({ message: "Periodic test not found" });
+      }
+
+      res.json(test);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update periodic test" });
+    }
+  });
+
+  app.delete("/api/periodic-tests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid periodic test ID" });
+      }
+
+      const deleted = await storage.deletePeriodicTest(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Periodic test not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete periodic test" });
     }
   });
 

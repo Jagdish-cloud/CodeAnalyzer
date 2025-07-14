@@ -230,6 +230,15 @@ Preferred communication style: Simple, everyday language.
   - Added complete CRUD operations for syllabus masters in backend storage and API
   - Applied consistent indigo-purple gradient theme matching application design
   - Enhanced syllabus display with chapter/lesson badges and conditional description rendering
+- July 14, 2025: Added Schedule Periodic Test Management System:
+  - Created new "Schedule Periodic Test" menu item positioned after Time Table creation
+  - Built landing page displaying scheduled tests with Class/Division, Subject, and Action columns
+  - Developed comprehensive Add Periodic Test form with year, class, division, subject, and chapter selection
+  - Implemented advanced validation system with real-time error display for class-subject-division conflicts
+  - Added multi-select functionality for divisions and chapters with proper validation
+  - Created complete CRUD operations for periodic tests in backend storage and API
+  - Applied consistent orange-red gradient theme matching educational scheduling design
+  - Enhanced form with date/time pickers and comprehensive validation messaging
 
 ## Changelog
 

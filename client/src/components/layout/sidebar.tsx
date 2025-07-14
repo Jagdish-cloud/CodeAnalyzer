@@ -80,6 +80,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/time-table",
         },
         {
+          id: "periodic-test",
+          title: "Schedule Periodic Test",
+          type: "item",
+          icon: "feather icon-clock",
+          url: "/periodic-test",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

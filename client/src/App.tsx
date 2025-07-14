@@ -26,6 +26,8 @@ import AddStudent from "@/pages/add-student";
 import SyllabusMaster from "@/pages/syllabus-master";
 import SyllabusClass from "@/pages/syllabus-class";
 import AddSyllabus from "@/pages/add-syllabus";
+import PeriodicTest from "@/pages/periodic-test";
+import AddPeriodicTest from "@/pages/add-periodic-test";
 
 function Router() {
   return (
@@ -53,6 +55,8 @@ function Router() {
         <Route path="/syllabus-master" component={SyllabusMaster} />
         <Route path="/syllabus-master/class/:className" component={SyllabusClass} />
         <Route path="/syllabus-master/add" component={AddSyllabus} />
+        <Route path="/periodic-test" component={PeriodicTest} />
+        <Route path="/periodic-test/add" component={AddPeriodicTest} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

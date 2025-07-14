@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, json, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -137,6 +137,20 @@ export const syllabusMasters = pgTable("syllabus_masters", {
   status: text("status").notNull().default("active"),
 });
 
+export const periodicTests = pgTable("periodic_tests", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  class: text("class").notNull(),
+  divisions: text("divisions").array().notNull(), // Array of divisions
+  subject: text("subject").notNull(),
+  chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
+  testDate: text("test_date").notNull(),
+  testTime: text("test_time").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -187,6 +201,12 @@ export const insertSyllabusMasterSchema = createInsertSchema(syllabusMasters).om
   id: true,
 });
 
+export const insertPeriodicTestSchema = createInsertSchema(periodicTests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -211,3 +231,5 @@ export type InsertTimeTableEntry = z.infer<typeof insertTimeTableEntrySchema>;
 export type TimeTableEntry = typeof timeTableEntries.$inferSelect;
 export type InsertSyllabusMaster = z.infer<typeof insertSyllabusMasterSchema>;
 export type SyllabusMaster = typeof syllabusMasters.$inferSelect;
+export type InsertPeriodicTest = z.infer<typeof insertPeriodicTestSchema>;
+export type PeriodicTest = typeof periodicTests.$inferSelect;
