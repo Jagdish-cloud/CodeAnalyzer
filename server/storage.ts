@@ -8,6 +8,9 @@ import {
   students,
   workingDays,
   schoolSchedule,
+  timeTables,
+  timeTableEntries,
+  syllabusMasters,
   type User,
   type InsertUser,
   type Staff,
@@ -26,6 +29,12 @@ import {
   type InsertWorkingDay,
   type SchoolSchedule,
   type InsertSchoolSchedule,
+  type TimeTable,
+  type InsertTimeTable,
+  type TimeTableEntry,
+  type InsertTimeTableEntry,
+  type SyllabusMaster,
+  type InsertSyllabusMaster,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -131,6 +140,18 @@ export interface IStorage {
     teacherId: number,
     excludeTimeTableId?: number,
   ): Promise<boolean>;
+  getSyllabusMaster(id: number): Promise<SyllabusMaster | undefined>;
+  getAllSyllabusMasters(): Promise<SyllabusMaster[]>;
+  getSyllabusMastersByClassDivision(
+    className: string,
+    divisions: string[],
+  ): Promise<SyllabusMaster[]>;
+  createSyllabusMaster(syllabus: InsertSyllabusMaster): Promise<SyllabusMaster>;
+  updateSyllabusMaster(
+    id: number,
+    syllabus: Partial<InsertSyllabusMaster>,
+  ): Promise<SyllabusMaster | undefined>;
+  deleteSyllabusMaster(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -145,6 +166,7 @@ export class MemStorage implements IStorage {
   private schoolSchedules: Map<number, SchoolSchedule>;
   private timeTables: Map<number, TimeTable>;
   private timeTableEntries: Map<number, TimeTableEntry>;
+  private syllabusMasters: Map<number, SyllabusMaster>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -156,6 +178,7 @@ export class MemStorage implements IStorage {
   private currentSchoolScheduleId: number;
   private currentTimeTableId: number;
   private currentTimeTableEntryId: number;
+  private currentSyllabusMasterId: number;
 
   constructor() {
     this.users = new Map();
@@ -169,6 +192,7 @@ export class MemStorage implements IStorage {
     this.schoolSchedules = new Map();
     this.timeTables = new Map();
     this.timeTableEntries = new Map();
+    this.syllabusMasters = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -180,6 +204,7 @@ export class MemStorage implements IStorage {
     this.currentSchoolScheduleId = 1;
     this.currentTimeTableId = 1;
     this.currentTimeTableEntryId = 1;
+    this.currentSyllabusMasterId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1074,6 +1099,53 @@ export class MemStorage implements IStorage {
     }
 
     return false; // No conflict
+  }
+
+  // Syllabus Master methods
+  async getSyllabusMaster(id: number): Promise<SyllabusMaster | undefined> {
+    return this.syllabusMasters.get(id);
+  }
+
+  async getAllSyllabusMasters(): Promise<SyllabusMaster[]> {
+    return Array.from(this.syllabusMasters.values());
+  }
+
+  async getSyllabusMastersByClassDivision(
+    className: string,
+    divisions: string[],
+  ): Promise<SyllabusMaster[]> {
+    const allSyllabusMasters = Array.from(this.syllabusMasters.values());
+    return allSyllabusMasters.filter((syllabus) => 
+      syllabus.class === className && 
+      divisions.some(division => syllabus.divisions.includes(division))
+    );
+  }
+
+  async createSyllabusMaster(insertSyllabus: InsertSyllabusMaster): Promise<SyllabusMaster> {
+    const id = this.currentSyllabusMasterId++;
+    const syllabus: SyllabusMaster = {
+      ...insertSyllabus,
+      id,
+      status: insertSyllabus.status || "active",
+    };
+    this.syllabusMasters.set(id, syllabus);
+    return syllabus;
+  }
+
+  async updateSyllabusMaster(
+    id: number,
+    updateData: Partial<InsertSyllabusMaster>,
+  ): Promise<SyllabusMaster | undefined> {
+    const existing = this.syllabusMasters.get(id);
+    if (!existing) return undefined;
+
+    const updated: SyllabusMaster = { ...existing, ...updateData };
+    this.syllabusMasters.set(id, updated);
+    return updated;
+  }
+
+  async deleteSyllabusMaster(id: number): Promise<boolean> {
+    return this.syllabusMasters.delete(id);
   }
 }
 

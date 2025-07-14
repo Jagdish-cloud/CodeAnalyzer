@@ -23,6 +23,9 @@ import AddTimeTable from "@/pages/add-time-table";
 import StudentMasters from "@/pages/student-masters";
 import StudentsLanding from "@/pages/students-landing";
 import AddStudent from "@/pages/add-student";
+import SyllabusMaster from "@/pages/syllabus-master";
+import SyllabusClass from "@/pages/syllabus-class";
+import AddSyllabus from "@/pages/add-syllabus";
 
 function Router() {
   return (
@@ -47,6 +50,9 @@ function Router() {
         <Route path="/student-masters" component={StudentMasters} />
         <Route path="/students/:class/:division" component={StudentsLanding} />
         <Route path="/add-student" component={AddStudent} />
+        <Route path="/syllabus-master" component={SyllabusMaster} />
+        <Route path="/syllabus-master/class/:className" component={SyllabusClass} />
+        <Route path="/syllabus-master/add" component={AddSyllabus} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

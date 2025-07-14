@@ -125,6 +125,16 @@ export const timeTableEntries = pgTable("time_table_entries", {
   teacherId: integer("teacher_id").references(() => staff.id),
 });
 
+export const syllabusMasters = pgTable("syllabus_masters", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  subject: text("subject").notNull(),
+  class: text("class").notNull(),
+  divisions: text("divisions").array().notNull(), // Array of divisions
+  chapters: json("chapters").notNull(), // Array of {chapterNo: string, chapterName: string}
+  status: text("status").notNull().default("active"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -171,6 +181,10 @@ export const insertTimeTableEntrySchema = createInsertSchema(timeTableEntries).o
   id: true,
 });
 
+export const insertSyllabusMasterSchema = createInsertSchema(syllabusMasters).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -193,3 +207,5 @@ export type InsertTimeTable = z.infer<typeof insertTimeTableSchema>;
 export type TimeTable = typeof timeTables.$inferSelect;
 export type InsertTimeTableEntry = z.infer<typeof insertTimeTableEntrySchema>;
 export type TimeTableEntry = typeof timeTableEntries.$inferSelect;
+export type InsertSyllabusMaster = z.infer<typeof insertSyllabusMasterSchema>;
+export type SyllabusMaster = typeof syllabusMasters.$inferSelect;

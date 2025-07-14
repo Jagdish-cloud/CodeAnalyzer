@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -889,6 +889,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: "Time table deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Syllabus Master routes
+  app.get("/api/syllabus-masters", async (req, res) => {
+    try {
+      const syllabusMasters = await storage.getAllSyllabusMasters();
+      res.json(syllabusMasters);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch syllabus masters" });
+    }
+  });
+
+  app.post("/api/syllabus-masters", async (req, res) => {
+    try {
+      const result = insertSyllabusMasterSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const syllabus = await storage.createSyllabusMaster(result.data);
+      res.status(201).json(syllabus);
+    } catch (error) {
+      console.error("Syllabus master creation error:", error);
+      res.status(500).json({ message: "Failed to create syllabus master" });
+    }
+  });
+
+  app.get("/api/syllabus-masters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid syllabus master ID" });
+      }
+
+      const syllabus = await storage.getSyllabusMaster(id);
+      if (!syllabus) {
+        return res.status(404).json({ message: "Syllabus master not found" });
+      }
+      
+      res.json(syllabus);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch syllabus master" });
+    }
+  });
+
+  app.patch("/api/syllabus-masters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid syllabus master ID" });
+      }
+
+      const result = insertSyllabusMasterSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const syllabus = await storage.updateSyllabusMaster(id, result.data);
+      if (!syllabus) {
+        return res.status(404).json({ message: "Syllabus master not found" });
+      }
+
+      res.json(syllabus);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update syllabus master" });
+    }
+  });
+
+  app.delete("/api/syllabus-masters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid syllabus master ID" });
+      }
+
+      const deleted = await storage.deleteSyllabusMaster(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Syllabus master not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete syllabus master" });
     }
   });
 

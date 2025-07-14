@@ -17,6 +17,7 @@ import {
   Book,
   Calendar,
   Clock,
+  FileText,
 } from "lucide-react";
 
 interface MenuItem {
@@ -93,6 +94,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/class-mapping",
         },
         {
+          id: "syllabus-master",
+          title: "Syllabus Master",
+          type: "item",
+          icon: "feather icon-file-text",
+          url: "/syllabus-master",
+        },
+        {
           id: "teacher-mapping",
           title: "Teacher Subject/Class/Div Mapping",
           type: "item",
@@ -131,6 +139,8 @@ const getIcon = (iconName: string) => {
       return Calendar;
     case "feather icon-clock":
       return Clock;
+    case "feather icon-file-text":
+      return FileText;
     default:
       return Home;
   }
