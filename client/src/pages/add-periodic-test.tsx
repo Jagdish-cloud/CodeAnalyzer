@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,10 +25,19 @@ const formSchema = insertPeriodicTestSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
+interface TestEntry {
+  id: string;
+  subject: string;
+  chapters: string[];
+  testDate: string;
+  testTime: string;
+}
+
 export default function AddPeriodicTestPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [testEntries, setTestEntries] = useState<TestEntry[]>([]);
 
   const { data: classMappings = [], isLoading: isClassMappingsLoading } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -63,10 +72,13 @@ export default function AddPeriodicTestPage() {
         .map(mapping => mapping.division)))
     : [];
 
-  // Get available subjects for selected class
-  const availableSubjects = selectedClass
+  // Get available subjects for selected class and divisions
+  const availableSubjects = selectedClass && selectedDivisions.length > 0
     ? Array.from(new Set(classMappings
-        .filter(mapping => mapping.class === selectedClass)
+        .filter(mapping => 
+          mapping.class === selectedClass && 
+          selectedDivisions.some(div => mapping.division === div)
+        )
         .flatMap(mapping => mapping.subjects)))
     : [];
 
@@ -99,21 +111,6 @@ export default function AddPeriodicTestPage() {
       }
     }
 
-    // Check if any other subjects are left for scheduling
-    if (selectedClass && selectedDivisions.length > 0 && selectedSubject) {
-      const hasOtherSubjects = classMappings
-        .filter(mapping => 
-          mapping.class === selectedClass && 
-          selectedDivisions.some(div => mapping.division === div)
-        )
-        .flatMap(mapping => mapping.subjects)
-        .some(subject => subject !== selectedSubject);
-
-      if (hasOtherSubjects) {
-        errors.push("It should prompt if any other subjects are left for scheduling(DO NOT THROW AN ERROR)");
-      }
-    }
-
     // Check multiselect validation
     if (selectedDivisions.length > 1 && selectedSubject) {
       const subjectInAllDivisions = selectedDivisions.every(division => 
@@ -132,28 +129,90 @@ export default function AddPeriodicTestPage() {
     setValidationErrors(errors);
   }, [selectedClass, selectedDivisions, selectedSubject, classMappings]);
 
+  const addTestEntry = () => {
+    const subject = form.getValues("subject");
+    const chapters = form.getValues("chapters");
+    const testDate = form.getValues("testDate");
+    const testTime = form.getValues("testTime");
+
+    if (!subject || chapters.length === 0 || !testDate || !testTime) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in Subject, Chapters, Date, and Time before adding to the table",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newEntry: TestEntry = {
+      id: Date.now().toString(),
+      subject,
+      chapters,
+      testDate,
+      testTime,
+    };
+
+    setTestEntries([...testEntries, newEntry]);
+    
+    // Clear subject-specific fields
+    form.setValue("subject", "");
+    form.setValue("chapters", []);
+    form.setValue("testDate", "");
+    form.setValue("testTime", "");
+  };
+
+  const removeTestEntry = (id: string) => {
+    setTestEntries(testEntries.filter(entry => entry.id !== id));
+  };
+
   const createTestMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      return await apiRequest("POST", "/api/periodic-tests", data);
+    mutationFn: async (entries: TestEntry[]) => {
+      const year = form.getValues("year");
+      const className = form.getValues("class");
+      const divisions = form.getValues("divisions");
+      
+      const promises = entries.map(entry => 
+        apiRequest("POST", "/api/periodic-tests", {
+          year,
+          class: className,
+          divisions,
+          subject: entry.subject,
+          chapters: entry.chapters,
+          testDate: entry.testDate,
+          testTime: entry.testTime,
+          status: "active",
+        })
+      );
+      
+      return Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/periodic-tests"] });
       toast({
         title: "Success",
-        description: "Periodic test scheduled successfully!",
+        description: "All periodic tests scheduled successfully!",
       });
       navigate("/periodic-test");
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to schedule periodic test",
+        description: error.message || "Failed to schedule periodic tests",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = () => {
+    if (testEntries.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one test entry to the table",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (validationErrors.length > 0) {
       toast({
         title: "Validation Error",
@@ -162,7 +221,8 @@ export default function AddPeriodicTestPage() {
       });
       return;
     }
-    createTestMutation.mutate(data);
+    
+    createTestMutation.mutate(testEntries);
   };
 
   if (isClassMappingsLoading || isSyllabusLoading) {
@@ -222,7 +282,7 @@ export default function AddPeriodicTestPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Select Year */}
                   <FormField
@@ -443,17 +503,72 @@ export default function AddPeriodicTestPage() {
                   />
                 </div>
 
+                {/* Add More Button */}
+                <div className="flex justify-center pt-6 border-t border-gray-100">
+                  <Button
+                    type="button"
+                    onClick={addTestEntry}
+                    className="px-8 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-200"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add More
+                  </Button>
+                </div>
+
+                {/* Test Entries Table */}
+                {testEntries.length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Scheduled Test Entries</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-gray-200 rounded-lg">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Subject</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Chapters</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Date</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Time</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {testEntries.map((entry) => (
+                            <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-3 px-4 font-medium text-gray-800">{entry.subject}</td>
+                              <td className="py-3 px-4 text-gray-600">
+                                {entry.chapters.join(", ")}
+                              </td>
+                              <td className="py-3 px-4 text-gray-600">{entry.testDate}</td>
+                              <td className="py-3 px-4 text-gray-600">{entry.testTime}</td>
+                              <td className="py-3 px-4">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => removeTestEntry(entry.id)}
+                                  className="border-red-200 text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {/* Save Button */}
                 <div className="flex justify-center pt-6 border-t border-gray-100">
                   <Button
-                    type="submit"
-                    disabled={createTestMutation.isPending}
+                    type="button"
+                    onClick={onSubmit}
+                    disabled={createTestMutation.isPending || testEntries.length === 0}
                     className="px-12 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg transition-all duration-200"
                   >
-                    {createTestMutation.isPending ? "Saving..." : "Save(Button)"}
+                    {createTestMutation.isPending ? "Saving..." : "Save All Tests"}
                   </Button>
                 </div>
-              </form>
+              </div>
             </Form>
           </CardContent>
         </Card>

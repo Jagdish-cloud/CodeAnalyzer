@@ -239,6 +239,14 @@ Preferred communication style: Simple, everyday language.
   - Created complete CRUD operations for periodic tests in backend storage and API
   - Applied consistent orange-red gradient theme matching educational scheduling design
   - Enhanced form with date/time pickers and comprehensive validation messaging
+- July 14, 2025: Enhanced Schedule Periodic Test with Add More Functionality:
+  - Redesigned Add Periodic Test form with "Add More" button functionality
+  - Added real-time table display showing entered test subjects, chapters, date, and time
+  - Implemented individual test entry management with delete functionality
+  - Updated landing page to group tests by Class/Division with comma-separated subjects display
+  - Modified form to allow multiple subject scheduling per class-division combination
+  - Enhanced validation to ensure only mapped subjects for selected class-divisions appear
+  - Added batch saving functionality for multiple test entries at once
 
 ## Changelog
 

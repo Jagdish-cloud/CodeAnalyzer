@@ -18,12 +18,19 @@ export default function PeriodicTestPage() {
       acc[key] = {
         class: test.class,
         divisions: test.divisions,
+        subjects: [],
         tests: [],
       };
     }
+    
+    // Add subject if not already present
+    if (!acc[key].subjects.includes(test.subject)) {
+      acc[key].subjects.push(test.subject);
+    }
+    
     acc[key].tests.push(test);
     return acc;
-  }, {} as Record<string, { class: string; divisions: string[]; tests: PeriodicTest[] }>);
+  }, {} as Record<string, { class: string; divisions: string[]; subjects: string[]; tests: PeriodicTest[] }>);
 
   if (isLoading) {
     return (
@@ -72,53 +79,49 @@ export default function PeriodicTestPage() {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Class/Division</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Subject</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Subjects</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.values(groupedTests).map((group) => (
-                      group.tests.map((test, index) => (
-                        <tr key={test.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-gray-800">
-                                Class {test.class}
-                              </span>
-                              <span className="text-sm text-gray-600">
-                                Division: {test.divisions.join(", ")}
-                              </span>
+                    {Object.values(groupedTests).map((group, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">
+                              Class {group.class}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {group.divisions.length > 1 
+                                ? `Divisions: ${group.divisions.join(", ")}`
+                                : `Division: ${group.divisions[0]}`
+                              }
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">
+                              {group.subjects.join(", ")}
+                            </span>
+                            <div className="text-sm text-gray-600 mt-1">
+                              {group.tests.length} test{group.tests.length !== 1 ? 's' : ''} scheduled
                             </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-gray-800">{test.subject}</span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {test.chapters.map((chapter, chapterIndex) => (
-                                  <Badge key={chapterIndex} variant="outline" className="text-xs bg-orange-50 border-orange-200 text-orange-700">
-                                    {chapter}
-                                  </Badge>
-                                ))}
-                              </div>
-                              <div className="text-sm text-gray-600 mt-1">
-                                {test.testDate} at {test.testTime}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="border-orange-200 text-orange-600 hover:bg-orange-50">
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
-                              </Button>
-                              <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="border-orange-200 text-orange-600 hover:bg-orange-50">
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
