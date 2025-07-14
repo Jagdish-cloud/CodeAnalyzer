@@ -20,7 +20,7 @@ import type { ClassMapping, SyllabusMaster } from "@shared/schema";
 
 const formSchema = insertPeriodicTestSchema.extend({
   divisions: z.array(z.string()).min(1, "At least one division must be selected"),
-  chapters: z.array(z.string()).min(1, "At least one chapter must be selected"),
+  chapters: z.array(z.string()).optional().default([]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -135,19 +135,22 @@ export default function AddPeriodicTestPage() {
     const testDate = form.getValues("testDate");
     const testTime = form.getValues("testTime");
 
-    if (!subject || chapters.length === 0 || !testDate || !testTime) {
+    if (!subject || !testDate || !testTime) {
       toast({
         title: "Validation Error",
-        description: "Please fill in Subject, Chapters, Date, and Time before adding to the table",
+        description: "Please fill in Subject, Date, and Time before adding to the table",
         variant: "destructive",
       });
       return;
     }
 
+    // If no chapters are available but user has filled other required fields, allow with empty chapters
+    const finalChapters = chapters.length > 0 ? chapters : ["No chapters available"];
+
     const newEntry: TestEntry = {
       id: Date.now().toString(),
       subject,
-      chapters,
+      chapters: finalChapters,
       testDate,
       testTime,
     };
@@ -427,36 +430,49 @@ export default function AddPeriodicTestPage() {
                     name="chapters"
                     render={() => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Chapters *</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2 max-h-32 overflow-y-auto">
-                          {availableChapters.map((chapter) => (
-                            <FormField
-                              key={chapter}
-                              control={form.control}
-                              name="chapters"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem key={chapter} className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(chapter)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, chapter])
-                                            : field.onChange(field.value?.filter((value) => value !== chapter))
-                                        }}
-                                        className="border-gray-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="text-sm font-normal text-gray-600">
-                                      {chapter}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
+                        <FormLabel className="text-gray-700 font-medium">
+                          Chapters {availableChapters.length === 0 ? "(No chapters available)" : "(Optional)"}
+                        </FormLabel>
+                        {availableChapters.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-3 mt-2 max-h-32 overflow-y-auto">
+                            {availableChapters.map((chapter) => (
+                              <FormField
+                                key={chapter}
+                                control={form.control}
+                                name="chapters"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem key={chapter} className="flex flex-row items-start space-x-3 space-y-0">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(chapter)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value, chapter])
+                                              : field.onChange(field.value?.filter((value) => value !== chapter))
+                                          }}
+                                          className="border-gray-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="text-sm font-normal text-gray-600">
+                                        {chapter}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
+                            <p className="text-sm text-gray-600">
+                              No chapters available for the selected class, division, and subject combination.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              You can proceed without selecting chapters or add syllabus content first.
+                            </p>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
