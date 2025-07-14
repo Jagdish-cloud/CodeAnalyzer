@@ -134,10 +134,7 @@ export default function AddPeriodicTestPage() {
 
   const createTestMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return await apiRequest("/api/periodic-tests", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/periodic-tests", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/periodic-tests"] });

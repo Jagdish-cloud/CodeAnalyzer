@@ -76,10 +76,7 @@ export default function AddSyllabusPage() {
 
   const createSyllabusMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return await apiRequest("/api/syllabus-masters", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/syllabus-masters", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/syllabus-masters"] });
