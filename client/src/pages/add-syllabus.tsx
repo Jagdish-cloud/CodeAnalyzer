@@ -21,6 +21,7 @@ import type { ClassMapping, Subject } from "@shared/schema";
 
 const formSchema = insertSyllabusMasterSchema.extend({
   divisions: z.array(z.string()).min(1, "At least one division must be selected"),
+  description: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -45,9 +46,11 @@ export default function AddSyllabusPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       class: preselectedClass,
       subject: preselectedSubject,
       divisions: [],
+      chapterLessonNo: "",
       topic: "",
       description: "",
       status: "active",
@@ -246,6 +249,25 @@ export default function AddSyllabusPage() {
                   />
                 )}
 
+                {/* Chapter/Lesson No. */}
+                <FormField
+                  control={form.control}
+                  name="chapterLessonNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 font-medium">Chapter/Lesson No. *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Enter chapter or lesson number (e.g., Ch-1, Lesson-5)"
+                          className="border-gray-200 focus:border-indigo-300 focus:ring-indigo-200"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Topic */}
                 <FormField
                   control={form.control}
@@ -271,11 +293,11 @@ export default function AddSyllabusPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">Description *</FormLabel>
+                      <FormLabel className="text-gray-700 font-medium">Description</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
-                          placeholder="Enter detailed description of the syllabus content"
+                          placeholder="Enter detailed description of the syllabus content (optional)"
                           className="border-gray-200 focus:border-indigo-300 focus:ring-indigo-200 min-h-[100px]"
                         />
                       </FormControl>

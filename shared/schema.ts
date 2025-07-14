@@ -131,7 +131,9 @@ export const syllabusMasters = pgTable("syllabus_masters", {
   subject: text("subject").notNull(),
   class: text("class").notNull(),
   divisions: text("divisions").array().notNull(), // Array of divisions
-  chapters: json("chapters").notNull(), // Array of {chapterNo: string, chapterName: string}
+  chapterLessonNo: text("chapter_lesson_no").notNull(),
+  topic: text("topic").notNull(),
+  description: text("description"), // Optional field
   status: text("status").notNull().default("active"),
 });
 

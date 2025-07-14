@@ -131,8 +131,15 @@ export default function SyllabusClassPage() {
                       {subjectSyllabi.map((syllabus) => (
                         <div key={syllabus.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-800">{syllabus.topic}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{syllabus.description}</p>
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge variant="outline" className="border-indigo-200 text-indigo-700 bg-indigo-50">
+                                {syllabus.chapterLessonNo}
+                              </Badge>
+                              <h4 className="font-semibold text-gray-800">{syllabus.topic}</h4>
+                            </div>
+                            {syllabus.description && (
+                              <p className="text-sm text-gray-600 mt-1">{syllabus.description}</p>
+                            )}
                             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                               <span>Divisions: {syllabus.divisions.join(", ")}</span>
                               <Badge 
