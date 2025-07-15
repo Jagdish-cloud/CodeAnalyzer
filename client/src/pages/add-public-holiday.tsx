@@ -33,8 +33,8 @@ export default function AddPublicHoliday() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       year: new Date().getFullYear().toString(),
-      description: '',
-      type: 'full_day',
+      holidayDescription: '',
+      holidayType: 'full_day',
       fromDate: '',
       toDate: '',
     },
@@ -146,7 +146,7 @@ export default function AddPublicHoliday() {
                   {/* Holiday Type */}
                   <FormField
                     control={form.control}
-                    name="type"
+                    name="holidayType"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-white">Holiday Type</FormLabel>
@@ -175,7 +175,7 @@ export default function AddPublicHoliday() {
                 {/* Holiday Description */}
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="holidayDescription"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-white flex items-center gap-2">

@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads

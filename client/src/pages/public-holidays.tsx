@@ -107,9 +107,9 @@ export default function PublicHolidays() {
               <div
                 key={index}
                 className="text-xs p-1 bg-white/10 rounded text-white/90 truncate"
-                title={holiday.description}
+                title={holiday.holidayDescription}
               >
-                {holiday.description}
+                {holiday.holidayDescription}
               </div>
             ))}
             {dayHolidays.length > 2 && (
@@ -266,18 +266,18 @@ export default function PublicHolidays() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-white">
-                            {holiday.description}
+                            {holiday.holidayDescription}
                           </span>
                           <Badge 
                             variant="secondary" 
                             className={cn(
                               "text-xs",
-                              holiday.type === 'full_day' 
+                              holiday.holidayType === 'full_day' 
                                 ? "bg-red-500/20 text-red-200 border-red-400/30" 
                                 : "bg-yellow-500/20 text-yellow-200 border-yellow-400/30"
                             )}
                           >
-                            {holiday.type === 'full_day' ? 'Full Day' : 'Half Day'}
+                            {holiday.holidayType === 'full_day' ? 'Full Day' : 'Half Day'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-white/60">
@@ -314,13 +314,13 @@ export default function PublicHolidays() {
                   <div className="flex justify-between items-center">
                     <span className="text-white/70">Full Day</span>
                     <Badge variant="secondary" className="bg-red-500/20 text-red-200 border-red-400/30">
-                      {holidays.filter(h => h.type === 'full_day').length}
+                      {holidays.filter(h => h.holidayType === 'full_day').length}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/70">Half Day</span>
                     <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-200 border-yellow-400/30">
-                      {holidays.filter(h => h.type === 'half_day').length}
+                      {holidays.filter(h => h.holidayType === 'half_day').length}
                     </Badge>
                   </div>
                 </div>
