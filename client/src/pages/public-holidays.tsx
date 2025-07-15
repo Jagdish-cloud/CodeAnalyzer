@@ -38,9 +38,8 @@ export default function PublicHolidays() {
   const getHolidaysForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
     return holidays.filter(holiday => {
-      const holidayStart = new Date(holiday.fromDate);
-      const holidayEnd = new Date(holiday.toDate);
-      return date >= holidayStart && date <= holidayEnd;
+      // Compare date strings directly to avoid timezone issues
+      return dateString >= holiday.fromDate && dateString <= holiday.toDate;
     });
   };
 
