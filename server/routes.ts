@@ -1078,6 +1078,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public Holiday routes
+  app.get("/api/public-holidays", async (req, res) => {
+    try {
+      const holidays = await storage.getAllPublicHolidays();
+      res.json(holidays);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch public holidays" });
+    }
+  });
+
+  app.get("/api/public-holidays/year/:year", async (req, res) => {
+    try {
+      const year = req.params.year;
+      const holidays = await storage.getPublicHolidaysByYear(year);
+      res.json(holidays);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch public holidays by year" });
+    }
+  });
+
+  app.post("/api/public-holidays", async (req, res) => {
+    try {
+      const result = insertPublicHolidaySchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const holiday = await storage.createPublicHoliday(result.data);
+      res.status(201).json(holiday);
+    } catch (error) {
+      console.error("Public holiday creation error:", error);
+      res.status(500).json({ message: "Failed to create public holiday" });
+    }
+  });
+
+  app.get("/api/public-holidays/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid public holiday ID" });
+      }
+
+      const holiday = await storage.getPublicHoliday(id);
+      if (!holiday) {
+        return res.status(404).json({ message: "Public holiday not found" });
+      }
+      
+      res.json(holiday);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch public holiday" });
+    }
+  });
+
+  app.patch("/api/public-holidays/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid public holiday ID" });
+      }
+
+      const result = insertPublicHolidaySchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const holiday = await storage.updatePublicHoliday(id, result.data);
+      if (!holiday) {
+        return res.status(404).json({ message: "Public holiday not found" });
+      }
+
+      res.json(holiday);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update public holiday" });
+    }
+  });
+
+  app.delete("/api/public-holidays/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid public holiday ID" });
+      }
+
+      const deleted = await storage.deletePublicHoliday(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Public holiday not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete public holiday" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static(uploadDir));
 

@@ -12,6 +12,7 @@ import {
   timeTableEntries,
   syllabusMasters,
   periodicTests,
+  publicHolidays,
   type User,
   type InsertUser,
   type Staff,
@@ -38,6 +39,8 @@ import {
   type InsertSyllabusMaster,
   type PeriodicTest,
   type InsertPeriodicTest,
+  type PublicHoliday,
+  type InsertPublicHoliday,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -163,6 +166,15 @@ export interface IStorage {
     test: Partial<InsertPeriodicTest>,
   ): Promise<PeriodicTest | undefined>;
   deletePeriodicTest(id: number): Promise<boolean>;
+  getPublicHoliday(id: number): Promise<PublicHoliday | undefined>;
+  getAllPublicHolidays(): Promise<PublicHoliday[]>;
+  getPublicHolidaysByYear(year: string): Promise<PublicHoliday[]>;
+  createPublicHoliday(holiday: InsertPublicHoliday): Promise<PublicHoliday>;
+  updatePublicHoliday(
+    id: number,
+    holiday: Partial<InsertPublicHoliday>,
+  ): Promise<PublicHoliday | undefined>;
+  deletePublicHoliday(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -179,6 +191,7 @@ export class MemStorage implements IStorage {
   private timeTableEntries: Map<number, TimeTableEntry>;
   private syllabusMasters: Map<number, SyllabusMaster>;
   private periodicTests: Map<number, PeriodicTest>;
+  private publicHolidays: Map<number, PublicHoliday>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -192,6 +205,7 @@ export class MemStorage implements IStorage {
   private currentTimeTableEntryId: number;
   private currentSyllabusMasterId: number;
   private currentPeriodicTestId: number;
+  private currentPublicHolidayId: number;
 
   constructor() {
     this.users = new Map();
@@ -207,6 +221,7 @@ export class MemStorage implements IStorage {
     this.timeTableEntries = new Map();
     this.syllabusMasters = new Map();
     this.periodicTests = new Map();
+    this.publicHolidays = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -220,6 +235,7 @@ export class MemStorage implements IStorage {
     this.currentTimeTableEntryId = 1;
     this.currentSyllabusMasterId = 1;
     this.currentPeriodicTestId = 1;
+    this.currentPublicHolidayId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1203,6 +1219,49 @@ export class MemStorage implements IStorage {
 
   async deletePeriodicTest(id: number): Promise<boolean> {
     return this.periodicTests.delete(id);
+  }
+
+  // Public Holiday methods
+  async getPublicHoliday(id: number): Promise<PublicHoliday | undefined> {
+    return this.publicHolidays.get(id);
+  }
+
+  async getAllPublicHolidays(): Promise<PublicHoliday[]> {
+    return Array.from(this.publicHolidays.values());
+  }
+
+  async getPublicHolidaysByYear(year: string): Promise<PublicHoliday[]> {
+    return Array.from(this.publicHolidays.values()).filter(holiday => holiday.year === year);
+  }
+
+  async createPublicHoliday(insertHoliday: InsertPublicHoliday): Promise<PublicHoliday> {
+    const id = this.currentPublicHolidayId++;
+    const holiday: PublicHoliday = {
+      ...insertHoliday,
+      id,
+      createdAt: new Date(),
+    };
+    this.publicHolidays.set(id, holiday);
+    return holiday;
+  }
+
+  async updatePublicHoliday(
+    id: number,
+    updateData: Partial<InsertPublicHoliday>,
+  ): Promise<PublicHoliday | undefined> {
+    const existing = this.publicHolidays.get(id);
+    if (!existing) return undefined;
+
+    const updated: PublicHoliday = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.publicHolidays.set(id, updated);
+    return updated;
+  }
+
+  async deletePublicHoliday(id: number): Promise<boolean> {
+    return this.publicHolidays.delete(id);
   }
 }
 

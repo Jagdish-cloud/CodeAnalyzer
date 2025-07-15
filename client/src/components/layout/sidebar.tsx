@@ -87,6 +87,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/periodic-test",
         },
         {
+          id: "public-holidays",
+          title: "Public Holiday/Vacation Master",
+          type: "item",
+          icon: "feather icon-calendar",
+          url: "/public-holidays",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

@@ -28,6 +28,8 @@ import SyllabusClass from "@/pages/syllabus-class";
 import AddSyllabus from "@/pages/add-syllabus";
 import PeriodicTest from "@/pages/periodic-test";
 import AddPeriodicTest from "@/pages/add-periodic-test";
+import PublicHolidays from "@/pages/public-holidays";
+import AddPublicHoliday from "@/pages/add-public-holiday";
 
 function Router() {
   return (
@@ -57,6 +59,8 @@ function Router() {
         <Route path="/syllabus-master/add" component={AddSyllabus} />
         <Route path="/periodic-test" component={PeriodicTest} />
         <Route path="/periodic-test/add" component={AddPeriodicTest} />
+        <Route path="/public-holidays" component={PublicHolidays} />
+        <Route path="/add-public-holiday" component={AddPublicHoliday} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -247,6 +247,16 @@ Preferred communication style: Simple, everyday language.
   - Modified form to allow multiple subject scheduling per class-division combination
   - Enhanced validation to ensure only mapped subjects for selected class-divisions appear
   - Added batch saving functionality for multiple test entries at once
+- July 15, 2025: Added Public Holiday/Vacation Master Management System:
+  - Created new "Public Holiday/Vacation Master" menu item positioned after Schedule Periodic Test
+  - Built full-page creative calendar landing page with bold vibrant blue-purple-pink gradient design
+  - Implemented monthly calendar view with holiday highlighting and navigation controls
+  - Added comprehensive sidebar with year selector, upcoming holidays, and statistics
+  - Created detailed Add Public Holiday form with year, description, type, and date range fields
+  - Implemented holiday type selection (Full Day/Half Day) with radio button interface
+  - Added complete CRUD operations for public holidays in backend storage and API
+  - Enhanced calendar display with color-coded holiday periods and holiday count badges
+  - Applied consistent gradient theme with glass morphism effects throughout interface
 
 ## Changelog
 

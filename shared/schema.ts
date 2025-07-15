@@ -151,6 +151,16 @@ export const periodicTests = pgTable("periodic_tests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const publicHolidays = pgTable("public_holidays", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  holidayDescription: text("holiday_description").notNull(),
+  holidayType: text("holiday_type").notNull(), // 'full' or 'half'
+  fromDate: text("from_date").notNull(),
+  toDate: text("to_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -207,6 +217,11 @@ export const insertPeriodicTestSchema = createInsertSchema(periodicTests).omit({
   updatedAt: true,
 });
 
+export const insertPublicHolidaySchema = createInsertSchema(publicHolidays).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -233,3 +248,5 @@ export type InsertSyllabusMaster = z.infer<typeof insertSyllabusMasterSchema>;
 export type SyllabusMaster = typeof syllabusMasters.$inferSelect;
 export type InsertPeriodicTest = z.infer<typeof insertPeriodicTestSchema>;
 export type PeriodicTest = typeof periodicTests.$inferSelect;
+export type InsertPublicHoliday = z.infer<typeof insertPublicHolidaySchema>;
+export type PublicHoliday = typeof publicHolidays.$inferSelect;
