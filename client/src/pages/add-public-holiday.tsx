@@ -41,10 +41,10 @@ export default function AddPublicHoliday() {
   });
 
   const createHolidayMutation = useMutation({
-    mutationFn: (data: FormValues) => apiRequest('/api/public-holidays', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: FormValues) => {
+      const response = await apiRequest('POST', '/api/public-holidays', data);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Holiday Created",
