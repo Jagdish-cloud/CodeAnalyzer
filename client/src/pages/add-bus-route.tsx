@@ -15,7 +15,13 @@ import { ArrowLeft, Plus, MapPin, Trash2 } from "lucide-react";
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import { insertBusRouteSchema } from "@shared/schema";
 
-const formSchema = insertBusRouteSchema;
+// Custom form schema that excludes auto-generated fields
+const formSchema = insertBusRouteSchema.omit({
+  fromLocation: true,
+  toLocation: true,
+  busNumber: true,
+  stops: true,
+});
 type FormValues = z.infer<typeof formSchema>;
 
 interface Stop {
@@ -39,10 +45,6 @@ export default function AddBusRoutePage() {
     defaultValues: {
       routeNumber: "",
       routeName: "",
-      fromLocation: "",
-      toLocation: "",
-      busNumber: "",
-      stops: [],
       vehicleNumber: "",
       driverName: "",
       driverContactNumber: "",
@@ -52,18 +54,13 @@ export default function AddBusRoutePage() {
   });
 
   const createBusRouteMutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      const busRouteData = {
-        ...data,
-        stops,
-      };
-
+    mutationFn: async (data: any) => {
       const response = await fetch('/api/bus-routes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(busRouteData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -91,7 +88,29 @@ export default function AddBusRoutePage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    createBusRouteMutation.mutate(values);
+    if (stops.length < 2) {
+      toast({
+        title: "Insufficient Stops",
+        description: "Please select at least 2 stops to create a route (starting and ending locations).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Auto-derive route information from selected stops
+    const fromLocation = stops[0].address;
+    const toLocation = stops[stops.length - 1].address;
+    const busNumber = `BUS-${values.routeNumber}`;
+
+    const busRouteData = {
+      ...values,
+      fromLocation,
+      toLocation,
+      busNumber,
+      stops,
+    };
+
+    createBusRouteMutation.mutate(busRouteData);
   };
 
   const handleSearch = async () => {
@@ -232,62 +251,32 @@ export default function AddBusRoutePage() {
                   />
                 </div>
 
-                {/* From and To with Bus Number */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="fromLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">From Location</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Starting location..."
-                            className="bg-white/50 border-white/20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="toLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">To Location</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ending location..."
-                            className="bg-white/50 border-white/20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="busNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">Bus Number</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Bus number..."
-                            className="bg-white/50 border-white/20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Route Information Display */}
+                {stops.length > 0 && (
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-amber-800 mb-4">Route Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white/60 rounded-lg p-4">
+                        <h4 className="font-medium text-amber-700 mb-2">From Location</h4>
+                        <p className="text-sm text-gray-700">{stops[0]?.address || "Not selected"}</p>
+                      </div>
+                      <div className="bg-white/60 rounded-lg p-4">
+                        <h4 className="font-medium text-amber-700 mb-2">To Location</h4>
+                        <p className="text-sm text-gray-700">{stops[stops.length - 1]?.address || "Not selected"}</p>
+                      </div>
+                      <div className="bg-white/60 rounded-lg p-4">
+                        <h4 className="font-medium text-amber-700 mb-2">Auto Bus Number</h4>
+                        <p className="text-sm text-gray-700">
+                          {form.watch('routeNumber') ? `BUS-${form.watch('routeNumber')}` : "Will generate after route number"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 bg-white/60 rounded-lg p-4">
+                      <h4 className="font-medium text-amber-700 mb-2">Total Stops</h4>
+                      <p className="text-sm text-gray-700">{stops.length} locations selected</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Add Stops Section */}
                 <div className="space-y-4">
