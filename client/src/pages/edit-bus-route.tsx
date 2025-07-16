@@ -408,7 +408,7 @@ export default function EditBusRoutePage() {
                         <DialogHeader>
                           <DialogTitle className="text-lg font-semibold">Select Location on Map</DialogTitle>
                           <p className="text-sm text-gray-600 mt-2">
-                            🎯 <strong>Click directly on the map</strong> to select a location, or use the optional search bar below
+                            🎯 <strong>Click directly on the map</strong> to select a location, then <strong>drag the marker</strong> to fine-tune the position, or use the optional search bar below
                           </p>
                         </DialogHeader>
                         
@@ -455,6 +455,38 @@ export default function EditBusRoutePage() {
                                     <Marker 
                                       position={selectedLocation}
                                       title="Selected Location"
+                                      draggable={true}
+                                      onDragEnd={(e) => {
+                                        console.log('Marker dragged:', e);
+                                        if (e.latLng) {
+                                          const lat = typeof e.latLng.lat === 'function' ? e.latLng.lat() : e.latLng.lat;
+                                          const lng = typeof e.latLng.lng === 'function' ? e.latLng.lng() : e.latLng.lng;
+                                          
+                                          console.log('Drag end coordinates:', { lat, lng });
+                                          
+                                          // Update location with loading state
+                                          setSelectedLocation({ lat, lng, address: "🔄 Getting location address..." });
+                                          
+                                          // Reverse geocoding for new position
+                                          const geocoder = new google.maps.Geocoder();
+                                          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                                            if (status === 'OK' && results && results[0]) {
+                                              const address = results[0].formatted_address;
+                                              setSelectedLocation({ lat, lng, address });
+                                              toast({
+                                                title: "Location updated",
+                                                description: "Marker position updated successfully!",
+                                              });
+                                            } else {
+                                              setSelectedLocation({ 
+                                                lat, 
+                                                lng, 
+                                                address: `📍 Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}` 
+                                              });
+                                            }
+                                          });
+                                        }
+                                      }}
                                     />
                                   )}
                                 </Map>
@@ -462,7 +494,7 @@ export default function EditBusRoutePage() {
                             </div>
                             <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
                               <p className="text-xs text-gray-600">
-                                📍 Click anywhere on the map to select a location
+                                📍 Click to select • 🔄 Drag marker to adjust
                               </p>
                             </div>
                           </div>
