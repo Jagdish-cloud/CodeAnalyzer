@@ -264,6 +264,32 @@ export const insertEventSchema = createInsertSchema(events).omit({
   createdAt: true,
 });
 
+// Bus Route schema
+export const busRoutes = pgTable("bus_routes", {
+  id: serial("id").primaryKey(),
+  routeNumber: text("route_number").notNull(),
+  routeName: text("route_name").notNull(),
+  fromLocation: text("from_location").notNull(),
+  toLocation: text("to_location").notNull(),
+  busNumber: text("bus_number").notNull(),
+  stops: json("stops").$type<Array<{
+    address: string;
+    lat: number;
+    lng: number;
+  }>>().default([]),
+  vehicleNumber: text("vehicle_number").notNull(),
+  driverName: text("driver_name").notNull(),
+  driverContactNumber: text("driver_contact_number").notNull(),
+  busAttenderName: text("bus_attender_name").notNull(),
+  busAttenderContactNumber: text("bus_attender_contact_number").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBusRouteSchema = createInsertSchema(busRoutes).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -298,3 +324,5 @@ export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
 export type Newsletter = typeof newsletters.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+export type InsertBusRoute = z.infer<typeof insertBusRouteSchema>;
+export type BusRoute = typeof busRoutes.$inferSelect;

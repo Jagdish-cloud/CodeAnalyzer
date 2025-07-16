@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1495,6 +1495,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // Bus Route routes
+  app.get("/api/bus-routes", async (req, res) => {
+    try {
+      const busRoutes = await storage.getAllBusRoutes();
+      res.json(busRoutes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch bus routes" });
+    }
+  });
+
+  app.post("/api/bus-routes", async (req, res) => {
+    try {
+      const result = insertBusRouteSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const busRoute = await storage.createBusRoute(result.data);
+      res.status(201).json(busRoute);
+    } catch (error) {
+      console.error("Bus route creation error:", error);
+      res.status(500).json({ message: "Failed to create bus route" });
+    }
+  });
+
+  app.get("/api/bus-routes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bus route ID" });
+      }
+
+      const busRoute = await storage.getBusRoute(id);
+      if (!busRoute) {
+        return res.status(404).json({ message: "Bus route not found" });
+      }
+      
+      res.json(busRoute);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch bus route" });
+    }
+  });
+
+  app.patch("/api/bus-routes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bus route ID" });
+      }
+
+      const result = insertBusRouteSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const busRoute = await storage.updateBusRoute(id, result.data);
+      if (!busRoute) {
+        return res.status(404).json({ message: "Bus route not found" });
+      }
+
+      res.json(busRoute);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update bus route" });
+    }
+  });
+
+  app.delete("/api/bus-routes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bus route ID" });
+      }
+
+      const deleted = await storage.deleteBusRoute(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Bus route not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete bus route" });
     }
   });
 

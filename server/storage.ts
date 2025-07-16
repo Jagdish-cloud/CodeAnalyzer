@@ -209,6 +209,14 @@ export interface IStorage {
     event: Partial<InsertEvent>,
   ): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
+  getBusRoute(id: number): Promise<BusRoute | undefined>;
+  getAllBusRoutes(): Promise<BusRoute[]>;
+  createBusRoute(busRoute: InsertBusRoute): Promise<BusRoute>;
+  updateBusRoute(
+    id: number,
+    busRoute: Partial<InsertBusRoute>,
+  ): Promise<BusRoute | undefined>;
+  deleteBusRoute(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -229,6 +237,7 @@ export class MemStorage implements IStorage {
   private handBooks: Map<number, HandBook>;
   private newsletters: Map<number, Newsletter>;
   private events: Map<number, Event>;
+  private busRoutes: Map<number, BusRoute>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -246,6 +255,7 @@ export class MemStorage implements IStorage {
   private currentHandBookId: number;
   private currentNewsletterId: number;
   private currentEventId: number;
+  private currentBusRouteId: number;
 
   constructor() {
     this.users = new Map();
@@ -265,6 +275,7 @@ export class MemStorage implements IStorage {
     this.handBooks = new Map();
     this.newsletters = new Map();
     this.events = new Map();
+    this.busRoutes = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -282,6 +293,7 @@ export class MemStorage implements IStorage {
     this.currentHandBookId = 1;
     this.currentNewsletterId = 1;
     this.currentEventId = 1;
+    this.currentBusRouteId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1429,6 +1441,45 @@ export class MemStorage implements IStorage {
 
   async deleteEvent(id: number): Promise<boolean> {
     return this.events.delete(id);
+  }
+
+  // Bus Route methods
+  async getBusRoute(id: number): Promise<BusRoute | undefined> {
+    return this.busRoutes.get(id);
+  }
+
+  async getAllBusRoutes(): Promise<BusRoute[]> {
+    return Array.from(this.busRoutes.values());
+  }
+
+  async createBusRoute(insertBusRoute: InsertBusRoute): Promise<BusRoute> {
+    const id = this.currentBusRouteId++;
+    const busRoute: BusRoute = {
+      ...insertBusRoute,
+      id,
+      createdAt: new Date(),
+    };
+    this.busRoutes.set(id, busRoute);
+    return busRoute;
+  }
+
+  async updateBusRoute(
+    id: number,
+    updateData: Partial<InsertBusRoute>,
+  ): Promise<BusRoute | undefined> {
+    const existing = this.busRoutes.get(id);
+    if (!existing) return undefined;
+
+    const updated: BusRoute = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.busRoutes.set(id, updated);
+    return updated;
+  }
+
+  async deleteBusRoute(id: number): Promise<boolean> {
+    return this.busRoutes.delete(id);
   }
 }
 

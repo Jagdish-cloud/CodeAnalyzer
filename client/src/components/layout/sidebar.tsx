@@ -115,6 +115,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/events",
         },
         {
+          id: "bus-routes",
+          title: "Bus Routes",
+          type: "item",
+          icon: "feather icon-navigation",
+          url: "/bus-routes",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

@@ -36,6 +36,9 @@ import Newsletter from "@/pages/newsletter";
 import AddNewsletter from "@/pages/add-newsletter";
 import Events from "@/pages/events";
 import AddEvent from "@/pages/add-event";
+import BusRoutes from "@/pages/bus-routes";
+import AddBusRoute from "@/pages/add-bus-route";
+import EditBusRoute from "@/pages/edit-bus-route";
 
 function Router() {
   return (
@@ -73,6 +76,9 @@ function Router() {
         <Route path="/add-newsletter" component={AddNewsletter} />
         <Route path="/events" component={Events} />
         <Route path="/add-event" component={AddEvent} />
+        <Route path="/bus-routes" component={BusRoutes} />
+        <Route path="/add-bus-route" component={AddBusRoute} />
+        <Route path="/edit-bus-route/:id" component={EditBusRoute} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
