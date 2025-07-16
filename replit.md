@@ -304,6 +304,13 @@ Preferred communication style: Simple, everyday language.
   - Modified route information cards to use blue-purple color scheme instead of amber-orange
   - Applied consistent blue-purple gradient theme to all bus route components and elements
   - Enhanced visual appeal with modern blue-purple color palette throughout the bus routes system
+- July 16, 2025: Reorganized Public Holiday/Vacation Master System:
+  - Moved calendar view from Public Holiday landing page to Dashboard for better integration
+  - Created simple table-based Public Holiday management page with Holiday Name and Actions columns
+  - Added View, Edit, and Delete action buttons for each holiday entry
+  - Implemented holiday type badges (Full Day/Half Day) and duration display
+  - Updated dashboard with holiday calendar functionality including month navigation
+  - Applied consistent blue-purple gradient theme to both dashboard calendar and holiday table
 
 ## Changelog
 

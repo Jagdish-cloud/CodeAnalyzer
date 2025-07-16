@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from '@/components/ui/badge';
 import { 
   Building, 
   Users, 
@@ -7,10 +10,123 @@ import {
   TrendingUp,
   Plus,
   Eye,
-  BarChart3
+  BarChart3,
+  Calendar,
+  ArrowLeft,
+  ArrowRight
 } from "lucide-react";
+import { cn } from '@/lib/utils';
+import type { PublicHoliday } from '@shared/schema';
 
 export default function Dashboard() {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+
+  const { data: holidays = [], isLoading: holidaysLoading } = useQuery<PublicHoliday[]>({
+    queryKey: ['/api/public-holidays', selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/public-holidays/year/${selectedYear}`);
+      if (!response.ok) throw new Error('Failed to fetch holidays');
+      return response.json();
+    },
+  });
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const getHolidaysForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return holidays.filter(holiday => {
+      return dateString >= holiday.fromDate && dateString <= holiday.toDate;
+    });
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      if (selectedMonth === 0) {
+        setSelectedMonth(11);
+        setSelectedYear(selectedYear - 1);
+      } else {
+        setSelectedMonth(selectedMonth - 1);
+      }
+    } else {
+      if (selectedMonth === 11) {
+        setSelectedMonth(0);
+        setSelectedYear(selectedYear + 1);
+      } else {
+        setSelectedMonth(selectedMonth + 1);
+      }
+    }
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+    const firstDay = getFirstDayOfMonth(selectedYear, selectedMonth);
+    const days = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(
+        <div key={`empty-${i}`} className="h-16 p-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-lg"></div>
+      );
+    }
+
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(selectedYear, selectedMonth, day);
+      const dayHolidays = getHolidaysForDate(currentDate);
+      const isToday = currentDate.toDateString() === new Date().toDateString();
+
+      days.push(
+        <div
+          key={day}
+          className={cn(
+            "h-16 p-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-800",
+            isToday && "ring-2 ring-blue-400/50 bg-blue-50 dark:bg-blue-900/20",
+            dayHolidays.length > 0 && "bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 border-red-200 dark:border-red-800"
+          )}
+        >
+          <div className="flex justify-between items-start mb-1">
+            <span className={cn(
+              "text-sm font-medium",
+              isToday ? "text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300"
+            )}>
+              {day}
+            </span>
+            {dayHolidays.length > 0 && (
+              <Badge variant="secondary" className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                {dayHolidays.length}
+              </Badge>
+            )}
+          </div>
+          <div className="space-y-1">
+            {dayHolidays.slice(0, 1).map((holiday, index) => (
+              <div
+                key={index}
+                className="text-xs p-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-700 dark:text-slate-300 truncate"
+                title={holiday.holidayDescription}
+              >
+                {holiday.holidayDescription}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return days;
+  };
+
   const stats = [
     {
       title: "Total Institutions",
@@ -157,6 +273,61 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Holiday Calendar Section */}
+          <Card className="border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-700 pb-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-3 text-slate-900 dark:text-slate-100">
+                  <Calendar className="h-6 w-6 text-purple-600" />
+                  <span className="text-xl font-semibold">Holiday Calendar - {monthNames[selectedMonth]} {selectedYear}</span>
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigateMonth('prev')}
+                    className="border-slate-200 dark:border-slate-700"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigateMonth('next')}
+                    className="border-slate-200 dark:border-slate-700"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {holidaysLoading ? (
+                <div className="grid grid-cols-7 gap-4">
+                  {Array.from({ length: 35 }, (_, i) => (
+                    <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Week days header */}
+                  <div className="grid grid-cols-7 gap-4 mb-4">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <div key={day} className="text-center text-sm font-medium text-slate-600 dark:text-slate-400 p-2">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Calendar grid */}
+                  <div className="grid grid-cols-7 gap-4">
+                    {renderCalendar()}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
