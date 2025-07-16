@@ -101,6 +101,20 @@ const menuItems: { items: MenuItem[] } = {
           url: "/hand-book",
         },
         {
+          id: "newsletter",
+          title: "Newsletter",
+          type: "item",
+          icon: "feather icon-file-text",
+          url: "/newsletter",
+        },
+        {
+          id: "events",
+          title: "Events",
+          type: "item",
+          icon: "feather icon-calendar",
+          url: "/events",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

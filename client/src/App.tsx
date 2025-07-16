@@ -32,6 +32,10 @@ import PublicHolidays from "@/pages/public-holidays";
 import AddPublicHoliday from "@/pages/add-public-holiday";
 import HandBook from "@/pages/hand-book";
 import AddHandBook from "@/pages/add-hand-book";
+import Newsletter from "@/pages/newsletter";
+import AddNewsletter from "@/pages/add-newsletter";
+import Events from "@/pages/events";
+import AddEvent from "@/pages/add-event";
 
 function Router() {
   return (
@@ -65,6 +69,10 @@ function Router() {
         <Route path="/add-public-holiday" component={AddPublicHoliday} />
         <Route path="/hand-book" component={HandBook} />
         <Route path="/add-hand-book" component={AddHandBook} />
+        <Route path="/newsletter" component={Newsletter} />
+        <Route path="/add-newsletter" component={AddNewsletter} />
+        <Route path="/events" component={Events} />
+        <Route path="/add-event" component={AddEvent} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

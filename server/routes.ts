@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1281,6 +1281,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete handbook" });
+    }
+  });
+
+  // Newsletter routes
+  app.get("/api/newsletters", async (req, res) => {
+    try {
+      const newsletters = await storage.getAllNewsletters();
+      res.json(newsletters);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch newsletters" });
+    }
+  });
+
+  app.post("/api/newsletters", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { year, topicName } = req.body;
+      
+      if (!year || !topicName) {
+        return res.status(400).json({ message: "Year and topic name are required" });
+      }
+
+      const newsletterData = {
+        year,
+        topicName,
+        fileName: req.file.originalname,
+        filePath: req.file.path,
+        fileSize: req.file.size,
+      };
+
+      const result = insertNewsletterSchema.safeParse(newsletterData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const newsletter = await storage.createNewsletter(result.data);
+      res.status(201).json(newsletter);
+    } catch (error) {
+      console.error("Newsletter creation error:", error);
+      res.status(500).json({ message: "Failed to create newsletter" });
+    }
+  });
+
+  app.get("/api/newsletters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid newsletter ID" });
+      }
+
+      const newsletter = await storage.getNewsletter(id);
+      if (!newsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      
+      res.json(newsletter);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch newsletter" });
+    }
+  });
+
+  app.patch("/api/newsletters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid newsletter ID" });
+      }
+
+      const result = insertNewsletterSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const newsletter = await storage.updateNewsletter(id, result.data);
+      if (!newsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+
+      res.json(newsletter);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update newsletter" });
+    }
+  });
+
+  app.delete("/api/newsletters/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid newsletter ID" });
+      }
+
+      const newsletter = await storage.getNewsletter(id);
+      if (!newsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+
+      // Delete the file from filesystem
+      if (fs.existsSync(newsletter.filePath)) {
+        fs.unlinkSync(newsletter.filePath);
+      }
+
+      const deleted = await storage.deleteNewsletter(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete newsletter" });
+    }
+  });
+
+  // Event routes
+  app.get("/api/events", async (req, res) => {
+    try {
+      const events = await storage.getAllEvents();
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.post("/api/events", async (req, res) => {
+    try {
+      const result = insertEventSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const event = await storage.createEvent(result.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Event creation error:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const event = await storage.getEvent(id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch event" });
+    }
+  });
+
+  app.patch("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const result = insertEventSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const event = await storage.updateEvent(id, result.data);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const deleted = await storage.deleteEvent(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete event" });
     }
   });
 

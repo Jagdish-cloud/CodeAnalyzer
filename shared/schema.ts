@@ -236,6 +236,34 @@ export const insertHandBookSchema = createInsertSchema(handBooks).omit({
   uploadedAt: true,
 });
 
+export const newsletters = pgTable("newsletters", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  topicName: text("topic_name").notNull(),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertNewsletterSchema = createInsertSchema(newsletters).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  eventName: text("event_name").notNull(),
+  fromDate: text("from_date").notNull(),
+  toDate: text("to_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -266,3 +294,7 @@ export type InsertPublicHoliday = z.infer<typeof insertPublicHolidaySchema>;
 export type PublicHoliday = typeof publicHolidays.$inferSelect;
 export type InsertHandBook = z.infer<typeof insertHandBookSchema>;
 export type HandBook = typeof handBooks.$inferSelect;
+export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
+export type Newsletter = typeof newsletters.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;

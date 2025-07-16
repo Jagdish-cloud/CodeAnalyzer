@@ -14,6 +14,8 @@ import {
   periodicTests,
   publicHolidays,
   handBooks,
+  newsletters,
+  events,
   type User,
   type InsertUser,
   type Staff,
@@ -44,6 +46,10 @@ import {
   type InsertPublicHoliday,
   type HandBook,
   type InsertHandBook,
+  type Newsletter,
+  type InsertNewsletter,
+  type Event,
+  type InsertEvent,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -187,6 +193,22 @@ export interface IStorage {
     handBook: Partial<InsertHandBook>,
   ): Promise<HandBook | undefined>;
   deleteHandBook(id: number): Promise<boolean>;
+  getNewsletter(id: number): Promise<Newsletter | undefined>;
+  getAllNewsletters(): Promise<Newsletter[]>;
+  createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
+  updateNewsletter(
+    id: number,
+    newsletter: Partial<InsertNewsletter>,
+  ): Promise<Newsletter | undefined>;
+  deleteNewsletter(id: number): Promise<boolean>;
+  getEvent(id: number): Promise<Event | undefined>;
+  getAllEvents(): Promise<Event[]>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(
+    id: number,
+    event: Partial<InsertEvent>,
+  ): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -205,6 +227,8 @@ export class MemStorage implements IStorage {
   private periodicTests: Map<number, PeriodicTest>;
   private publicHolidays: Map<number, PublicHoliday>;
   private handBooks: Map<number, HandBook>;
+  private newsletters: Map<number, Newsletter>;
+  private events: Map<number, Event>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -220,6 +244,8 @@ export class MemStorage implements IStorage {
   private currentPeriodicTestId: number;
   private currentPublicHolidayId: number;
   private currentHandBookId: number;
+  private currentNewsletterId: number;
+  private currentEventId: number;
 
   constructor() {
     this.users = new Map();
@@ -237,6 +263,8 @@ export class MemStorage implements IStorage {
     this.periodicTests = new Map();
     this.publicHolidays = new Map();
     this.handBooks = new Map();
+    this.newsletters = new Map();
+    this.events = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -252,6 +280,8 @@ export class MemStorage implements IStorage {
     this.currentPeriodicTestId = 1;
     this.currentPublicHolidayId = 1;
     this.currentHandBookId = 1;
+    this.currentNewsletterId = 1;
+    this.currentEventId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1321,6 +1351,84 @@ export class MemStorage implements IStorage {
 
   async deleteHandBook(id: number): Promise<boolean> {
     return this.handBooks.delete(id);
+  }
+
+  // Newsletter methods
+  async getNewsletter(id: number): Promise<Newsletter | undefined> {
+    return this.newsletters.get(id);
+  }
+
+  async getAllNewsletters(): Promise<Newsletter[]> {
+    return Array.from(this.newsletters.values());
+  }
+
+  async createNewsletter(insertNewsletter: InsertNewsletter): Promise<Newsletter> {
+    const id = this.currentNewsletterId++;
+    const newsletter: Newsletter = {
+      ...insertNewsletter,
+      id,
+      createdAt: new Date(),
+    };
+    this.newsletters.set(id, newsletter);
+    return newsletter;
+  }
+
+  async updateNewsletter(
+    id: number,
+    updateData: Partial<InsertNewsletter>,
+  ): Promise<Newsletter | undefined> {
+    const existing = this.newsletters.get(id);
+    if (!existing) return undefined;
+
+    const updated: Newsletter = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.newsletters.set(id, updated);
+    return updated;
+  }
+
+  async deleteNewsletter(id: number): Promise<boolean> {
+    return this.newsletters.delete(id);
+  }
+
+  // Event methods
+  async getEvent(id: number): Promise<Event | undefined> {
+    return this.events.get(id);
+  }
+
+  async getAllEvents(): Promise<Event[]> {
+    return Array.from(this.events.values());
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const id = this.currentEventId++;
+    const event: Event = {
+      ...insertEvent,
+      id,
+      createdAt: new Date(),
+    };
+    this.events.set(id, event);
+    return event;
+  }
+
+  async updateEvent(
+    id: number,
+    updateData: Partial<InsertEvent>,
+  ): Promise<Event | undefined> {
+    const existing = this.events.get(id);
+    if (!existing) return undefined;
+
+    const updated: Event = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.events.set(id, updated);
+    return updated;
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    return this.events.delete(id);
   }
 }
 

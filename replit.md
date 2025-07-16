@@ -267,6 +267,25 @@ Preferred communication style: Simple, everyday language.
   - Enhanced file management with download links and delete confirmation dialogs
   - Applied consistent blue-indigo-purple gradient theme matching application design
   - Integrated with multer middleware for secure file handling and filesystem storage
+- July 16, 2025: Added Newsletter Management System with File Upload:
+  - Created new "Newsletter" menu item positioned after Hand Book in sidebar navigation
+  - Built landing page displaying newsletters with topic name, year, file info, and upload date
+  - Developed comprehensive Add Newsletter form with year selection and topic name field (textarea)
+  - Implemented file upload functionality supporting PDF, DOC, DOCX formats with validation
+  - Added complete CRUD operations for newsletters in backend storage and API
+  - Enhanced file management with view, edit, and delete functionality
+  - Applied consistent emerald-teal gradient theme matching application design
+  - Integrated file handling with proper error handling and success notifications
+- July 16, 2025: Added Events Management System:
+  - Created new "Events" menu item positioned after Newsletter in sidebar navigation
+  - Built landing page displaying events with name, date range, duration, and status tracking
+  - Developed comprehensive Add Event form with event name and from/to date selection
+  - Implemented intelligent event status tracking (upcoming, ongoing, completed) based on dates
+  - Added duration calculation and event validation with date range checking
+  - Created complete CRUD operations for events in backend storage and API
+  - Enhanced event display with color-coded status badges and action buttons
+  - Applied consistent purple-pink gradient theme matching application design
+  - Integrated date validation to ensure proper from/to date relationships
 
 ## Changelog
 
