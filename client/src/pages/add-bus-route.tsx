@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +39,13 @@ export default function AddBusRoutePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [mapCenter, setMapCenter] = useState({ lat: 12.907974564043526, lng: 77.57370469559991 });
+  
+  // Enhanced drag functionality state
+  const [isDragging, setIsDragging] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{ lat: number; lng: number } | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -238,6 +245,81 @@ export default function AddBusRoutePage() {
     });
   };
 
+  // Enhanced drag functionality handlers
+  const handleLongPressStart = (event: TouchEvent | MouseEvent) => {
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+    
+    setTouchStartPos({ x: clientX, y: clientY });
+    setDragStartPos(mapCenter);
+    
+    const timer = setTimeout(() => {
+      setIsDragging(true);
+      toast({
+        title: "Long Press Activated",
+        description: "You can now drag the map with enhanced precision.",
+      });
+    }, 500); // 500ms long press threshold
+    
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setIsDragging(false);
+    setTouchStartPos(null);
+    setDragStartPos(null);
+  };
+
+  const handleDragMove = (event: TouchEvent | MouseEvent) => {
+    if (!isDragging || !touchStartPos || !dragStartPos || !mapRef.current) return;
+    
+    event.preventDefault();
+    
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+    
+    const deltaX = clientX - touchStartPos.x;
+    const deltaY = clientY - touchStartPos.y;
+    
+    // Convert pixel movement to lat/lng movement
+    const bounds = mapRef.current.getBounds();
+    if (bounds) {
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      
+      const latRange = ne.lat() - sw.lat();
+      const lngRange = ne.lng() - sw.lng();
+      
+      const mapDiv = mapRef.current.getDiv();
+      const mapHeight = mapDiv.offsetHeight;
+      const mapWidth = mapDiv.offsetWidth;
+      
+      const latDelta = -(deltaY / mapHeight) * latRange;
+      const lngDelta = -(deltaX / mapWidth) * lngRange;
+      
+      const newCenter = {
+        lat: dragStartPos.lat + latDelta,
+        lng: dragStartPos.lng + lngDelta
+      };
+      
+      setMapCenter(newCenter);
+      mapRef.current.panTo(newCenter);
+    }
+  };
+
+  // Cleanup effect for event listeners
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-6">
       <div className="max-w-5xl mx-auto">
@@ -355,7 +437,7 @@ export default function AddBusRoutePage() {
                         <DialogHeader>
                           <DialogTitle className="text-lg font-semibold">Select Location on Map</DialogTitle>
                           <p className="text-sm text-gray-600 mt-2">
-                            🎯 <strong>Drag the map</strong> to navigate, <strong>click to select a location</strong>, then <strong>drag the marker</strong> to fine-tune the position, or use the optional search bar below
+                            🎯 <strong>Long press and drag</strong> for enhanced navigation, <strong>click to select a location</strong>, then <strong>drag the marker</strong> to fine-tune the position, or use the optional search bar below
                           </p>
                         </DialogHeader>
                         
@@ -379,9 +461,23 @@ export default function AddBusRoutePage() {
 
                           {/* Google Maps - Primary Interaction */}
                           <div className="relative">
-                            <div className="h-[400px] border-2 border-amber-200 rounded-lg overflow-hidden shadow-lg">
+                            <div 
+                              className="h-[400px] border-2 border-amber-200 rounded-lg overflow-hidden shadow-lg"
+                              onTouchStart={(e) => handleLongPressStart(e.nativeEvent)}
+                              onTouchEnd={handleLongPressEnd}
+                              onTouchMove={(e) => handleDragMove(e.nativeEvent)}
+                              onMouseDown={(e) => handleLongPressStart(e.nativeEvent)}
+                              onMouseUp={handleLongPressEnd}
+                              onMouseMove={(e) => handleDragMove(e.nativeEvent)}
+                              onMouseLeave={handleLongPressEnd}
+                              style={{ 
+                                touchAction: isDragging ? 'none' : 'auto',
+                                cursor: isDragging ? 'grabbing' : 'grab'
+                              }}
+                            >
                               <APIProvider apiKey="AIzaSyBujSZvWEnauXhd-bJQ7wjD2rho1qKUwf8">
                                 <Map
+                                  ref={mapRef}
                                   defaultZoom={13}
                                   center={mapCenter}
                                   onClick={(e) => {
@@ -405,9 +501,12 @@ export default function AddBusRoutePage() {
                                     fullscreenControl: true
                                   }}
                                   style={{ 
-                                    cursor: 'grab',
+                                    cursor: isDragging ? 'grabbing' : 'grab',
                                     width: '100%',
                                     height: '100%'
+                                  }}
+                                  onLoad={(map) => {
+                                    mapRef.current = map;
                                   }}
                                 >
                                   {selectedLocation && (
@@ -453,8 +552,13 @@ export default function AddBusRoutePage() {
                             </div>
                             <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
                               <p className="text-xs text-gray-600">
-                                🗺️ Drag map to navigate • 📍 Click to select • 🔄 Drag marker to adjust
+                                🗺️ Long press & drag for enhanced navigation • 📍 Click to select • 🔄 Drag marker to adjust
                               </p>
+                              {isDragging && (
+                                <p className="text-xs text-amber-600 font-medium mt-1">
+                                  ✨ Enhanced drag mode active
+                                </p>
+                              )}
                             </div>
                           </div>
 
