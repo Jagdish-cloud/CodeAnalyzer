@@ -257,6 +257,16 @@ Preferred communication style: Simple, everyday language.
   - Added complete CRUD operations for public holidays in backend storage and API
   - Enhanced calendar display with color-coded holiday periods and holiday count badges
   - Applied consistent gradient theme with glass morphism effects throughout interface
+- July 16, 2025: Added Hand Book Management System with File Upload:
+  - Created new "Hand Book" menu item positioned after Public Holiday/Vacation Master
+  - Built landing page displaying uploaded files with year filtering and file information
+  - Developed comprehensive Add Hand Book form with year selection and file upload functionality
+  - Implemented file upload validation supporting PDF, DOC, DOCX formats with 10MB limit
+  - Added file preview with size display and remove functionality before upload
+  - Created complete CRUD operations for hand books in backend storage and API
+  - Enhanced file management with download links and delete confirmation dialogs
+  - Applied consistent blue-indigo-purple gradient theme matching application design
+  - Integrated with multer middleware for secure file handling and filesystem storage
 
 ## Changelog
 

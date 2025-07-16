@@ -30,6 +30,8 @@ import PeriodicTest from "@/pages/periodic-test";
 import AddPeriodicTest from "@/pages/add-periodic-test";
 import PublicHolidays from "@/pages/public-holidays";
 import AddPublicHoliday from "@/pages/add-public-holiday";
+import HandBook from "@/pages/hand-book";
+import AddHandBook from "@/pages/add-hand-book";
 
 function Router() {
   return (
@@ -61,6 +63,8 @@ function Router() {
         <Route path="/periodic-test/add" component={AddPeriodicTest} />
         <Route path="/public-holidays" component={PublicHolidays} />
         <Route path="/add-public-holiday" component={AddPublicHoliday} />
+        <Route path="/hand-book" component={HandBook} />
+        <Route path="/add-hand-book" component={AddHandBook} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

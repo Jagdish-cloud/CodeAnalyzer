@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -23,7 +23,7 @@ const upload = multer({
     }
   }),
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.mimetype.startsWith('application/')) {
       cb(null, true);
     } else {
       cb(null, false);
@@ -1178,6 +1178,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete public holiday" });
+    }
+  });
+
+  // HandBook routes
+  app.get("/api/handbooks", async (req, res) => {
+    try {
+      const handBooks = await storage.getAllHandBooks();
+      res.json(handBooks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch handbooks" });
+    }
+  });
+
+  app.get("/api/handbooks/year/:year", async (req, res) => {
+    try {
+      const year = req.params.year;
+      const handBooks = await storage.getHandBooksByYear(year);
+      res.json(handBooks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch handbooks by year" });
+    }
+  });
+
+  app.post("/api/handbooks", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { year } = req.body;
+      
+      if (!year) {
+        return res.status(400).json({ message: "Year is required" });
+      }
+
+      const handBookData = {
+        year,
+        fileName: req.file.originalname,
+        filePath: req.file.path,
+        fileSize: req.file.size,
+      };
+
+      const result = insertHandBookSchema.safeParse(handBookData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const handBook = await storage.createHandBook(result.data);
+      res.status(201).json(handBook);
+    } catch (error) {
+      console.error("HandBook creation error:", error);
+      res.status(500).json({ message: "Failed to create handbook" });
+    }
+  });
+
+  app.get("/api/handbooks/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid handbook ID" });
+      }
+
+      const handBook = await storage.getHandBook(id);
+      if (!handBook) {
+        return res.status(404).json({ message: "Handbook not found" });
+      }
+      
+      res.json(handBook);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch handbook" });
+    }
+  });
+
+  app.delete("/api/handbooks/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid handbook ID" });
+      }
+
+      const handBook = await storage.getHandBook(id);
+      if (!handBook) {
+        return res.status(404).json({ message: "Handbook not found" });
+      }
+
+      // Delete the file from filesystem
+      if (fs.existsSync(handBook.filePath)) {
+        fs.unlinkSync(handBook.filePath);
+      }
+
+      const deleted = await storage.deleteHandBook(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Handbook not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete handbook" });
     }
   });
 

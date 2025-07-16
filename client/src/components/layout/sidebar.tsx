@@ -94,6 +94,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/public-holidays",
         },
         {
+          id: "hand-book",
+          title: "Hand Book",
+          type: "item",
+          icon: "feather icon-file-text",
+          url: "/hand-book",
+        },
+        {
           id: "staff-data",
           title: "Staff Data",
           type: "item",

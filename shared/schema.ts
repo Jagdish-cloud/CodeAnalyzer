@@ -222,6 +222,20 @@ export const insertPublicHolidaySchema = createInsertSchema(publicHolidays).omit
   createdAt: true,
 });
 
+export const handBooks = pgTable("hand_books", {
+  id: serial("id").primaryKey(),
+  year: text("year").notNull(),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const insertHandBookSchema = createInsertSchema(handBooks).omit({
+  id: true,
+  uploadedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -250,3 +264,5 @@ export type InsertPeriodicTest = z.infer<typeof insertPeriodicTestSchema>;
 export type PeriodicTest = typeof periodicTests.$inferSelect;
 export type InsertPublicHoliday = z.infer<typeof insertPublicHolidaySchema>;
 export type PublicHoliday = typeof publicHolidays.$inferSelect;
+export type InsertHandBook = z.infer<typeof insertHandBookSchema>;
+export type HandBook = typeof handBooks.$inferSelect;

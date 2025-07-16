@@ -13,6 +13,7 @@ import {
   syllabusMasters,
   periodicTests,
   publicHolidays,
+  handBooks,
   type User,
   type InsertUser,
   type Staff,
@@ -41,6 +42,8 @@ import {
   type InsertPeriodicTest,
   type PublicHoliday,
   type InsertPublicHoliday,
+  type HandBook,
+  type InsertHandBook,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -175,6 +178,15 @@ export interface IStorage {
     holiday: Partial<InsertPublicHoliday>,
   ): Promise<PublicHoliday | undefined>;
   deletePublicHoliday(id: number): Promise<boolean>;
+  getHandBook(id: number): Promise<HandBook | undefined>;
+  getAllHandBooks(): Promise<HandBook[]>;
+  getHandBooksByYear(year: string): Promise<HandBook[]>;
+  createHandBook(handBook: InsertHandBook): Promise<HandBook>;
+  updateHandBook(
+    id: number,
+    handBook: Partial<InsertHandBook>,
+  ): Promise<HandBook | undefined>;
+  deleteHandBook(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -192,6 +204,7 @@ export class MemStorage implements IStorage {
   private syllabusMasters: Map<number, SyllabusMaster>;
   private periodicTests: Map<number, PeriodicTest>;
   private publicHolidays: Map<number, PublicHoliday>;
+  private handBooks: Map<number, HandBook>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -206,6 +219,7 @@ export class MemStorage implements IStorage {
   private currentSyllabusMasterId: number;
   private currentPeriodicTestId: number;
   private currentPublicHolidayId: number;
+  private currentHandBookId: number;
 
   constructor() {
     this.users = new Map();
@@ -222,6 +236,7 @@ export class MemStorage implements IStorage {
     this.syllabusMasters = new Map();
     this.periodicTests = new Map();
     this.publicHolidays = new Map();
+    this.handBooks = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -236,6 +251,7 @@ export class MemStorage implements IStorage {
     this.currentSyllabusMasterId = 1;
     this.currentPeriodicTestId = 1;
     this.currentPublicHolidayId = 1;
+    this.currentHandBookId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1262,6 +1278,49 @@ export class MemStorage implements IStorage {
 
   async deletePublicHoliday(id: number): Promise<boolean> {
     return this.publicHolidays.delete(id);
+  }
+
+  // HandBook methods
+  async getHandBook(id: number): Promise<HandBook | undefined> {
+    return this.handBooks.get(id);
+  }
+
+  async getAllHandBooks(): Promise<HandBook[]> {
+    return Array.from(this.handBooks.values());
+  }
+
+  async getHandBooksByYear(year: string): Promise<HandBook[]> {
+    return Array.from(this.handBooks.values()).filter(handBook => handBook.year === year);
+  }
+
+  async createHandBook(insertHandBook: InsertHandBook): Promise<HandBook> {
+    const id = this.currentHandBookId++;
+    const handBook: HandBook = {
+      ...insertHandBook,
+      id,
+      uploadedAt: new Date(),
+    };
+    this.handBooks.set(id, handBook);
+    return handBook;
+  }
+
+  async updateHandBook(
+    id: number,
+    updateData: Partial<InsertHandBook>,
+  ): Promise<HandBook | undefined> {
+    const existing = this.handBooks.get(id);
+    if (!existing) return undefined;
+
+    const updated: HandBook = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.handBooks.set(id, updated);
+    return updated;
+  }
+
+  async deleteHandBook(id: number): Promise<boolean> {
+    return this.handBooks.delete(id);
   }
 }
 
