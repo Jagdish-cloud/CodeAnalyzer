@@ -311,6 +311,19 @@ Preferred communication style: Simple, everyday language.
   - Implemented holiday type badges (Full Day/Half Day) and duration display
   - Updated dashboard with holiday calendar functionality including month navigation
   - Applied consistent blue-purple gradient theme to both dashboard calendar and holiday table
+- July 16, 2025: Enhanced Add Periodic Test with Time Management:
+  - Removed "Time of Test" field from add-periodic-test form
+  - Added "From Time", "To Time", and auto-calculated "Duration" fields
+  - Implemented intelligent duration calculation with real-time updates
+  - Enhanced form validation to ensure proper time range (To Time after From Time)
+  - Updated database schema to include fromTime, toTime, and duration columns
+  - Applied consistent time formatting and validation throughout the system
+- July 16, 2025: Reorganized Navigation Menu Structure:
+  - Restructured sidebar menu into two main groups: "Masters" and "Others"
+  - Masters group includes: Roles, Subjects, Staff Data, Class/Subject/Div Mapping, Syllabus Master, Schedule Periodic Test, Teacher Subject/Class/Div Mapping, Student Masters, Working Days, School Schedule, Create Time Table
+  - Others group includes: Public Holiday/Vacation Master, Hand Book, Newsletter, Bus Routes, Events
+  - Moved Dashboard to top level for easy access
+  - Enhanced navigation organization for better user experience and logical grouping
 
 ## Changelog
 

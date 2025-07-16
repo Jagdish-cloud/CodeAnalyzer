@@ -24,7 +24,7 @@ const formSchema = insertPeriodicTestSchema.extend({
   fromTime: z.string().min(1, "From time is required"),
   toTime: z.string().min(1, "To time is required"),
   duration: z.string().optional(),
-});
+}).omit({ testTime: true });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -33,7 +33,6 @@ interface TestEntry {
   subject: string;
   chapters: string[];
   testDate: string;
-  testTime: string;
   fromTime: string;
   toTime: string;
   duration: string;
@@ -62,7 +61,6 @@ export default function AddPeriodicTestPage() {
       subject: "",
       chapters: [],
       testDate: "",
-      testTime: "",
       fromTime: "",
       toTime: "",
       duration: "",
@@ -106,8 +104,10 @@ export default function AddPeriodicTestPage() {
   // Update duration when times change
   useEffect(() => {
     const duration = calculateDuration(fromTime, toTime);
-    form.setValue("duration", duration);
-  }, [fromTime, toTime, form]);
+    if (duration !== form.getValues("duration")) {
+      form.setValue("duration", duration);
+    }
+  }, [fromTime, toTime]);
 
   // Get available divisions for selected class
   const availableDivisions = selectedClass 
@@ -177,15 +177,14 @@ export default function AddPeriodicTestPage() {
     const subject = form.getValues("subject");
     const chapters = form.getValues("chapters");
     const testDate = form.getValues("testDate");
-    const testTime = form.getValues("testTime");
     const fromTime = form.getValues("fromTime");
     const toTime = form.getValues("toTime");
     const duration = form.getValues("duration");
 
-    if (!subject || !testDate || !testTime || !fromTime || !toTime) {
+    if (!subject || !testDate || !fromTime || !toTime) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Subject, Date, Time, From Time, To Time) before adding to the table",
+        description: "Please fill in all required fields (Subject, Date, From Time, To Time) before adding to the table",
         variant: "destructive",
       });
       return;
@@ -209,7 +208,6 @@ export default function AddPeriodicTestPage() {
       subject,
       chapters: finalChapters,
       testDate,
-      testTime,
       fromTime,
       toTime,
       duration,
@@ -221,7 +219,6 @@ export default function AddPeriodicTestPage() {
     form.setValue("subject", "");
     form.setValue("chapters", []);
     form.setValue("testDate", "");
-    form.setValue("testTime", "");
     form.setValue("fromTime", "");
     form.setValue("toTime", "");
     form.setValue("duration", "");
@@ -245,7 +242,6 @@ export default function AddPeriodicTestPage() {
           subject: entry.subject,
           chapters: entry.chapters,
           testDate: entry.testDate,
-          testTime: entry.testTime,
           fromTime: entry.fromTime,
           toTime: entry.toTime,
           duration: entry.duration,
@@ -565,26 +561,7 @@ export default function AddPeriodicTestPage() {
                 />
 
                 {/* Time Fields Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Time of Test */}
-                  <FormField
-                    control={form.control}
-                    name="testTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Time of Test *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* From Time */}
                   <FormField
                     control={form.control}
@@ -669,7 +646,6 @@ export default function AddPeriodicTestPage() {
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Subject</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Chapters</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Date</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Time</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">From Time</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">To Time</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Duration</th>
@@ -684,7 +660,6 @@ export default function AddPeriodicTestPage() {
                                 {entry.chapters.join(", ")}
                               </td>
                               <td className="py-3 px-4 text-gray-600">{entry.testDate}</td>
-                              <td className="py-3 px-4 text-gray-600">{entry.testTime}</td>
                               <td className="py-3 px-4 text-gray-600">{entry.fromTime}</td>
                               <td className="py-3 px-4 text-gray-600">{entry.toTime}</td>
                               <td className="py-3 px-4 text-gray-600">

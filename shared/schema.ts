@@ -145,7 +145,6 @@ export const periodicTests = pgTable("periodic_tests", {
   subject: text("subject").notNull(),
   chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
   testDate: text("test_date").notNull(),
-  testTime: text("test_time").notNull(),
   fromTime: text("from_time").notNull(),
   toTime: text("to_time").notNull(),
   duration: text("duration").notNull(), // Auto-calculated from fromTime and toTime
