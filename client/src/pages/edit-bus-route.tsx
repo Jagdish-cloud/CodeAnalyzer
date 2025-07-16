@@ -265,7 +265,7 @@ export default function EditBusRoutePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
         <div className="max-w-5xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -278,7 +278,7 @@ export default function EditBusRoutePage() {
 
   if (!busRoute) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-600">Bus Route Not Found</h1>
@@ -292,7 +292,7 @@ export default function EditBusRoutePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -303,7 +303,7 @@ export default function EditBusRoutePage() {
                 Back to Bus Routes
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Edit Bus Route
             </h1>
           </div>
@@ -315,7 +315,7 @@ export default function EditBusRoutePage() {
         {/* Form Card */}
         <Card className="bg-white/70 backdrop-blur-sm border-white/20 shadow-xl">
           <CardHeader className="border-b border-white/20">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Bus Route Details
             </CardTitle>
           </CardHeader>
@@ -363,26 +363,26 @@ export default function EditBusRoutePage() {
 
                 {/* Route Information Display */}
                 {stops.length > 0 && (
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-amber-800 mb-4">Route Information</h3>
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-4">Route Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-white/60 rounded-lg p-4">
-                        <h4 className="font-medium text-amber-700 mb-2">From Location</h4>
+                        <h4 className="font-medium text-blue-700 mb-2">From Location</h4>
                         <p className="text-sm text-gray-700">{stops[0]?.address || "Not selected"}</p>
                       </div>
                       <div className="bg-white/60 rounded-lg p-4">
-                        <h4 className="font-medium text-amber-700 mb-2">To Location</h4>
+                        <h4 className="font-medium text-blue-700 mb-2">To Location</h4>
                         <p className="text-sm text-gray-700">{stops[stops.length - 1]?.address || "Not selected"}</p>
                       </div>
                       <div className="bg-white/60 rounded-lg p-4">
-                        <h4 className="font-medium text-amber-700 mb-2">Auto Bus Number</h4>
+                        <h4 className="font-medium text-blue-700 mb-2">Auto Bus Number</h4>
                         <p className="text-sm text-gray-700">
                           {form.watch('routeNumber') ? `BUS-${form.watch('routeNumber')}` : "Will generate after route number"}
                         </p>
                       </div>
                     </div>
                     <div className="mt-4 bg-white/60 rounded-lg p-4">
-                      <h4 className="font-medium text-amber-700 mb-2">Total Stops</h4>
+                      <h4 className="font-medium text-blue-700 mb-2">Total Stops</h4>
                       <p className="text-sm text-gray-700">{stops.length} locations selected</p>
                     </div>
                   </div>
@@ -432,7 +432,7 @@ export default function EditBusRoutePage() {
 
                           {/* Google Maps - Primary Interaction */}
                           <div className="relative">
-                            <div className="h-[400px] border-2 border-amber-200 rounded-lg overflow-hidden shadow-lg">
+                            <div className="h-[400px] border-2 border-blue-200 rounded-lg overflow-hidden shadow-lg">
                               <APIProvider apiKey="AIzaSyBujSZvWEnauXhd-bJQ7wjD2rho1qKUwf8">
                                 <Map
                                   defaultZoom={13}
