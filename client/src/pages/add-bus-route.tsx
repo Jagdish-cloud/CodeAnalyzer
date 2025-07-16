@@ -144,10 +144,14 @@ export default function AddBusRoutePage() {
     }
   };
 
-  const handleMapClick = (event: google.maps.MapMouseEvent) => {
-    if (event.latLng) {
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
+  const handleMapClick = (event: any) => {
+    console.log('handleMapClick called with event:', event);
+    
+    if (event && event.detail && event.detail.latLng) {
+      const lat = event.detail.latLng.lat;
+      const lng = event.detail.latLng.lng;
+      
+      console.log('Extracted coordinates:', { lat, lng });
       
       // Set location immediately with loading state
       setSelectedLocation({ lat, lng, address: "🔄 Getting location address..." });
@@ -155,9 +159,14 @@ export default function AddBusRoutePage() {
       // Reverse geocoding to get address using Google Geocoding API
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        console.log('Geocoding result:', { status, results });
         if (status === 'OK' && results && results[0]) {
           const address = results[0].formatted_address;
           setSelectedLocation({ lat, lng, address });
+          toast({
+            title: "Location selected",
+            description: "Address found successfully!",
+          });
         } else {
           // Fallback with coordinates if geocoding fails
           setSelectedLocation({ 
@@ -171,6 +180,39 @@ export default function AddBusRoutePage() {
             variant: "destructive",
           });
         }
+      });
+    } else if (event && event.latLng) {
+      // Fallback for different event structure
+      const lat = typeof event.latLng.lat === 'function' ? event.latLng.lat() : event.latLng.lat;
+      const lng = typeof event.latLng.lng === 'function' ? event.latLng.lng() : event.latLng.lng;
+      
+      console.log('Fallback coordinates extraction:', { lat, lng });
+      
+      setSelectedLocation({ lat, lng, address: "🔄 Getting location address..." });
+      
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const address = results[0].formatted_address;
+          setSelectedLocation({ lat, lng, address });
+          toast({
+            title: "Location selected",
+            description: "Address found successfully!",
+          });
+        } else {
+          setSelectedLocation({ 
+            lat, 
+            lng, 
+            address: `📍 Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}` 
+          });
+        }
+      });
+    } else {
+      console.log('No valid coordinates found in event:', event);
+      toast({
+        title: "Map click not detected",
+        description: "Please try clicking again on the map.",
+        variant: "destructive",
       });
     }
   };
@@ -342,9 +384,19 @@ export default function AddBusRoutePage() {
                                 <Map
                                   defaultZoom={13}
                                   center={mapCenter}
-                                  onClick={handleMapClick}
+                                  onClick={(e) => {
+                                    console.log('Map clicked:', e);
+                                    handleMapClick(e);
+                                  }}
                                   mapId="bus-route-map"
-                                  style={{ cursor: 'crosshair' }}
+                                  gestureHandling="cooperative"
+                                  disableDefaultUI={false}
+                                  clickableIcons={false}
+                                  style={{ 
+                                    cursor: 'crosshair',
+                                    width: '100%',
+                                    height: '100%'
+                                  }}
                                 >
                                   {selectedLocation && (
                                     <Marker 
