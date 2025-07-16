@@ -149,12 +149,27 @@ export default function AddBusRoutePage() {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       
-      // Reverse geocoding to get address
+      // Set location immediately with loading state
+      setSelectedLocation({ lat, lng, address: "🔄 Getting location address..." });
+      
+      // Reverse geocoding to get address using Google Geocoding API
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ location: { lat, lng } }, (results, status) => {
         if (status === 'OK' && results && results[0]) {
           const address = results[0].formatted_address;
           setSelectedLocation({ lat, lng, address });
+        } else {
+          // Fallback with coordinates if geocoding fails
+          setSelectedLocation({ 
+            lat, 
+            lng, 
+            address: `📍 Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}` 
+          });
+          toast({
+            title: "Address lookup failed",
+            description: "Using coordinates instead. Location will still work correctly.",
+            variant: "destructive",
+          });
         }
       });
     }
@@ -294,50 +309,74 @@ export default function AddBusRoutePage() {
                           Add Stops
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh]">
+                      <DialogContent className="max-w-4xl max-h-[85vh]">
                         <DialogHeader>
-                          <DialogTitle>Select Location on Map</DialogTitle>
+                          <DialogTitle className="text-lg font-semibold">Select Location on Map</DialogTitle>
+                          <p className="text-sm text-gray-600 mt-2">
+                            🎯 <strong>Click directly on the map</strong> to select a location, or use the optional search bar below
+                          </p>
                         </DialogHeader>
                         
                         <div className="space-y-4">
-                          {/* Search Section */}
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Search for a location..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="flex-1"
-                              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            />
-                            <Button onClick={handleSearch} type="button">
-                              Search
-                            </Button>
+                          {/* Optional Search Section */}
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">🔍 Optional: Search for Location</h4>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Type location name (e.g., MG Road Bangalore)..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="flex-1 bg-white"
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                              />
+                              <Button onClick={handleSearch} type="button" variant="outline">
+                                Search
+                              </Button>
+                            </div>
                           </div>
 
-                          {/* Google Maps */}
-                          <div className="h-96 border rounded-lg overflow-hidden">
-                            <APIProvider apiKey="AIzaSyBujSZvWEnauXhd-bJQ7wjD2rho1qKUwf8">
-                              <Map
-                                defaultZoom={13}
-                                center={mapCenter}
-                                onClick={handleMapClick}
-                                mapId="bus-route-map"
-                              >
-                                {selectedLocation && (
-                                  <Marker position={selectedLocation} />
-                                )}
-                              </Map>
-                            </APIProvider>
+                          {/* Google Maps - Primary Interaction */}
+                          <div className="relative">
+                            <div className="h-[400px] border-2 border-amber-200 rounded-lg overflow-hidden shadow-lg">
+                              <APIProvider apiKey="AIzaSyBujSZvWEnauXhd-bJQ7wjD2rho1qKUwf8">
+                                <Map
+                                  defaultZoom={13}
+                                  center={mapCenter}
+                                  onClick={handleMapClick}
+                                  mapId="bus-route-map"
+                                  style={{ cursor: 'crosshair' }}
+                                >
+                                  {selectedLocation && (
+                                    <Marker 
+                                      position={selectedLocation}
+                                      title="Selected Location"
+                                    />
+                                  )}
+                                </Map>
+                              </APIProvider>
+                            </div>
+                            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+                              <p className="text-xs text-gray-600">
+                                📍 Click anywhere on the map to select a location
+                              </p>
+                            </div>
                           </div>
 
                           {/* Selected Location Info */}
                           {selectedLocation && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                              <h4 className="font-medium text-green-900 mb-2">Selected Location</h4>
-                              <p className="text-sm text-green-700 mb-3">{selectedLocation.address}</p>
-                              <Button onClick={handleSelectLocation} className="bg-green-600 hover:bg-green-700">
-                                Select This Location
-                              </Button>
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                              <h4 className="font-medium text-green-900 mb-2 flex items-center">
+                                ✅ Location Selected
+                              </h4>
+                              <p className="text-sm text-green-700 mb-3 leading-relaxed">{selectedLocation.address}</p>
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-green-600">
+                                  📍 Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                                </div>
+                                <Button onClick={handleSelectLocation} className="bg-green-600 hover:bg-green-700">
+                                  Add This Stop
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
