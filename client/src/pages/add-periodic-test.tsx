@@ -21,6 +21,9 @@ import type { ClassMapping, SyllabusMaster } from "@shared/schema";
 const formSchema = insertPeriodicTestSchema.extend({
   divisions: z.array(z.string()).min(1, "At least one division must be selected"),
   chapters: z.array(z.string()).optional().default([]),
+  fromTime: z.string().min(1, "From time is required"),
+  toTime: z.string().min(1, "To time is required"),
+  duration: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -31,6 +34,9 @@ interface TestEntry {
   chapters: string[];
   testDate: string;
   testTime: string;
+  fromTime: string;
+  toTime: string;
+  duration: string;
 }
 
 export default function AddPeriodicTestPage() {
@@ -57,6 +63,9 @@ export default function AddPeriodicTestPage() {
       chapters: [],
       testDate: "",
       testTime: "",
+      fromTime: "",
+      toTime: "",
+      duration: "",
       status: "active",
     },
   });
@@ -64,6 +73,41 @@ export default function AddPeriodicTestPage() {
   const selectedClass = form.watch("class");
   const selectedDivisions = form.watch("divisions");
   const selectedSubject = form.watch("subject");
+  const fromTime = form.watch("fromTime");
+  const toTime = form.watch("toTime");
+
+  // Calculate duration automatically
+  const calculateDuration = (from: string, to: string): string => {
+    if (!from || !to) return "";
+    
+    const [fromHour, fromMin] = from.split(':').map(Number);
+    const [toHour, toMin] = to.split(':').map(Number);
+    
+    const fromMinutes = fromHour * 60 + fromMin;
+    const toMinutes = toHour * 60 + toMin;
+    
+    if (toMinutes <= fromMinutes) {
+      return "Invalid time range";
+    }
+    
+    const diffMinutes = toMinutes - fromMinutes;
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    if (hours > 0 && minutes > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else {
+      return `${minutes}m`;
+    }
+  };
+
+  // Update duration when times change
+  useEffect(() => {
+    const duration = calculateDuration(fromTime, toTime);
+    form.setValue("duration", duration);
+  }, [fromTime, toTime, form]);
 
   // Get available divisions for selected class
   const availableDivisions = selectedClass 
@@ -134,11 +178,24 @@ export default function AddPeriodicTestPage() {
     const chapters = form.getValues("chapters");
     const testDate = form.getValues("testDate");
     const testTime = form.getValues("testTime");
+    const fromTime = form.getValues("fromTime");
+    const toTime = form.getValues("toTime");
+    const duration = form.getValues("duration");
 
-    if (!subject || !testDate || !testTime) {
+    if (!subject || !testDate || !testTime || !fromTime || !toTime) {
       toast({
         title: "Validation Error",
-        description: "Please fill in Subject, Date, and Time before adding to the table",
+        description: "Please fill in all required fields (Subject, Date, Time, From Time, To Time) before adding to the table",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate time range
+    if (duration === "Invalid time range") {
+      toast({
+        title: "Validation Error",
+        description: "To Time must be after From Time",
         variant: "destructive",
       });
       return;
@@ -153,6 +210,9 @@ export default function AddPeriodicTestPage() {
       chapters: finalChapters,
       testDate,
       testTime,
+      fromTime,
+      toTime,
+      duration,
     };
 
     setTestEntries([...testEntries, newEntry]);
@@ -162,6 +222,9 @@ export default function AddPeriodicTestPage() {
     form.setValue("chapters", []);
     form.setValue("testDate", "");
     form.setValue("testTime", "");
+    form.setValue("fromTime", "");
+    form.setValue("toTime", "");
+    form.setValue("duration", "");
   };
 
   const removeTestEntry = (id: string) => {
@@ -183,6 +246,9 @@ export default function AddPeriodicTestPage() {
           chapters: entry.chapters,
           testDate: entry.testDate,
           testTime: entry.testTime,
+          fromTime: entry.fromTime,
+          toTime: entry.toTime,
+          duration: entry.duration,
           status: "active",
         })
       );
@@ -479,26 +545,27 @@ export default function AddPeriodicTestPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Date of test */}
-                  <FormField
-                    control={form.control}
-                    name="testDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Date of test *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="date"
-                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Test Date */}
+                <FormField
+                  control={form.control}
+                  name="testDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700 font-medium">Date of test *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="date"
+                          className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {/* Time Fields Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {/* Time of Test */}
                   <FormField
                     control={form.control}
@@ -514,6 +581,66 @@ export default function AddPeriodicTestPage() {
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* From Time */}
+                  <FormField
+                    control={form.control}
+                    name="fromTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium">From Time *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="time"
+                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* To Time */}
+                  <FormField
+                    control={form.control}
+                    name="toTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium">To Time *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="time"
+                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Duration (Auto-calculated) */}
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium">Duration</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            readOnly
+                            placeholder="Auto-calculated"
+                            className="border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Automatically calculated from From Time and To Time
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -543,6 +670,9 @@ export default function AddPeriodicTestPage() {
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Chapters</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Date</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Time</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">From Time</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">To Time</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Duration</th>
                             <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Action</th>
                           </tr>
                         </thead>
@@ -555,6 +685,13 @@ export default function AddPeriodicTestPage() {
                               </td>
                               <td className="py-3 px-4 text-gray-600">{entry.testDate}</td>
                               <td className="py-3 px-4 text-gray-600">{entry.testTime}</td>
+                              <td className="py-3 px-4 text-gray-600">{entry.fromTime}</td>
+                              <td className="py-3 px-4 text-gray-600">{entry.toTime}</td>
+                              <td className="py-3 px-4 text-gray-600">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {entry.duration}
+                                </span>
+                              </td>
                               <td className="py-3 px-4">
                                 <Button
                                   size="sm"
