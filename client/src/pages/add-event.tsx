@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Calendar, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, FileText, Bold, Italic, List, AlignLeft } from "lucide-react";
 import { insertEventSchema } from "@shared/schema";
 
 const formSchema = insertEventSchema;
@@ -25,6 +26,7 @@ export default function AddEventPage() {
       eventName: "",
       fromDate: "",
       toDate: "",
+      notes: "",
     },
   });
 
@@ -189,6 +191,118 @@ export default function AddEventPage() {
                     )}
                   />
                 </div>
+
+                {/* Notes Field */}
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Notes & Instructions (Optional)
+                        </div>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="space-y-3">
+                          {/* Formatting Tools */}
+                          <div className="flex gap-2 p-2 bg-white/30 rounded-lg border border-white/20">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={() => {
+                                const textarea = document.querySelector('textarea[name="notes"]') as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = field.value.substring(start, end);
+                                  const newText = field.value.substring(0, start) + 
+                                    `**${selectedText}**` + 
+                                    field.value.substring(end);
+                                  field.onChange(newText);
+                                }
+                              }}
+                              title="Bold"
+                            >
+                              <Bold className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={() => {
+                                const textarea = document.querySelector('textarea[name="notes"]') as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = field.value.substring(start, end);
+                                  const newText = field.value.substring(0, start) + 
+                                    `*${selectedText}*` + 
+                                    field.value.substring(end);
+                                  field.onChange(newText);
+                                }
+                              }}
+                              title="Italic"
+                            >
+                              <Italic className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={() => {
+                                const currentValue = field.value;
+                                const newLine = currentValue ? '\n• ' : '• ';
+                                field.onChange(currentValue + newLine);
+                              }}
+                              title="Add Bullet Point"
+                            >
+                              <List className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={() => {
+                                const currentValue = field.value;
+                                const newLine = currentValue ? '\n\n' : '';
+                                field.onChange(currentValue + newLine);
+                              }}
+                              title="Add Line Break"
+                            >
+                              <AlignLeft className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          {/* Textarea */}
+                          <Textarea
+                            placeholder="Add detailed instructions, requirements, or notes for this event...
+Example:
+• Venue: School Auditorium
+• Time: 10:00 AM - 2:00 PM
+• Required: All students must bring permission slips
+• Contact: Ms. Smith (ext. 234) for questions"
+                            className="bg-white/50 border-white/20 min-h-[120px] resize-y"
+                            {...field}
+                          />
+                          
+                          {/* Character Count */}
+                          <div className="flex justify-between items-center text-xs text-gray-500">
+                            <span>Use **bold** or *italic* text for emphasis</span>
+                            <span>{field.value?.length || 0} characters</span>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Event Duration Info */}
                 {form.watch('fromDate') && form.watch('toDate') && (

@@ -256,6 +256,7 @@ export const events = pgTable("events", {
   eventName: text("event_name").notNull(),
   fromDate: text("from_date").notNull(),
   toDate: text("to_date").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
