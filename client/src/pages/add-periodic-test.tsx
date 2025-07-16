@@ -24,7 +24,7 @@ const formSchema = insertPeriodicTestSchema.extend({
   fromTime: z.string().min(1, "From time is required"),
   toTime: z.string().min(1, "To time is required"),
   duration: z.string().optional(),
-});
+}).omit({ testTime: true });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -33,7 +33,6 @@ interface TestEntry {
   subject: string;
   chapters: string[];
   testDate: string;
-  testTime: string;
   fromTime: string;
   toTime: string;
   duration: string;
