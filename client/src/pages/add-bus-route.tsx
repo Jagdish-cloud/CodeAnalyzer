@@ -355,7 +355,7 @@ export default function AddBusRoutePage() {
                         <DialogHeader>
                           <DialogTitle className="text-lg font-semibold">Select Location on Map</DialogTitle>
                           <p className="text-sm text-gray-600 mt-2">
-                            🎯 <strong>Click directly on the map</strong> to select a location, then <strong>drag the marker</strong> to fine-tune the position, or use the optional search bar below
+                            🎯 <strong>Drag the map</strong> to navigate, <strong>click to select a location</strong>, then <strong>drag the marker</strong> to fine-tune the position, or use the optional search bar below
                           </p>
                         </DialogHeader>
                         
@@ -389,11 +389,23 @@ export default function AddBusRoutePage() {
                                     handleMapClick(e);
                                   }}
                                   mapId="bus-route-map"
-                                  gestureHandling="cooperative"
+                                  gestureHandling="greedy"
                                   disableDefaultUI={false}
                                   clickableIcons={false}
+                                  options={{
+                                    draggable: true,
+                                    zoomControl: true,
+                                    scrollwheel: true,
+                                    disableDoubleClickZoom: false,
+                                    keyboardShortcuts: true,
+                                    panControl: true,
+                                    rotateControl: false,
+                                    scaleControl: true,
+                                    streetViewControl: false,
+                                    fullscreenControl: true
+                                  }}
                                   style={{ 
-                                    cursor: 'crosshair',
+                                    cursor: 'grab',
                                     width: '100%',
                                     height: '100%'
                                   }}
@@ -441,7 +453,7 @@ export default function AddBusRoutePage() {
                             </div>
                             <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
                               <p className="text-xs text-gray-600">
-                                📍 Click to select • 🔄 Drag marker to adjust
+                                🗺️ Drag map to navigate • 📍 Click to select • 🔄 Drag marker to adjust
                               </p>
                             </div>
                           </div>
