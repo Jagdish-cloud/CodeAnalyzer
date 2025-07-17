@@ -1,0 +1,121 @@
+Create a new menu item under others called : Photo Gallery 
+
+This consist of two parts :  
+
+	Landing Page 
+
+	Add page 
+
+Landing Page : Wil consist of simple table and a add button. 
+
+Table Layout 
+
+Columns:  
+
+Event Name (e.g., "Annual Sports Day 2024")  
+
+Type (e.g., Sports / Academic / Cultural / Others)  
+
+Date (e.g., 15 Mar 2024)  
+
+Images (e.g., 24 photos)  
+
+Actions (two icon buttons: 👁️ View and ✏️ Edit). 
+
+ 
+
+Add Button:"+ Add Gallery" (right-aligned, links to the gallery upload form) 
+
+ 
+
+Add Page: 
+
+1. Smart Event Selection 
+
+Dropdown: "Select Event" (pre-populated from master database)  
+
+Last option: "Others" (triggers manual entry mode) 
+
+Autofill Behavior:  
+
+If user selects predefined event → Auto-populate Event Date & Description from database  
+
+If "Others" selected → Clear fields and enable manual entry 
+
+2. Conditional Fields 
+
+A. For Predefined Events:  
+
+Event Date: (Auto-filled, read-only)  
+
+Description: (Auto-filled, editable Summernote field) 
+
+B. For "Others" Selection:  
+
+Event Name: Text input (required)  
+
+Event Date: Blank date picker (required)  
+
+Description: Empty Summernote field (optional) 
+
+3. Multi-Image Upload System 
+
+Smart Preview Panel:  
+
+Live thumbnails with hover-to-zoom  
+
+File size validation (max 2MB)  
+
+Batch removal option 
+
+Two-Step Upload:  
+
+Client-side validation (file type/size)  
+
+Server upload with progress bar 
+
+4. Validation Rules 
+
+❌ Show error if:  
+
+No event selected  
+
+"Others" chosen but no custom name entered  
+
+Invalid image files selected 
+
+✅ Enable submit button only when valid 
+
+5. UI/UX Requirements 
+
+Visual Cues:  
+
+Green checkmark for auto-filled fields  
+
+Red asterisk for required manual fields 
+
+Responsive Layout:  
+
+Stacked form on mobile  
+
+Inline date picker on desktop 
+
+Example Workflow Video Script:  
+
+Admin selects "Annual Day 2023" → Date/description auto-fill  
+
+Chooses 10 photos → sees instant previews  
+
+System rejects 1 oversized image → uploads 9  
+
+For "Science Fair" (new event):  
+
+Selects "Others"  
+
+Types "Science Fair 2024"  
+
+Sets new date  
+
+Adds custom description  
+
+Uploads photos 
