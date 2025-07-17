@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1588,6 +1588,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete bus route" });
+    }
+  });
+
+  // News/Circular routes
+  app.get("/api/news-circulars", async (req, res) => {
+    try {
+      const newsCirculars = await storage.getAllNewsCirculars();
+      res.json(newsCirculars);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch news/circulars" });
+    }
+  });
+
+  app.post("/api/news-circulars", upload.single('file'), async (req, res) => {
+    try {
+      const newsCircularData = req.body;
+      
+      // Add file information if file was uploaded
+      if (req.file) {
+        newsCircularData.fileName = req.file.filename;
+        newsCircularData.filePath = req.file.path;
+        newsCircularData.fileSize = req.file.size;
+      }
+      
+      const result = insertNewsCircularSchema.safeParse(newsCircularData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const newsCircular = await storage.createNewsCircular(result.data);
+      res.status(201).json(newsCircular);
+    } catch (error) {
+      console.error("News/Circular creation error:", error);
+      res.status(500).json({ message: "Failed to create news/circular" });
+    }
+  });
+
+  app.get("/api/news-circulars/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid news/circular ID" });
+      }
+
+      const newsCircular = await storage.getNewsCircular(id);
+      if (!newsCircular) {
+        return res.status(404).json({ message: "News/circular not found" });
+      }
+
+      res.json(newsCircular);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch news/circular" });
+    }
+  });
+
+  app.put("/api/news-circulars/:id", upload.single('file'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid news/circular ID" });
+      }
+
+      const newsCircularData = req.body;
+      
+      // Add file information if file was uploaded
+      if (req.file) {
+        newsCircularData.fileName = req.file.filename;
+        newsCircularData.filePath = req.file.path;
+        newsCircularData.fileSize = req.file.size;
+      }
+
+      const result = insertNewsCircularSchema.partial().safeParse(newsCircularData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const newsCircular = await storage.updateNewsCircular(id, result.data);
+      if (!newsCircular) {
+        return res.status(404).json({ message: "News/circular not found" });
+      }
+
+      res.json(newsCircular);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update news/circular" });
+    }
+  });
+
+  app.delete("/api/news-circulars/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid news/circular ID" });
+      }
+
+      const deleted = await storage.deleteNewsCircular(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "News/circular not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete news/circular" });
     }
   });
 

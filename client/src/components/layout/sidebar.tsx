@@ -164,6 +164,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-calendar",
           url: "/events",
         },
+        {
+          id: "news-circulars",
+          title: "Flash News / School News / Circular Screen",
+          type: "item",
+          icon: "feather icon-bell",
+          url: "/news-circulars",
+        },
       ],
     },
   ],

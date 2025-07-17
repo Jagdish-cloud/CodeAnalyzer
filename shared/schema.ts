@@ -293,6 +293,26 @@ export const insertBusRouteSchema = createInsertSchema(busRoutes).omit({
   createdAt: true,
 });
 
+// News/Circular schema
+export const newsCirculars = pgTable("news_circulars", {
+  id: serial("id").primaryKey(),
+  eventType: text("event_type").notNull(), // 'Flash News', 'School News', 'Notice & Circular'
+  title: text("title"), // For School News and Notices & Circulars
+  description: text("description"), // For School News and Notices & Circulars (rich text)
+  text: text("text"), // For Flash News (single line)
+  fromDate: text("from_date").notNull(),
+  toDate: text("to_date").notNull(),
+  fileName: text("file_name"), // For file uploads in Notices & Circulars
+  filePath: text("file_path"), // For file uploads in Notices & Circulars
+  fileSize: integer("file_size"), // For file uploads in Notices & Circulars
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertNewsCircularSchema = createInsertSchema(newsCirculars).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -329,3 +349,5 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertBusRoute = z.infer<typeof insertBusRouteSchema>;
 export type BusRoute = typeof busRoutes.$inferSelect;
+export type InsertNewsCircular = z.infer<typeof insertNewsCircularSchema>;
+export type NewsCircular = typeof newsCirculars.$inferSelect;

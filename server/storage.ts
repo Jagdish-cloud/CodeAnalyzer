@@ -16,6 +16,7 @@ import {
   handBooks,
   newsletters,
   events,
+  newsCirculars,
   type User,
   type InsertUser,
   type Staff,
@@ -50,6 +51,8 @@ import {
   type InsertNewsletter,
   type Event,
   type InsertEvent,
+  type NewsCircular,
+  type InsertNewsCircular,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -217,6 +220,14 @@ export interface IStorage {
     busRoute: Partial<InsertBusRoute>,
   ): Promise<BusRoute | undefined>;
   deleteBusRoute(id: number): Promise<boolean>;
+  getNewsCircular(id: number): Promise<NewsCircular | undefined>;
+  getAllNewsCirculars(): Promise<NewsCircular[]>;
+  createNewsCircular(newsCircular: InsertNewsCircular): Promise<NewsCircular>;
+  updateNewsCircular(
+    id: number,
+    newsCircular: Partial<InsertNewsCircular>,
+  ): Promise<NewsCircular | undefined>;
+  deleteNewsCircular(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -238,6 +249,7 @@ export class MemStorage implements IStorage {
   private newsletters: Map<number, Newsletter>;
   private events: Map<number, Event>;
   private busRoutes: Map<number, BusRoute>;
+  private newsCirculars: Map<number, NewsCircular>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -256,6 +268,7 @@ export class MemStorage implements IStorage {
   private currentNewsletterId: number;
   private currentEventId: number;
   private currentBusRouteId: number;
+  private currentNewsCircularId: number;
 
   constructor() {
     this.users = new Map();
@@ -276,6 +289,7 @@ export class MemStorage implements IStorage {
     this.newsletters = new Map();
     this.events = new Map();
     this.busRoutes = new Map();
+    this.newsCirculars = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -294,6 +308,7 @@ export class MemStorage implements IStorage {
     this.currentNewsletterId = 1;
     this.currentEventId = 1;
     this.currentBusRouteId = 1;
+    this.currentNewsCircularId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1480,6 +1495,45 @@ export class MemStorage implements IStorage {
 
   async deleteBusRoute(id: number): Promise<boolean> {
     return this.busRoutes.delete(id);
+  }
+
+  // News/Circular methods
+  async getNewsCircular(id: number): Promise<NewsCircular | undefined> {
+    return this.newsCirculars.get(id);
+  }
+
+  async getAllNewsCirculars(): Promise<NewsCircular[]> {
+    return Array.from(this.newsCirculars.values());
+  }
+
+  async createNewsCircular(insertNewsCircular: InsertNewsCircular): Promise<NewsCircular> {
+    const id = this.currentNewsCircularId++;
+    const newsCircular: NewsCircular = {
+      ...insertNewsCircular,
+      id,
+      createdAt: new Date(),
+    };
+    this.newsCirculars.set(id, newsCircular);
+    return newsCircular;
+  }
+
+  async updateNewsCircular(
+    id: number,
+    updateData: Partial<InsertNewsCircular>,
+  ): Promise<NewsCircular | undefined> {
+    const existing = this.newsCirculars.get(id);
+    if (!existing) return undefined;
+
+    const updated: NewsCircular = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.newsCirculars.set(id, updated);
+    return updated;
+  }
+
+  async deleteNewsCircular(id: number): Promise<boolean> {
+    return this.newsCirculars.delete(id);
   }
 }
 

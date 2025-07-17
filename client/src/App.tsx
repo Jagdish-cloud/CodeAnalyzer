@@ -39,6 +39,8 @@ import AddEvent from "@/pages/add-event";
 import BusRoutes from "@/pages/bus-routes";
 import AddBusRoute from "@/pages/add-bus-route";
 import EditBusRoute from "@/pages/edit-bus-route";
+import NewsCirculars from "@/pages/news-circulars";
+import AddNewsCircular from "@/pages/add-news-circular";
 
 function Router() {
   return (
@@ -79,6 +81,8 @@ function Router() {
         <Route path="/bus-routes" component={BusRoutes} />
         <Route path="/add-bus-route" component={AddBusRoute} />
         <Route path="/edit-bus-route/:id" component={EditBusRoute} />
+        <Route path="/news-circulars" component={NewsCirculars} />
+        <Route path="/add-news-circular" component={AddNewsCircular} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
