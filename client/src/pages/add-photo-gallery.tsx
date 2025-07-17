@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequestWithFormData } from "@/lib/queryClient";
 import { ArrowLeft, Upload, X, Eye, CheckCircle, AlertCircle, Calendar, ImageIcon } from "lucide-react";
 import type { Event, InsertPhotoGallery } from "@shared/schema";
 
@@ -167,7 +167,7 @@ export default function AddPhotoGalleryPage() {
         formData.append("images", image.file);
       });
 
-      return apiRequest("/api/photo-galleries", {
+      return apiRequestWithFormData("/api/photo-galleries", {
         method: "POST",
         body: formData,
       });

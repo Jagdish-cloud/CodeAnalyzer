@@ -37,6 +37,24 @@ export async function apiRequest(
   return res;
 }
 
+// For file uploads and FormData
+export async function apiRequestWithFormData(
+  url: string,
+  options: {
+    method: string;
+    body?: FormData;
+  },
+): Promise<Response> {
+  const res = await fetch(url, {
+    method: options.method,
+    body: options.body,
+    credentials: "include",
+  });
+
+  await throwIfResNotOk(res);
+  return res;
+}
+
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
