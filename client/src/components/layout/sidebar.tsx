@@ -171,6 +171,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-bell",
           url: "/news-circulars",
         },
+        {
+          id: "photo-gallery",
+          title: "Photo Gallery",
+          type: "item",
+          icon: "feather icon-image",
+          url: "/photo-gallery",
+        },
       ],
     },
   ],

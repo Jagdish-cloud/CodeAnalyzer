@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1699,6 +1699,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete news/circular" });
+    }
+  });
+
+  // Photo Gallery routes
+  app.get("/api/photo-galleries", async (req, res) => {
+    try {
+      const photoGalleries = await storage.getAllPhotoGalleries();
+      res.json(photoGalleries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch photo galleries" });
+    }
+  });
+
+  app.post("/api/photo-galleries", upload.array('images', 20), async (req, res) => {
+    try {
+      const photoGalleryData = req.body;
+      
+      // Process uploaded images
+      if (req.files && Array.isArray(req.files)) {
+        photoGalleryData.imagePaths = req.files.map(file => file.path);
+        photoGalleryData.imageCount = req.files.length;
+      } else {
+        photoGalleryData.imagePaths = [];
+        photoGalleryData.imageCount = 0;
+      }
+
+      const result = insertPhotoGallerySchema.safeParse(photoGalleryData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const photoGallery = await storage.createPhotoGallery(result.data);
+      res.status(201).json(photoGallery);
+    } catch (error) {
+      console.error("Photo gallery creation error:", error);
+      res.status(500).json({ message: "Failed to create photo gallery" });
+    }
+  });
+
+  app.get("/api/photo-galleries/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid photo gallery ID" });
+      }
+
+      const photoGallery = await storage.getPhotoGallery(id);
+      if (!photoGallery) {
+        return res.status(404).json({ message: "Photo gallery not found" });
+      }
+
+      res.json(photoGallery);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch photo gallery" });
+    }
+  });
+
+  app.put("/api/photo-galleries/:id", upload.array('images', 20), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid photo gallery ID" });
+      }
+
+      const photoGalleryData = req.body;
+      
+      // Process uploaded images if any
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        photoGalleryData.imagePaths = req.files.map(file => file.path);
+        photoGalleryData.imageCount = req.files.length;
+      }
+
+      const result = insertPhotoGallerySchema.partial().safeParse(photoGalleryData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const photoGallery = await storage.updatePhotoGallery(id, result.data);
+      if (!photoGallery) {
+        return res.status(404).json({ message: "Photo gallery not found" });
+      }
+
+      res.json(photoGallery);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update photo gallery" });
+    }
+  });
+
+  app.delete("/api/photo-galleries/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid photo gallery ID" });
+      }
+
+      const deleted = await storage.deletePhotoGallery(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Photo gallery not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete photo gallery" });
     }
   });
 

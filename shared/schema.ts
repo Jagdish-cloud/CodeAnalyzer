@@ -313,6 +313,23 @@ export const insertNewsCircularSchema = createInsertSchema(newsCirculars).omit({
   createdAt: true,
 });
 
+// Photo Gallery schema
+export const photoGalleries = pgTable("photo_galleries", {
+  id: serial("id").primaryKey(),
+  eventName: text("event_name").notNull(),
+  eventType: text("event_type").notNull(), // Sports, Academic, Cultural, Others
+  eventDate: text("event_date").notNull(),
+  description: text("description"), // Optional description
+  imageCount: integer("image_count").notNull().default(0),
+  imagePaths: text("image_paths").array().notNull().default([]), // Array of image file paths
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPhotoGallerySchema = createInsertSchema(photoGalleries).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -351,3 +368,5 @@ export type InsertBusRoute = z.infer<typeof insertBusRouteSchema>;
 export type BusRoute = typeof busRoutes.$inferSelect;
 export type InsertNewsCircular = z.infer<typeof insertNewsCircularSchema>;
 export type NewsCircular = typeof newsCirculars.$inferSelect;
+export type InsertPhotoGallery = z.infer<typeof insertPhotoGallerySchema>;
+export type PhotoGallery = typeof photoGalleries.$inferSelect;

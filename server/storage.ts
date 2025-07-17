@@ -17,6 +17,7 @@ import {
   newsletters,
   events,
   newsCirculars,
+  photoGalleries,
   type User,
   type InsertUser,
   type Staff,
@@ -53,6 +54,8 @@ import {
   type InsertEvent,
   type NewsCircular,
   type InsertNewsCircular,
+  type PhotoGallery,
+  type InsertPhotoGallery,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -228,6 +231,14 @@ export interface IStorage {
     newsCircular: Partial<InsertNewsCircular>,
   ): Promise<NewsCircular | undefined>;
   deleteNewsCircular(id: number): Promise<boolean>;
+  getPhotoGallery(id: number): Promise<PhotoGallery | undefined>;
+  getAllPhotoGalleries(): Promise<PhotoGallery[]>;
+  createPhotoGallery(photoGallery: InsertPhotoGallery): Promise<PhotoGallery>;
+  updatePhotoGallery(
+    id: number,
+    photoGallery: Partial<InsertPhotoGallery>,
+  ): Promise<PhotoGallery | undefined>;
+  deletePhotoGallery(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -250,6 +261,7 @@ export class MemStorage implements IStorage {
   private events: Map<number, Event>;
   private busRoutes: Map<number, BusRoute>;
   private newsCirculars: Map<number, NewsCircular>;
+  private photoGalleries: Map<number, PhotoGallery>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -269,6 +281,7 @@ export class MemStorage implements IStorage {
   private currentEventId: number;
   private currentBusRouteId: number;
   private currentNewsCircularId: number;
+  private currentPhotoGalleryId: number;
 
   constructor() {
     this.users = new Map();
@@ -290,6 +303,7 @@ export class MemStorage implements IStorage {
     this.events = new Map();
     this.busRoutes = new Map();
     this.newsCirculars = new Map();
+    this.photoGalleries = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -309,6 +323,7 @@ export class MemStorage implements IStorage {
     this.currentEventId = 1;
     this.currentBusRouteId = 1;
     this.currentNewsCircularId = 1;
+    this.currentPhotoGalleryId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1534,6 +1549,45 @@ export class MemStorage implements IStorage {
 
   async deleteNewsCircular(id: number): Promise<boolean> {
     return this.newsCirculars.delete(id);
+  }
+
+  // Photo Gallery methods
+  async getPhotoGallery(id: number): Promise<PhotoGallery | undefined> {
+    return this.photoGalleries.get(id);
+  }
+
+  async getAllPhotoGalleries(): Promise<PhotoGallery[]> {
+    return Array.from(this.photoGalleries.values());
+  }
+
+  async createPhotoGallery(insertPhotoGallery: InsertPhotoGallery): Promise<PhotoGallery> {
+    const id = this.currentPhotoGalleryId++;
+    const photoGallery: PhotoGallery = {
+      ...insertPhotoGallery,
+      id,
+      createdAt: new Date(),
+    };
+    this.photoGalleries.set(id, photoGallery);
+    return photoGallery;
+  }
+
+  async updatePhotoGallery(
+    id: number,
+    updateData: Partial<InsertPhotoGallery>,
+  ): Promise<PhotoGallery | undefined> {
+    const existing = this.photoGalleries.get(id);
+    if (!existing) return undefined;
+
+    const updated: PhotoGallery = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.photoGalleries.set(id, updated);
+    return updated;
+  }
+
+  async deletePhotoGallery(id: number): Promise<boolean> {
+    return this.photoGalleries.delete(id);
   }
 }
 
