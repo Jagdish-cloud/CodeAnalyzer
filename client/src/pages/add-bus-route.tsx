@@ -28,6 +28,7 @@ interface Stop {
   address: string;
   lat: number;
   lng: number;
+  pickupTime: string;
 }
 
 export default function AddBusRoutePage() {
@@ -39,6 +40,7 @@ export default function AddBusRoutePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [mapCenter, setMapCenter] = useState({ lat: 12.907974564043526, lng: 77.57370469559991 });
+  const [pickupTime, setPickupTime] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -218,14 +220,25 @@ export default function AddBusRoutePage() {
   };
 
   const handleSelectLocation = () => {
-    if (selectedLocation) {
-      setStops([...stops, selectedLocation]);
+    if (selectedLocation && pickupTime) {
+      const newStop: Stop = {
+        ...selectedLocation,
+        pickupTime
+      };
+      setStops([...stops, newStop]);
       setSelectedLocation(null);
       setSearchQuery("");
+      setPickupTime("");
       setIsMapDialogOpen(false);
       toast({
         title: "Stop Added",
-        description: "Location has been added to the route stops.",
+        description: "Location and pickup time have been added to the route stops.",
+      });
+    } else {
+      toast({
+        title: "Missing Information",
+        description: "Please select a location and pickup time before adding the stop.",
+        variant: "destructive",
       });
     }
   };
@@ -465,11 +478,30 @@ export default function AddBusRoutePage() {
                                 ✅ Location Selected
                               </h4>
                               <p className="text-sm text-green-700 mb-3 leading-relaxed break-words">{selectedLocation.address}</p>
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div className="text-xs text-green-600 break-all">
-                                  📍 Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                                </div>
-                                <Button onClick={handleSelectLocation} className="bg-green-600 hover:bg-green-700 flex-shrink-0">
+                              <div className="text-xs text-green-600 break-all mb-3">
+                                📍 Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                              </div>
+                              
+                              {/* Pickup Time Input */}
+                              <div className="mb-3">
+                                <label className="block text-sm font-medium text-green-800 mb-2">
+                                  Pickup Time
+                                </label>
+                                <Input
+                                  type="time"
+                                  value={pickupTime}
+                                  onChange={(e) => setPickupTime(e.target.value)}
+                                  className="bg-white border-green-300"
+                                  placeholder="Select pickup time"
+                                />
+                              </div>
+                              
+                              <div className="flex justify-end">
+                                <Button 
+                                  onClick={handleSelectLocation} 
+                                  className="bg-green-600 hover:bg-green-700 flex-shrink-0"
+                                  disabled={!pickupTime}
+                                >
                                   Add This Stop
                                 </Button>
                               </div>
@@ -488,6 +520,7 @@ export default function AddBusRoutePage() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Address</TableHead>
+                              <TableHead className="text-center w-32">Pickup Time</TableHead>
                               <TableHead className="text-center w-24">Action</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -495,6 +528,9 @@ export default function AddBusRoutePage() {
                             {stops.map((stop, index) => (
                               <TableRow key={index}>
                                 <TableCell className="text-sm">{stop.address}</TableCell>
+                                <TableCell className="text-center text-sm font-medium text-blue-600">
+                                  {stop.pickupTime}
+                                </TableCell>
                                 <TableCell className="text-center">
                                   <Button
                                     type="button"

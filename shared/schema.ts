@@ -279,6 +279,7 @@ export const busRoutes = pgTable("bus_routes", {
     address: string;
     lat: number;
     lng: number;
+    pickupTime: string;
   }>>().default([]),
   vehicleNumber: text("vehicle_number").notNull(),
   driverName: text("driver_name").notNull(),
