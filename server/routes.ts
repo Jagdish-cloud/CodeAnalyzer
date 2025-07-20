@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1811,6 +1811,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete photo gallery" });
+    }
+  });
+
+  // Poll routes
+  app.get("/api/polls", async (req, res) => {
+    try {
+      const polls = await storage.getAllPolls();
+      res.json(polls);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch polls" });
+    }
+  });
+
+  app.post("/api/polls", async (req, res) => {
+    try {
+      const result = insertPollSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const poll = await storage.createPoll(result.data);
+      res.status(201).json(poll);
+    } catch (error) {
+      console.error("Poll creation error:", error);
+      res.status(500).json({ message: "Failed to create poll" });
+    }
+  });
+
+  app.get("/api/polls/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid poll ID" });
+      }
+
+      const poll = await storage.getPoll(id);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+
+      res.json(poll);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch poll" });
+    }
+  });
+
+  app.put("/api/polls/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid poll ID" });
+      }
+
+      const result = insertPollSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const poll = await storage.updatePoll(id, result.data);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+
+      res.json(poll);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update poll" });
+    }
+  });
+
+  app.delete("/api/polls/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid poll ID" });
+      }
+
+      const deleted = await storage.deletePoll(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete poll" });
     }
   });
 

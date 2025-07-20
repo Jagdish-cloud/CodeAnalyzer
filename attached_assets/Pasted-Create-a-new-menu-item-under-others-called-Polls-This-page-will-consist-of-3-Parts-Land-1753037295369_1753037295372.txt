@@ -1,0 +1,141 @@
+Create a new menu item under others called :  Polls 
+
+This page will consist of 3 Parts : 
+
+Landing  
+
+Add  
+
+View  
+
+Landing :  
+
+A Simple Table with 2 Columns : 1 – Poll Name , 2 – Action (View). 
+
+And a button to redirecting to add page 
+
+Add : 
+
+Enhanced Prompt for Development with Additional Questions: 
+
+Create a responsive web form titled "Add Poll Details" with the following sections and functionality: 
+
+Header Section: 
+
+Main heading: "Add Poll Details" as an H1 element 
+
+Subheading: "Poll Description*" as an H2 element (asterisk indicating required field) 
+
+Poll Name: 
+
+Label: "Poll Name*" (required) 
+
+Placeholder text: "Enter Poll Name" 
+
+Text input field 
+
+ 
+
+Form Fields: 
+
+Poll Questions Section: 
+
+Primary Question: 
+
+Label: "Poll Question*" (required) 
+
+Textarea input field 
+
+"Add More Questions" button: 
+
+Positioned below the first question 
+
+Secondary button style 
+
+On click, adds another question field with: 
+
+Textarea input 
+
+"Remove" button for each additional question 
+
+Include character count indicator if applicable 
+
+Poll Type: 
+
+Label: "Poll Type*" (required) 
+
+Dropdown selector with: 
+
+Default option: "Select Poll Type" (disabled) 
+
+Options: "Single Choice", "Multiple Choices" 
+
+Choices Section: 
+
+Label: "No. Of Choices*" (required) 
+
+Number input field or dropdown for selecting number of choices 
+
+Dynamic choice entry fields that appear based on the number selected 
+
+Each choice should have a text input with placeholder "Enter Choice #" 
+
+Note: Choices should apply to all questions in the poll 
+
+Form Controls: 
+
+Two buttons at the bottom: 
+
+"Submit" (primary button) 
+
+"Back" (secondary button) 
+
+Additional Features: 
+
+Question management: 
+
+Each additional question should be removable 
+
+Questions should be numbered sequentially 
+
+Visual distinction between primary and additional questions 
+
+Dynamic behavior: 
+
+Smooth animations when adding/removing questions 
+
+Auto-focus on newly added question fields 
+
+Styling Requirements: 
+
+Clean, modern interface with proper spacing 
+
+Required fields clearly marked with asterisks 
+
+Visual grouping of related questions 
+
+Responsive design for all devices 
+
+Validation: 
+
+Client-side validation for all required fields 
+
+Ensure at least one question exists 
+
+Validate all questions have content before submission 
+
+Technical Implementation: 
+
+React component with TypeScript 
+
+State management for dynamic questions 
+
+Formik or React Hook Form for form handling 
+
+CSS modules for styling 
+
+Accessibility-compliant markup 
+
+View : 
+
+Only click of view page provide the list of all question. A proper poll page. 

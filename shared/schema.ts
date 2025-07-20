@@ -331,6 +331,27 @@ export const insertPhotoGallerySchema = createInsertSchema(photoGalleries).omit(
   createdAt: true,
 });
 
+// Polls schema
+export const polls = pgTable("polls", {
+  id: serial("id").primaryKey(),
+  pollName: text("poll_name").notNull(),
+  pollType: text("poll_type").notNull(), // 'Single Choice', 'Multiple Choices'
+  questions: json("questions").$type<Array<{
+    id: string;
+    question: string;
+  }>>().default([]),
+  choices: json("choices").$type<Array<{
+    id: string;
+    choice: string;
+  }>>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPollSchema = createInsertSchema(polls).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
@@ -371,3 +392,5 @@ export type InsertNewsCircular = z.infer<typeof insertNewsCircularSchema>;
 export type NewsCircular = typeof newsCirculars.$inferSelect;
 export type InsertPhotoGallery = z.infer<typeof insertPhotoGallerySchema>;
 export type PhotoGallery = typeof photoGalleries.$inferSelect;
+export type InsertPoll = z.infer<typeof insertPollSchema>;
+export type Poll = typeof polls.$inferSelect;

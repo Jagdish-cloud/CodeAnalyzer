@@ -43,6 +43,9 @@ import NewsCirculars from "@/pages/news-circulars";
 import AddNewsCircular from "@/pages/add-news-circular";
 import PhotoGallery from "@/pages/photo-gallery";
 import AddPhotoGallery from "@/pages/add-photo-gallery";
+import Polls from "@/pages/polls";
+import AddPoll from "@/pages/add-poll";
+import ViewPoll from "@/pages/view-poll";
 
 function Router() {
   return (
@@ -87,6 +90,9 @@ function Router() {
         <Route path="/add-news-circular" component={AddNewsCircular} />
         <Route path="/photo-gallery" component={PhotoGallery} />
         <Route path="/add-photo-gallery" component={AddPhotoGallery} />
+        <Route path="/polls" component={Polls} />
+        <Route path="/add-poll" component={AddPoll} />
+        <Route path="/view-poll/:id" component={ViewPoll} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

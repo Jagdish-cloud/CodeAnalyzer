@@ -18,6 +18,11 @@ import {
   Calendar,
   Clock,
   FileText,
+  Shield,
+  Navigation,
+  Image,
+  Bell,
+  PieChart,
 } from "lucide-react";
 
 interface MenuItem {
@@ -178,6 +183,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-image",
           url: "/photo-gallery",
         },
+        {
+          id: "polls",
+          title: "Polls",
+          type: "item",
+          icon: "feather icon-pie-chart",
+          url: "/polls",
+        },
       ],
     },
   ],
@@ -205,6 +217,16 @@ const getIcon = (iconName: string) => {
       return Clock;
     case "feather icon-file-text":
       return FileText;
+    case "feather icon-shield":
+      return Shield;
+    case "feather icon-navigation":
+      return Navigation;
+    case "feather icon-image":
+      return Image;
+    case "feather icon-bell":
+      return Bell;
+    case "feather icon-pie-chart":
+      return PieChart;
     default:
       return Home;
   }
