@@ -22,9 +22,13 @@ export default function ViewPollPage() {
   });
 
   // Debug logging
+  console.log('PollId:', pollId);
   console.log('Poll data:', poll);
-  console.log('Questions:', poll?.questions);
-  console.log('Choices:', poll?.choices);
+  console.log('IsLoading:', isLoading);
+  console.log('Questions length:', poll?.questions?.length);
+  console.log('Choices length:', poll?.choices?.length);
+
+
 
   const handleSingleChoiceChange = (questionId: string, value: string) => {
     setResponses(prev => ({
@@ -133,14 +137,15 @@ export default function ViewPollPage() {
 
         {/* Poll Questions */}
         <div className="space-y-4">
-          {poll.questions && poll.questions.length > 0 ? (
+          {console.log('Rendering questions check:', poll?.questions)}
+          {poll?.questions && poll.questions.length > 0 ? (
             poll.questions.map((question, questionIndex) => {
               // Get choices for this specific question
               const questionChoices = poll.choices?.filter(choice => 
                 choice.questionId === question.id || choice.id?.startsWith(`${question.id}-`)
               ) || [];
               
-              console.log(`Question ${question.id} choices:`, questionChoices);
+
               
               const pollType = question.pollType || "Single Choice";
               
