@@ -21,6 +21,11 @@ export default function ViewPollPage() {
     enabled: !!pollId,
   });
 
+  // Debug logging
+  console.log('Poll data:', poll);
+  console.log('Questions:', poll?.questions);
+  console.log('Choices:', poll?.choices);
+
   const handleSingleChoiceChange = (questionId: string, value: string) => {
     setResponses(prev => ({
       ...prev,
@@ -127,70 +132,80 @@ export default function ViewPollPage() {
         </div>
 
         {/* Poll Questions */}
-        <div className="space-y-6">
-          {poll.questions?.map((question, questionIndex) => {
-            // Get choices for this specific question
-            const questionChoices = poll.choices?.filter(choice => 
-              choice.questionId === question.id || choice.id?.startsWith(`${question.id}-`)
-            ) || [];
-            
-            return (
-              <Card key={question.id} className="bg-white/70 backdrop-blur-sm border-white/20 shadow-xl">
-                <CardHeader className="border-b border-white/20">
-                  <CardTitle className="text-lg font-semibold text-gray-800">
-                    Question {questionIndex + 1}: {question.question}
-                  </CardTitle>
-                  <div className="text-sm text-blue-600 font-medium">
-                    {question.pollType || "Single Choice"}
+        <div className="space-y-4">
+          {poll.questions && poll.questions.length > 0 ? (
+            poll.questions.map((question, questionIndex) => {
+              // Get choices for this specific question
+              const questionChoices = poll.choices?.filter(choice => 
+                choice.questionId === question.id || choice.id?.startsWith(`${question.id}-`)
+              ) || [];
+              
+              console.log(`Question ${question.id} choices:`, questionChoices);
+              
+              const pollType = question.pollType || "Single Choice";
+              
+              return (
+                <div key={question.id} className="bg-white/70 backdrop-blur-sm border border-white/20 rounded-lg p-6 shadow-xl">
+                  {/* Question Header */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {questionIndex + 1}. {question.question}
+                    </h3>
                   </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {(question.pollType || "Single Choice") === "Single Choice" ? (
-                    <RadioGroup
-                      value={responses[question.id] as string || ""}
-                      onValueChange={(value) => handleSingleChoiceChange(question.id, value)}
-                      className="space-y-3"
-                    >
-                      {questionChoices.map((choice) => (
-                        <div key={choice.id} className="flex items-center space-x-3">
-                          <RadioGroupItem value={choice.id} id={`${question.id}-${choice.id}`} />
-                          <Label 
-                            htmlFor={`${question.id}-${choice.id}`} 
-                            className="text-sm font-medium text-gray-700 cursor-pointer"
-                          >
-                            {choice.choice}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  ) : (
-                    <div className="space-y-3">
-                      {questionChoices.map((choice) => {
-                        const isChecked = ((responses[question.id] as string[]) || []).includes(choice.id);
-                        return (
+
+                  {/* Answer Options */}
+                  <div className="space-y-3">
+                    {pollType === "Single Choice" ? (
+                      <RadioGroup
+                        value={responses[question.id] as string || ""}
+                        onValueChange={(value) => handleSingleChoiceChange(question.id, value)}
+                        className="space-y-3"
+                      >
+                        {questionChoices.map((choice) => (
                           <div key={choice.id} className="flex items-center space-x-3">
-                            <Checkbox 
-                              id={`${question.id}-${choice.id}`}
-                              checked={isChecked}
-                              onCheckedChange={(checked) => 
-                                handleMultipleChoiceChange(question.id, choice.id, checked as boolean)
-                              }
-                            />
+                            <RadioGroupItem value={choice.id} id={`${question.id}-${choice.id}`} />
                             <Label 
                               htmlFor={`${question.id}-${choice.id}`} 
-                              className="text-sm font-medium text-gray-700 cursor-pointer"
+                              className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
                             >
                               {choice.choice}
                             </Label>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                        ))}
+                      </RadioGroup>
+                    ) : (
+                      <div className="space-y-3">
+                        {questionChoices.map((choice) => {
+                          const isChecked = ((responses[question.id] as string[]) || []).includes(choice.id);
+                          return (
+                            <div key={choice.id} className="flex items-center space-x-3">
+                              <Checkbox 
+                                id={`${question.id}-${choice.id}`}
+                                checked={isChecked}
+                                onCheckedChange={(checked) => 
+                                  handleMultipleChoiceChange(question.id, choice.id, checked as boolean)
+                                }
+                              />
+                              <Label 
+                                htmlFor={`${question.id}-${choice.id}`} 
+                                className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
+                              >
+                                {choice.choice}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No questions found in this poll.</p>
+            </div>
+          )}
         </div>
 
         {/* Submit Section */}

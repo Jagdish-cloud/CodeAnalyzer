@@ -324,6 +324,23 @@ Preferred communication style: Simple, everyday language.
   - Others group includes: Public Holiday/Vacation Master, Hand Book, Newsletter, Bus Routes, Events
   - Moved Dashboard to top level for easy access
   - Enhanced navigation organization for better user experience and logical grouping
+- July 20, 2025: Enhanced Bus Routes with Pickup Time functionality:
+  - Added pickup time input fields for each bus stop location
+  - Updated database schema to support pickup times in bus route stops
+  - Enhanced both add-bus-route and edit-bus-route pages with time validation
+  - Applied database schema changes using drizzle push command
+- July 20, 2025: Implemented Comprehensive Polls Management System:
+  - Added "Polls" menu item under "Others" section in navigation
+  - Created polls database schema with questions, options, and responses tables
+  - Built polls landing page showing poll information with question types and counts
+  - Developed add poll page with dynamic question and choice management
+  - Each question can have its own poll type (Single Choice/Multiple Choices)
+  - Each question has its own set of choices with dynamic count selection (2-8 choices)
+  - Implemented "Add More Questions" functionality to repeat question sections
+  - Created view poll page for taking polls with proper question-choice associations
+  - Added complete CRUD operations for polls in backend storage and API
+  - Applied consistent blue-purple gradient design theme throughout polls system
+  - Updated database schema to support question-specific poll types and choice associations
 
 ## Changelog
 
