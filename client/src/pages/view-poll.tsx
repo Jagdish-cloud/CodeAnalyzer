@@ -17,16 +17,11 @@ export default function ViewPollPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const { data: poll, isLoading } = useQuery<Poll>({
-    queryKey: ['/api/polls', pollId],
+    queryKey: [`/api/polls/${pollId}`],
     enabled: !!pollId,
   });
 
-  // Debug logging
-  console.log('PollId:', pollId);
-  console.log('Poll data:', poll);
-  console.log('IsLoading:', isLoading);
-  console.log('Questions length:', poll?.questions?.length);
-  console.log('Choices length:', poll?.choices?.length);
+
 
 
 
@@ -123,25 +118,24 @@ export default function ViewPollPage() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              {poll.pollName}
+              {poll?.pollName || "Poll"}
             </h1>
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
               Mixed Question Types
             </span>
-            <span>{poll.questions?.length || 0} Questions</span>
-            <span>{poll.choices?.length || 0} Total Choices</span>
+            <span>{poll?.questions?.length || 0} Questions</span>
+            <span>{poll?.choices?.length || 0} Total Choices</span>
           </div>
         </div>
 
         {/* Poll Questions */}
         <div className="space-y-4">
-          {console.log('Rendering questions check:', poll?.questions)}
           {poll?.questions && poll.questions.length > 0 ? (
             poll.questions.map((question, questionIndex) => {
               // Get choices for this specific question
-              const questionChoices = poll.choices?.filter(choice => 
+              const questionChoices = poll?.choices?.filter(choice => 
                 choice.questionId === question.id || choice.id?.startsWith(`${question.id}-`)
               ) || [];
               
