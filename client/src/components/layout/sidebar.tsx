@@ -265,11 +265,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-3 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200 min-w-max"
+            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
             onClick={() => toggleGroup(item.id)}
           >
-            <div className="flex-1 min-w-0">
-              <span className="whitespace-nowrap block">{item.title}</span>
+            <div className="flex-1 min-w-0 overflow-x-auto max-w-[200px] custom-scrollbar">
+              <span className="whitespace-nowrap block">
+                {item.title}
+              </span>
             </div>
             {isExpanded ? (
               <ChevronDown className="h-4 w-4 flex-shrink-0 ml-2" />
@@ -295,15 +297,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1 min-w-max",
+              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1",
               isActive &&
                 "bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-white/20 shadow-lg hover:from-blue-500/40 hover:to-purple-500/40",
             )}
             onClick={onClose}
           >
             <Icon className="h-4 w-4 flex-shrink-0 mr-2" />
-            <div className="flex-1 min-w-0">
-              <span className="whitespace-nowrap block">{item.title}</span>
+            <div className="flex-1 min-w-0 overflow-x-auto max-w-[200px] custom-scrollbar">
+              <span className="whitespace-nowrap block">
+                {item.title}
+              </span>
             </div>
           </Button>
         </Link>
@@ -326,7 +330,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl flex flex-col overflow-auto custom-scrollbar",
+          "fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 border-r border-purple-500/20 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 backdrop-blur-xl flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         style={{
@@ -354,8 +358,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <div className="flex-1 overflow-auto custom-scrollbar">
-          <div className="p-4 overflow-x-auto overflow-y-auto custom-scrollbar min-w-max">
-            <nav className="space-y-2 min-w-max w-fit">
+          <div className="h-full p-4 overflow-auto custom-scrollbar">
+            <nav className="space-y-2 overflow-x-auto custom-scrollbar">
               {menuItems.items.map(renderMenuItem)}
             </nav>
           </div>
