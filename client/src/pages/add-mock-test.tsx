@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -58,6 +59,23 @@ function AddMockTest() {
   const [availableDivisions, setAvailableDivisions] = useState<string[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Initialize with one default question
+  useEffect(() => {
+    if (questions.length === 0) {
+      const defaultQuestion: MockTestQuestion = {
+        id: `question-${Date.now()}`,
+        questionText: "",
+        isRequired: false,
+        hasOtherOption: false,
+        options: [
+          { id: `option-${Date.now()}-1`, text: "", score: 0 },
+          { id: `option-${Date.now()}-2`, text: "", score: 0 }
+        ]
+      };
+      setQuestions([defaultQuestion]);
+    }
+  }, []);
 
   const { data: classMappings } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -517,135 +535,179 @@ function AddMockTest() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {questions.length === 0 ? (
-                  <div className="text-center py-8">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-8"
+                  >
                     <p className="text-gray-500 dark:text-gray-400 mb-4">
                       No questions added yet. Click "Add Question" to start.
                     </p>
-                  </div>
+                  </motion.div>
                 ) : (
-                  questions.map((question, questionIndex) => (
-                    <div key={question.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                          Question {questionIndex + 1}
-                        </h4>
-                        <div className="flex space-x-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moveQuestion(question.id, 'up')}
-                            disabled={questionIndex === 0}
-                          >
-                            <MoveUp className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moveQuestion(question.id, 'down')}
-                            disabled={questionIndex === questions.length - 1}
-                          >
-                            <MoveDown className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteQuestion(question.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>Question Text</Label>
-                        <Input
-                          placeholder="Enter question text"
-                          value={question.questionText}
-                          onChange={(e) => updateQuestion(question.id, { questionText: e.target.value })}
-                          className="mt-1"
-                        />
-                      </div>
-
-                      <div className="flex space-x-6">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`required-${question.id}`}
-                            checked={question.isRequired}
-                            onCheckedChange={(checked) => 
-                              updateQuestion(question.id, { isRequired: checked as boolean })
-                            }
-                          />
-                          <Label htmlFor={`required-${question.id}`}>Required Question</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`other-${question.id}`}
-                            checked={question.hasOtherOption}
-                            onCheckedChange={(checked) => 
-                              updateQuestion(question.id, { hasOtherOption: checked as boolean })
-                            }
-                          />
-                          <Label htmlFor={`other-${question.id}`}>Add Other Option</Label>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <Label>Options</Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addOption(question.id)}
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Option
-                          </Button>
-                        </div>
-                        <div className="space-y-3">
-                          {question.options.map((option, optionIndex) => (
-                            <div key={option.id} className="flex items-center space-x-3">
-                              <div className="flex-1 grid grid-cols-3 gap-3">
-                                <div className="col-span-2">
-                                  <Input
-                                    placeholder={`Option ${optionIndex + 1} text`}
-                                    value={option.text}
-                                    onChange={(e) => 
-                                      updateOption(question.id, option.id, { text: e.target.value })
-                                    }
-                                  />
-                                </div>
-                                <div>
-                                  <Input
-                                    type="number"
-                                    placeholder="Score"
-                                    value={option.score}
-                                    min="0"
-                                    onChange={(e) => 
-                                      updateOption(question.id, option.id, { score: parseInt(e.target.value) || 0 })
-                                    }
-                                  />
-                                </div>
-                              </div>
-                              {question.options.length > 2 && (
+                  <AnimatePresence mode="wait">
+                    {questions.map((question, questionIndex) => (
+                      <motion.div 
+                        key={question.id}
+                        layout
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0, 
+                          scale: 1,
+                          transition: {
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30
+                          }
+                        }}
+                        exit={{ 
+                          opacity: 0, 
+                          y: -20, 
+                          scale: 0.95,
+                          transition: {
+                            duration: 0.2
+                          }
+                        }}
+                        whileHover={{ scale: 1.01 }}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4 bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-800/50 dark:to-gray-900/50"
+                      >
+                          <div className="flex justify-between items-start">
+                            <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                              Question {questionIndex + 1}
+                            </h4>
+                            <div className="flex space-x-2">
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => deleteOption(question.id, option.id)}
+                                  onClick={() => moveQuestion(question.id, 'up')}
+                                  disabled={questionIndex === 0}
+                                >
+                                  <MoveUp className="w-4 h-4" />
+                                </Button>
+                              </motion.div>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => moveQuestion(question.id, 'down')}
+                                  disabled={questionIndex === questions.length - 1}
+                                >
+                                  <MoveDown className="w-4 h-4" />
+                                </Button>
+                              </motion.div>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteQuestion(question.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
-                              )}
+                              </motion.div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))
+                          </div>
+
+                          <div>
+                            <Label>Question Text</Label>
+                            <Input
+                              placeholder="Enter question text"
+                              value={question.questionText}
+                              onChange={(e) => updateQuestion(question.id, { questionText: e.target.value })}
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div className="flex space-x-6">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`required-${question.id}`}
+                                checked={question.isRequired}
+                                onCheckedChange={(checked) => 
+                                  updateQuestion(question.id, { isRequired: checked as boolean })
+                                }
+                              />
+                              <Label htmlFor={`required-${question.id}`}>Required Question</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`other-${question.id}`}
+                                checked={question.hasOtherOption}
+                                onCheckedChange={(checked) => 
+                                  updateQuestion(question.id, { hasOtherOption: checked as boolean })
+                                }
+                              />
+                              <Label htmlFor={`other-${question.id}`}>Add Other Option</Label>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between items-center mb-3">
+                              <Label>Options</Label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addOption(question.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Option
+                              </Button>
+                            </div>
+                            <div className="space-y-3">
+                              {question.options.map((option, optionIndex) => (
+                                <motion.div 
+                                  key={option.id} 
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: 20 }}
+                                  className="flex items-center space-x-3"
+                                >
+                                  <div className="flex-1 grid grid-cols-3 gap-3">
+                                    <div className="col-span-2">
+                                      <Input
+                                        placeholder={`Option ${optionIndex + 1} text`}
+                                        value={option.text}
+                                        onChange={(e) => 
+                                          updateOption(question.id, option.id, { text: e.target.value })
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Input
+                                        type="number"
+                                        placeholder="Score"
+                                        value={option.score}
+                                        min="0"
+                                        onChange={(e) => 
+                                          updateOption(question.id, option.id, { score: parseInt(e.target.value) || 0 })
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                  {question.options.length > 2 && (
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => deleteOption(question.id, option.id)}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </motion.div>
+                                  )}
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </CardContent>
             </Card>
@@ -667,13 +729,23 @@ function AddMockTest() {
                     variant="destructive"
                     onClick={() => {
                       form.reset();
-                      setQuestions([]);
+                      const defaultQuestion: MockTestQuestion = {
+                        id: `question-${Date.now()}`,
+                        questionText: "",
+                        isRequired: false,
+                        hasOtherOption: false,
+                        options: [
+                          { id: `option-${Date.now()}-1`, text: "", score: 0 },
+                          { id: `option-${Date.now()}-2`, text: "", score: 0 }
+                        ]
+                      };
+                      setQuestions([defaultQuestion]);
                       setSelectedSubjects([]);
                       setSelectedFile(null);
                     }}
                     className="order-2"
                   >
-                    Delete Mock
+                    Reset Form
                   </Button>
                   <Button
                     type="submit"
