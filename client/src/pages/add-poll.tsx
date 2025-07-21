@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Minus, Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { insertPollSchema } from "@shared/schema";
 
 // Form schema
@@ -47,17 +47,15 @@ export default function AddPollPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [questions, setQuestions] = useState<Question[]>([
-    { 
-      id: "1", 
-      question: "", 
-      pollType: "Single Choice",
-      choices: [
-        { id: "1", choice: "" },
-        { id: "2", choice: "" }
-      ]
-    }
-  ]);
+  const [question, setQuestion] = useState<Question>({
+    id: "1", 
+    question: "", 
+    pollType: "Single Choice",
+    choices: [
+      { id: "1", choice: "" },
+      { id: "2", choice: "" }
+    ]
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -104,102 +102,68 @@ export default function AddPollPage() {
     },
   });
 
-  const addQuestion = () => {
-    const newId = (questions.length + 1).toString();
-    setQuestions([...questions, { 
-      id: newId, 
-      question: "", 
-      pollType: "Single Choice",
-      choices: [
-        { id: "1", choice: "" },
-        { id: "2", choice: "" }
-      ]
-    }]);
+  const updateQuestion = (questionText: string) => {
+    setQuestion(prev => ({ ...prev, question: questionText }));
   };
 
-  const removeQuestion = (id: string) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter(q => q.id !== id));
-    }
+  const updateQuestionPollType = (pollType: "Single Choice" | "Multiple Choices") => {
+    setQuestion(prev => ({ ...prev, pollType }));
   };
 
-  const updateQuestion = (id: string, question: string) => {
-    setQuestions(questions.map(q => q.id === id ? { ...q, question } : q));
-  };
-
-  const updateQuestionPollType = (id: string, pollType: "Single Choice" | "Multiple Choices") => {
-    setQuestions(questions.map(q => q.id === id ? { ...q, pollType } : q));
-  };
-
-  const updateQuestionChoice = (questionId: string, choiceId: string, choice: string) => {
-    setQuestions(questions.map(q => 
-      q.id === questionId 
-        ? { ...q, choices: q.choices.map(c => c.id === choiceId ? { ...c, choice } : c) }
-        : q
-    ));
-  };
-
-  const updateQuestionNumChoices = (questionId: string, num: number) => {
-    setQuestions(questions.map(q => {
-      if (q.id === questionId) {
-        const newChoices: Choice[] = [];
-        for (let i = 1; i <= num; i++) {
-          const existingChoice = q.choices.find(c => c.id === i.toString());
-          newChoices.push(existingChoice || { id: i.toString(), choice: "" });
-        }
-        return { ...q, choices: newChoices };
-      }
-      return q;
+  const updateQuestionChoice = (choiceId: string, choice: string) => {
+    setQuestion(prev => ({
+      ...prev,
+      choices: prev.choices.map(c => c.id === choiceId ? { ...c, choice } : c)
     }));
   };
 
-  const onSubmit = (values: FormValues) => {
-    // Validate questions
-    const validQuestions = questions.filter(q => {
-      const hasValidQuestion = q.question.trim();
-      const hasValidChoices = q.choices.filter(c => c.choice.trim()).length >= 2;
-      return hasValidQuestion && hasValidChoices;
+  const updateQuestionNumChoices = (num: number) => {
+    setQuestion(prev => {
+      const newChoices: Choice[] = [];
+      for (let i = 1; i <= num; i++) {
+        const existingChoice = prev.choices.find(c => c.id === i.toString());
+        newChoices.push(existingChoice || { id: i.toString(), choice: "" });
+      }
+      return { ...prev, choices: newChoices };
     });
+  };
 
-    if (validQuestions.length === 0) {
+  const onSubmit = (values: FormValues) => {
+    // Validate the single question
+    const hasValidQuestion = question.question.trim();
+    const validChoices = question.choices.filter(c => c.choice.trim());
+    const hasValidChoices = validChoices.length >= 2;
+
+    if (!hasValidQuestion) {
       toast({
         title: "Validation Error",
-        description: "Please add at least one question with at least two choices.",
+        description: "Please enter a question.",
         variant: "destructive",
       });
       return;
     }
 
-    // Check for incomplete questions
-    const incompleteQuestions = questions.filter(q => {
-      const hasValidQuestion = q.question.trim();
-      const hasValidChoices = q.choices.filter(c => c.choice.trim()).length >= 2;
-      return q.question.trim() && (!hasValidQuestion || !hasValidChoices);
-    });
-
-    if (incompleteQuestions.length > 0) {
+    if (!hasValidChoices) {
       toast({
         title: "Validation Error",
-        description: "Please complete all questions with at least two choices each.",
+        description: "Please provide at least two choices for the question.",
         variant: "destructive",
       });
       return;
     }
 
     // Prepare data for submission
-    const processedQuestions = validQuestions.map(q => ({
-      id: q.id,
-      question: q.question,
-      pollType: q.pollType
-    }));
+    const processedQuestions = [{
+      id: question.id,
+      question: question.question,
+      pollType: question.pollType
+    }];
 
-    const allChoices = validQuestions.flatMap(q => 
-      q.choices.filter(c => c.choice.trim()).map(c => ({
-        id: `${q.id}-${c.id}`,
-        choice: c.choice,
-        questionId: q.id
-      }))
-    );
+    const allChoices = validChoices.map(c => ({
+      id: `${question.id}-${c.id}`,
+      choice: c.choice,
+      questionId: question.id
+    }));
 
     const pollData = {
       ...values,
@@ -227,7 +191,7 @@ export default function AddPollPage() {
             </h1>
           </div>
           <h2 className="text-xl font-semibold text-gray-700">
-            Poll Description*
+            Create a Poll with One Question*
           </h2>
         </div>
 
@@ -298,120 +262,94 @@ export default function AddPollPage() {
                   />
                 </div>
 
-                {/* Poll Questions Section */}
+                {/* Poll Question Section */}
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-700">Poll Questions</h3>
+                  <h3 className="text-lg font-semibold text-gray-700">Poll Question</h3>
                   
-                  {questions.map((question, index) => (
-                    <div key={question.id} className="border border-white/30 rounded-lg p-6 bg-white/30 backdrop-blur-sm space-y-4">
-                      {/* Question Header */}
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-md font-medium text-gray-700">
-                          {index === 0 ? "Question" : `Question ${index + 1}`}
-                        </h4>
-                        {index > 0 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeQuestion(question.id)}
-                            className="bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
-                          >
-                            <Minus className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                        )}
-                      </div>
+                  <div className="border border-white/30 rounded-lg p-6 bg-white/30 backdrop-blur-sm space-y-4">
+                    {/* Question Header */}
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-md font-medium text-gray-700">Question</h4>
+                    </div>
 
-                      {/* Question Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Question*
-                        </label>
-                        <Textarea
-                          placeholder={`Enter question ${index + 1}...`}
-                          value={question.question}
-                          onChange={(e) => updateQuestion(question.id, e.target.value)}
-                          className="bg-white/50 border-white/20"
-                          rows={3}
-                        />
-                        <div className="text-xs text-gray-500">
-                          Characters: {question.question.length}
-                        </div>
-                      </div>
-
-                      {/* Poll Type for this question */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Poll Type*</label>
-                        <Select 
-                          value={question.pollType} 
-                          onValueChange={(value: "Single Choice" | "Multiple Choices") => updateQuestionPollType(question.id, value)}
-                        >
-                          <SelectTrigger className="bg-white/50 border-white/20">
-                            <SelectValue placeholder="Select Poll Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Single Choice">Single Choice</SelectItem>
-                            <SelectItem value="Multiple Choices">Multiple Choices</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Choices for this question */}
-                      <div className="space-y-4">
-                        <h5 className="text-sm font-semibold text-gray-700">Choices</h5>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                              No. Of Choices*
-                            </label>
-                            <Select 
-                              value={question.choices.length.toString()} 
-                              onValueChange={(value) => updateQuestionNumChoices(question.id, parseInt(value))}
-                            >
-                              <SelectTrigger className="bg-white/50 border-white/20">
-                                <SelectValue placeholder="Select number of choices" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-                                  <SelectItem key={num} value={num.toString()}>
-                                    {num} Choices
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {question.choices.map((choice, choiceIndex) => (
-                            <div key={choice.id}>
-                              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Choice {choiceIndex + 1}
-                              </label>
-                              <Input
-                                placeholder={`Enter Choice ${choiceIndex + 1}`}
-                                value={choice.choice}
-                                onChange={(e) => updateQuestionChoice(question.id, choice.id, e.target.value)}
-                                className="bg-white/50 border-white/20"
-                              />
-                            </div>
-                          ))}
-                        </div>
+                    {/* Question Input */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Question*
+                      </label>
+                      <Textarea
+                        placeholder="Enter your poll question..."
+                        value={question.question}
+                        onChange={(e) => updateQuestion(e.target.value)}
+                        className="bg-white/50 border-white/20"
+                        rows={3}
+                      />
+                      <div className="text-xs text-gray-500">
+                        Characters: {question.question.length}
                       </div>
                     </div>
-                  ))}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addQuestion}
-                    className="bg-green-50 hover:bg-green-100 border-green-200 text-green-600"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add More Questions
-                  </Button>
+                    {/* Poll Type for this question */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Poll Type*</label>
+                      <Select 
+                        value={question.pollType} 
+                        onValueChange={(value: "Single Choice" | "Multiple Choices") => updateQuestionPollType(value)}
+                      >
+                        <SelectTrigger className="bg-white/50 border-white/20">
+                          <SelectValue placeholder="Select Poll Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Single Choice">Single Choice</SelectItem>
+                          <SelectItem value="Multiple Choices">Multiple Choices</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Choices for this question */}
+                    <div className="space-y-4">
+                      <h5 className="text-sm font-semibold text-gray-700">Choices</h5>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            No. Of Choices*
+                          </label>
+                          <Select 
+                            value={question.choices.length.toString()} 
+                            onValueChange={(value) => updateQuestionNumChoices(parseInt(value))}
+                          >
+                            <SelectTrigger className="bg-white/50 border-white/20">
+                              <SelectValue placeholder="Select number of choices" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} Choices
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {question.choices.map((choice, choiceIndex) => (
+                          <div key={choice.id}>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              Choice {choiceIndex + 1}
+                            </label>
+                            <Input
+                              placeholder={`Enter Choice ${choiceIndex + 1}`}
+                              value={choice.choice}
+                              onChange={(e) => updateQuestionChoice(choice.id, e.target.value)}
+                              className="bg-white/50 border-white/20"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Submit Buttons */}

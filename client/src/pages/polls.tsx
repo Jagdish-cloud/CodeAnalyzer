@@ -82,14 +82,15 @@ export default function PollsPage() {
                             {poll.pollName}
                           </div>
                           <div className="text-sm text-gray-600">
-                            <span className="font-medium">Questions:</span> {poll.questions?.length || 0}
+                            <span className="font-medium">Question:</span> {poll.questions?.[0]?.question?.substring(0, 50) || "No question"}
+                            {poll.questions?.[0]?.question && poll.questions[0].question.length > 50 && "..."}
                           </div>
                           <div className="text-sm text-gray-600">
                             <span className="font-medium">Total Choices:</span> {poll.choices?.length || 0}
                           </div>
                           <div className="text-sm text-gray-600">
-                            <span className="font-medium">Question Types:</span> {
-                              poll.questions?.map(q => q.pollType || "Single Choice").join(", ") || "Mixed"
+                            <span className="font-medium">Question Type:</span> {
+                              poll.questions?.[0]?.pollType || "Single Choice"
                             }
                           </div>
                         </div>
