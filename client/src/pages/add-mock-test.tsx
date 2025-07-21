@@ -104,10 +104,13 @@ function AddMockTest() {
     mutationFn: async (data: AddMockTestFormData) => {
       const formData = new FormData();
       
-      // Add all form fields
+      // Add all form fields, but use our questions state instead of form data
       Object.entries(data).forEach(([key, value]) => {
-        if (key === 'subjects' || key === 'questions') {
+        if (key === 'subjects') {
           formData.append(key, JSON.stringify(value));
+        } else if (key === 'questions') {
+          // Use the questions from our state instead of form data
+          formData.append(key, JSON.stringify(questions));
         } else if (value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
@@ -230,15 +233,6 @@ function AddMockTest() {
     }
   };
 
-  const onSubmit = (data: AddMockTestFormData) => {
-    const finalData = {
-      ...data,
-      questions,
-      subjects: selectedSubjects,
-    };
-    createMockTestMutation.mutate(finalData);
-  };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -252,6 +246,53 @@ function AddMockTest() {
     if (fileInput) {
       fileInput.value = '';
     }
+  };
+
+  const onSubmit = (data: AddMockTestFormData) => {
+    // Validate that we have at least one question with valid data
+    if (questions.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one question is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate that all questions have text and valid options
+    for (const question of questions) {
+      if (!question.questionText.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "All questions must have question text",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (question.options.length < 2) {
+        toast({
+          title: "Validation Error", 
+          description: "Each question must have at least 2 options",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      for (const option of question.options) {
+        if (!option.text.trim()) {
+          toast({
+            title: "Validation Error",
+            description: "All options must have text",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
+    // If validation passes, submit the form
+    createMockTestMutation.mutate(data);
   };
 
   const uniqueClasses = Array.from(new Set(classMappings?.map(mapping => mapping.class) || []));
