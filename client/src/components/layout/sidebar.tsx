@@ -265,12 +265,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200 overflow-x-auto scrollbar-none"
+            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
             onClick={() => toggleGroup(item.id)}
           >
-            <span className="whitespace-nowrap overflow-x-auto scrollbar-none flex-1 text-left">
-              {item.title}
-            </span>
+            <div className="flex-1 min-w-0 overflow-x-auto max-w-[200px] custom-scrollbar">
+              <span className="whitespace-nowrap block">
+                {item.title}
+              </span>
+            </div>
             {isExpanded ? (
               <ChevronDown className="h-4 w-4 flex-shrink-0 ml-2" />
             ) : (
@@ -295,16 +297,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1 overflow-x-auto scrollbar-none",
+              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1",
               isActive &&
                 "bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-white/20 shadow-lg hover:from-blue-500/40 hover:to-purple-500/40",
             )}
             onClick={onClose}
           >
             <Icon className="h-4 w-4 flex-shrink-0 mr-2" />
-            <span className="whitespace-nowrap overflow-x-auto scrollbar-none">
-              {item.title}
-            </span>
+            <div className="flex-1 min-w-0 overflow-x-auto max-w-[200px] custom-scrollbar">
+              <span className="whitespace-nowrap block">
+                {item.title}
+              </span>
+            </div>
           </Button>
         </Link>
       );
@@ -353,10 +357,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full p-4">
-            <nav className="space-y-2">{menuItems.items.map(renderMenuItem)}</nav>
-          </ScrollArea>
+        <div className="flex-1 overflow-auto custom-scrollbar">
+          <div className="h-full p-4 overflow-auto custom-scrollbar">
+            <nav className="space-y-2 overflow-x-auto custom-scrollbar">
+              {menuItems.items.map(renderMenuItem)}
+            </nav>
+          </div>
         </div>
       </div>
     </>
