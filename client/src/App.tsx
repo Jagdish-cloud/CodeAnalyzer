@@ -46,6 +46,9 @@ import AddPhotoGallery from "@/pages/add-photo-gallery";
 import Polls from "@/pages/polls";
 import AddPoll from "@/pages/add-poll";
 import ViewPoll from "@/pages/view-poll";
+import Surveys from "@/pages/surveys";
+import AddSurvey from "@/pages/add-survey";
+import ViewSurvey from "@/pages/view-survey";
 
 function Router() {
   return (
@@ -93,6 +96,9 @@ function Router() {
         <Route path="/polls" component={Polls} />
         <Route path="/add-poll" component={AddPoll} />
         <Route path="/view-poll/:id" component={ViewPoll} />
+        <Route path="/surveys" component={Surveys} />
+        <Route path="/add-survey" component={AddSurvey} />
+        <Route path="/view-survey/:id" component={ViewSurvey} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

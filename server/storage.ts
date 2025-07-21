@@ -19,6 +19,7 @@ import {
   newsCirculars,
   photoGalleries,
   polls,
+  surveys,
   busRoutes,
   type User,
   type InsertUser,
@@ -60,6 +61,8 @@ import {
   type InsertPhotoGallery,
   type Poll,
   type InsertPoll,
+  type Survey,
+  type InsertSurvey,
   type BusRoute,
   type InsertBusRoute,
 } from "@shared/schema";
@@ -252,6 +255,13 @@ export interface IStorage {
   createPoll(poll: InsertPoll): Promise<Poll>;
   updatePoll(id: number, poll: Partial<InsertPoll>): Promise<Poll | undefined>;
   deletePoll(id: number): Promise<boolean>;
+
+  // Survey methods
+  getAllSurveys(): Promise<Survey[]>;
+  getSurvey(id: number): Promise<Survey | undefined>;
+  createSurvey(survey: InsertSurvey): Promise<Survey>;
+  updateSurvey(id: number, survey: Partial<InsertSurvey>): Promise<Survey | undefined>;
+  deleteSurvey(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -276,6 +286,7 @@ export class MemStorage implements IStorage {
   private newsCirculars: Map<number, NewsCircular>;
   private photoGalleries: Map<number, PhotoGallery>;
   private polls: Map<number, Poll>;
+  private surveys: Map<number, Survey>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -297,6 +308,7 @@ export class MemStorage implements IStorage {
   private currentNewsCircularId: number;
   private currentPhotoGalleryId: number;
   private currentPollId: number;
+  private currentSurveyId: number;
 
   constructor() {
     this.users = new Map();
@@ -320,6 +332,7 @@ export class MemStorage implements IStorage {
     this.newsCirculars = new Map();
     this.photoGalleries = new Map();
     this.polls = new Map();
+    this.surveys = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -341,6 +354,7 @@ export class MemStorage implements IStorage {
     this.currentNewsCircularId = 1;
     this.currentPhotoGalleryId = 1;
     this.currentPollId = 1;
+    this.currentSurveyId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1640,6 +1654,42 @@ export class MemStorage implements IStorage {
 
   async deletePoll(id: number): Promise<boolean> {
     return this.polls.delete(id);
+  }
+
+  // Survey methods
+  async getAllSurveys(): Promise<Survey[]> {
+    return Array.from(this.surveys.values());
+  }
+
+  async getSurvey(id: number): Promise<Survey | undefined> {
+    return this.surveys.get(id);
+  }
+
+  async createSurvey(insertSurvey: InsertSurvey): Promise<Survey> {
+    const id = this.currentSurveyId++;
+    const survey: Survey = {
+      ...insertSurvey,
+      id,
+      createdAt: new Date(),
+    };
+    this.surveys.set(id, survey);
+    return survey;
+  }
+
+  async updateSurvey(id: number, updateData: Partial<InsertSurvey>): Promise<Survey | undefined> {
+    const existing = this.surveys.get(id);
+    if (!existing) return undefined;
+
+    const updated: Survey = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.surveys.set(id, updated);
+    return updated;
+  }
+
+  async deleteSurvey(id: number): Promise<boolean> {
+    return this.surveys.delete(id);
   }
 }
 

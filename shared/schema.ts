@@ -398,3 +398,31 @@ export type InsertPhotoGallery = z.infer<typeof insertPhotoGallerySchema>;
 export type PhotoGallery = typeof photoGalleries.$inferSelect;
 export type InsertPoll = z.infer<typeof insertPollSchema>;
 export type Poll = typeof polls.$inferSelect;
+
+// Surveys schema
+export const surveys = pgTable("surveys", {
+  id: serial("id").primaryKey(),
+  surveyName: text("survey_name").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  surveyType: text("survey_type"), // Deprecated - now each question has its own type
+  questions: json("questions").$type<Array<{
+    id: string;
+    question: string;
+    surveyType?: "Single Choice" | "Multiple Choices";
+  }>>().default([]),
+  choices: json("choices").$type<Array<{
+    id: string;
+    choice: string;
+    questionId?: string;
+  }>>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSurveySchema = createInsertSchema(surveys).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSurvey = z.infer<typeof insertSurveySchema>;
+export type Survey = typeof surveys.$inferSelect;

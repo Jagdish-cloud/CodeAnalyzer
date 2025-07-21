@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema, insertSurveySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1903,6 +1903,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete poll" });
+    }
+  });
+
+  // Survey routes
+  app.get("/api/surveys", async (req, res) => {
+    try {
+      const surveys = await storage.getAllSurveys();
+      res.json(surveys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch surveys" });
+    }
+  });
+
+  app.post("/api/surveys", async (req, res) => {
+    try {
+      const result = insertSurveySchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const survey = await storage.createSurvey(result.data);
+      res.status(201).json(survey);
+    } catch (error) {
+      console.error("Survey creation error:", error);
+      res.status(500).json({ message: "Failed to create survey" });
+    }
+  });
+
+  app.get("/api/surveys/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid survey ID" });
+      }
+
+      const survey = await storage.getSurvey(id);
+      if (!survey) {
+        return res.status(404).json({ message: "Survey not found" });
+      }
+
+      res.json(survey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch survey" });
+    }
+  });
+
+  app.put("/api/surveys/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid survey ID" });
+      }
+
+      const result = insertSurveySchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const survey = await storage.updateSurvey(id, result.data);
+      if (!survey) {
+        return res.status(404).json({ message: "Survey not found" });
+      }
+
+      res.json(survey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update survey" });
+    }
+  });
+
+  app.delete("/api/surveys/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid survey ID" });
+      }
+
+      const deleted = await storage.deleteSurvey(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Survey not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete survey" });
     }
   });
 

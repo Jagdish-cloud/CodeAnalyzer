@@ -190,6 +190,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-pie-chart",
           url: "/polls",
         },
+        {
+          id: "surveys",
+          title: "Surveys",
+          type: "item",
+          icon: "feather icon-pie-chart",
+          url: "/surveys",
+        },
       ],
     },
   ],
