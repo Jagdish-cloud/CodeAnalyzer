@@ -2026,6 +2026,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (typeof bodyData.questions === 'string') {
         bodyData.questions = JSON.parse(bodyData.questions);
       }
+      
+      // Convert string booleans to actual booleans
+      if (typeof bodyData.hasFileUpload === 'string') {
+        bodyData.hasFileUpload = bodyData.hasFileUpload === 'true';
+      }
 
       const result = insertMockTestSchema.safeParse(bodyData);
       
@@ -2084,6 +2089,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (typeof bodyData.questions === 'string') {
         bodyData.questions = JSON.parse(bodyData.questions);
+      }
+      
+      // Convert string booleans to actual booleans
+      if (typeof bodyData.hasFileUpload === 'string') {
+        bodyData.hasFileUpload = bodyData.hasFileUpload === 'true';
       }
 
       const result = insertMockTestSchema.partial().safeParse(bodyData);
