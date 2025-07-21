@@ -69,6 +69,7 @@ export default function PollsPage() {
                 <TableHeader>
                   <TableRow className="border-white/20">
                     <TableHead className="font-semibold text-gray-700">Poll Name</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Poll Duration</TableHead>
                     <TableHead className="font-semibold text-gray-700 text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -91,6 +92,39 @@ export default function PollsPage() {
                               poll.questions?.map(q => q.pollType || "Single Choice").join(", ") || "Mixed"
                             }
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-800">
+                        <div className="space-y-1">
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-700">Start:</span>{" "}
+                            <span className="text-green-600">
+                              {poll.startDate ? new Date(poll.startDate).toLocaleDateString() : "Not set"}
+                            </span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-700">End:</span>{" "}
+                            <span className="text-red-600">
+                              {poll.endDate ? new Date(poll.endDate).toLocaleDateString() : "Not set"}
+                            </span>
+                          </div>
+                          {poll.startDate && poll.endDate && (
+                            <div className="text-xs">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                new Date() < new Date(poll.startDate) 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : new Date() > new Date(poll.endDate)
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {new Date() < new Date(poll.startDate) 
+                                  ? 'Upcoming' 
+                                  : new Date() > new Date(poll.endDate)
+                                  ? 'Ended'
+                                  : 'Active'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-center">

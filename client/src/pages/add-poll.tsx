@@ -17,6 +17,15 @@ import { insertPollSchema } from "@shared/schema";
 // Form schema
 const formSchema = insertPollSchema.extend({
   pollName: z.string().min(1, "Poll name is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
+}).refine((data) => {
+  const startDate = new Date(data.startDate);
+  const endDate = new Date(data.endDate);
+  return endDate >= startDate;
+}, {
+  message: "End date must be on or after start date",
+  path: ["endDate"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,6 +63,8 @@ export default function AddPollPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       pollName: "",
+      startDate: "",
+      endDate: "",
       questions: [],
       choices: [],
     },
@@ -248,6 +259,44 @@ export default function AddPollPage() {
                     </FormItem>
                   )}
                 />
+
+                {/* Poll Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Poll Start Date*</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            className="bg-white/50 border-white/20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Poll End Date*</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            className="bg-white/50 border-white/20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Poll Questions Section */}
                 <div className="space-y-6">

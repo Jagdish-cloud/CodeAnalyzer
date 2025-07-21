@@ -335,6 +335,8 @@ export const insertPhotoGallerySchema = createInsertSchema(photoGalleries).omit(
 export const polls = pgTable("polls", {
   id: serial("id").primaryKey(),
   pollName: text("poll_name").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
   pollType: text("poll_type"), // Deprecated - now each question has its own type
   questions: json("questions").$type<Array<{
     id: string;
