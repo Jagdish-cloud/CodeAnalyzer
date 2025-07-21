@@ -23,6 +23,7 @@ import {
   Image,
   Bell,
   PieChart,
+  ClipboardList,
 } from "lucide-react";
 
 interface MenuItem {
@@ -197,6 +198,13 @@ const menuItems: { items: MenuItem[] } = {
           icon: "feather icon-pie-chart",
           url: "/surveys",
         },
+        {
+          id: "mock-tests",
+          title: "Mock Test",
+          type: "item",
+          icon: "feather icon-clipboard",
+          url: "/mock-tests",
+        },
       ],
     },
   ],
@@ -234,6 +242,8 @@ const getIcon = (iconName: string) => {
       return Bell;
     case "feather icon-pie-chart":
       return PieChart;
+    case "feather icon-clipboard":
+      return ClipboardList;
     default:
       return Home;
   }

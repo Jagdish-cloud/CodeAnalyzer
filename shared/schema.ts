@@ -426,3 +426,39 @@ export const insertSurveySchema = createInsertSchema(surveys).omit({
 
 export type InsertSurvey = z.infer<typeof insertSurveySchema>;
 export type Survey = typeof surveys.$inferSelect;
+
+// Mock Tests schema
+export const mockTests = pgTable("mock_tests", {
+  id: serial("id").primaryKey(),
+  mockName: text("mock_name").notNull(),
+  description: text("description"),
+  mockStartDate: text("mock_start_date").notNull(),
+  mockEndDate: text("mock_end_date").notNull(),
+  class: text("class").notNull(),
+  division: text("division").notNull(),
+  subjects: text("subjects").array().notNull(),
+  hasFileUpload: boolean("has_file_upload").notNull().default(false),
+  fileName: text("file_name"),
+  filePath: text("file_path"),
+  fileSize: integer("file_size"),
+  questions: json("questions").$type<Array<{
+    id: string;
+    questionText: string;
+    isRequired: boolean;
+    hasOtherOption: boolean;
+    options: Array<{
+      id: string;
+      text: string;
+      score: number;
+    }>;
+  }>>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMockTestSchema = createInsertSchema(mockTests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMockTest = z.infer<typeof insertMockTestSchema>;
+export type MockTest = typeof mockTests.$inferSelect;

@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema, insertSurveySchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema, insertSurveySchema, insertMockTestSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -1995,6 +1995,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete survey" });
+    }
+  });
+
+  // Mock Test routes
+  app.get("/api/mock-tests", async (req, res) => {
+    try {
+      const mockTests = await storage.getAllMockTests();
+      res.json(mockTests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch mock tests" });
+    }
+  });
+
+  app.post("/api/mock-tests", upload.single('file'), async (req, res) => {
+    try {
+      const bodyData = { ...req.body };
+      
+      // Handle file upload
+      if (req.file) {
+        bodyData.fileName = req.file.originalname;
+        bodyData.filePath = req.file.path;
+        bodyData.fileSize = req.file.size;
+      }
+
+      // Parse JSON strings
+      if (typeof bodyData.subjects === 'string') {
+        bodyData.subjects = JSON.parse(bodyData.subjects);
+      }
+      if (typeof bodyData.questions === 'string') {
+        bodyData.questions = JSON.parse(bodyData.questions);
+      }
+
+      const result = insertMockTestSchema.safeParse(bodyData);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const mockTest = await storage.createMockTest(result.data);
+      res.status(201).json(mockTest);
+    } catch (error) {
+      console.error("Mock test creation error:", error);
+      res.status(500).json({ message: "Failed to create mock test" });
+    }
+  });
+
+  app.get("/api/mock-tests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mock test ID" });
+      }
+
+      const mockTest = await storage.getMockTest(id);
+      if (!mockTest) {
+        return res.status(404).json({ message: "Mock test not found" });
+      }
+
+      res.json(mockTest);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch mock test" });
+    }
+  });
+
+  app.put("/api/mock-tests/:id", upload.single('file'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mock test ID" });
+      }
+
+      const bodyData = { ...req.body };
+      
+      // Handle file upload
+      if (req.file) {
+        bodyData.fileName = req.file.originalname;
+        bodyData.filePath = req.file.path;
+        bodyData.fileSize = req.file.size;
+      }
+
+      // Parse JSON strings
+      if (typeof bodyData.subjects === 'string') {
+        bodyData.subjects = JSON.parse(bodyData.subjects);
+      }
+      if (typeof bodyData.questions === 'string') {
+        bodyData.questions = JSON.parse(bodyData.questions);
+      }
+
+      const result = insertMockTestSchema.partial().safeParse(bodyData);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const mockTest = await storage.updateMockTest(id, result.data);
+      if (!mockTest) {
+        return res.status(404).json({ message: "Mock test not found" });
+      }
+
+      res.json(mockTest);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update mock test" });
+    }
+  });
+
+  app.delete("/api/mock-tests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid mock test ID" });
+      }
+
+      const deleted = await storage.deleteMockTest(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Mock test not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete mock test" });
     }
   });
 

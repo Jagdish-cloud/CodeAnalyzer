@@ -20,6 +20,7 @@ import {
   photoGalleries,
   polls,
   surveys,
+  mockTests,
   busRoutes,
   type User,
   type InsertUser,
@@ -63,6 +64,8 @@ import {
   type InsertPoll,
   type Survey,
   type InsertSurvey,
+  type MockTest,
+  type InsertMockTest,
   type BusRoute,
   type InsertBusRoute,
 } from "@shared/schema";
@@ -262,6 +265,13 @@ export interface IStorage {
   createSurvey(survey: InsertSurvey): Promise<Survey>;
   updateSurvey(id: number, survey: Partial<InsertSurvey>): Promise<Survey | undefined>;
   deleteSurvey(id: number): Promise<boolean>;
+
+  // Mock Test methods
+  getAllMockTests(): Promise<MockTest[]>;
+  getMockTest(id: number): Promise<MockTest | undefined>;
+  createMockTest(mockTest: InsertMockTest): Promise<MockTest>;
+  updateMockTest(id: number, mockTest: Partial<InsertMockTest>): Promise<MockTest | undefined>;
+  deleteMockTest(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -287,6 +297,7 @@ export class MemStorage implements IStorage {
   private photoGalleries: Map<number, PhotoGallery>;
   private polls: Map<number, Poll>;
   private surveys: Map<number, Survey>;
+  private mockTests: Map<number, MockTest>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -309,6 +320,7 @@ export class MemStorage implements IStorage {
   private currentPhotoGalleryId: number;
   private currentPollId: number;
   private currentSurveyId: number;
+  private currentMockTestId: number;
 
   constructor() {
     this.users = new Map();
@@ -333,6 +345,7 @@ export class MemStorage implements IStorage {
     this.photoGalleries = new Map();
     this.polls = new Map();
     this.surveys = new Map();
+    this.mockTests = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -355,6 +368,7 @@ export class MemStorage implements IStorage {
     this.currentPhotoGalleryId = 1;
     this.currentPollId = 1;
     this.currentSurveyId = 1;
+    this.currentMockTestId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1690,6 +1704,42 @@ export class MemStorage implements IStorage {
 
   async deleteSurvey(id: number): Promise<boolean> {
     return this.surveys.delete(id);
+  }
+
+  // Mock Test methods
+  async getAllMockTests(): Promise<MockTest[]> {
+    return Array.from(this.mockTests.values());
+  }
+
+  async getMockTest(id: number): Promise<MockTest | undefined> {
+    return this.mockTests.get(id);
+  }
+
+  async createMockTest(insertMockTest: InsertMockTest): Promise<MockTest> {
+    const id = this.currentMockTestId++;
+    const mockTest: MockTest = {
+      ...insertMockTest,
+      id,
+      createdAt: new Date(),
+    };
+    this.mockTests.set(id, mockTest);
+    return mockTest;
+  }
+
+  async updateMockTest(id: number, updateData: Partial<InsertMockTest>): Promise<MockTest | undefined> {
+    const existing = this.mockTests.get(id);
+    if (!existing) return undefined;
+
+    const updated: MockTest = { 
+      ...existing, 
+      ...updateData,
+    };
+    this.mockTests.set(id, updated);
+    return updated;
+  }
+
+  async deleteMockTest(id: number): Promise<boolean> {
+    return this.mockTests.delete(id);
   }
 }
 
