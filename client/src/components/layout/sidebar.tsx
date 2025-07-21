@@ -265,14 +265,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div key={item.id} className="mb-2">
           <Button
             variant="ghost"
-            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200"
+            className="w-full justify-between p-3 w-100 h-auto text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/5 rounded-xl transition-all duration-200 overflow-x-auto scrollbar-none"
             onClick={() => toggleGroup(item.id)}
           >
-            <span>{item.title}</span>
+            <span className="whitespace-nowrap overflow-x-auto scrollbar-none flex-1 text-left">
+              {item.title}
+            </span>
             {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4 flex-shrink-0 ml-2" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 flex-shrink-0 ml-2" />
             )}
           </Button>
           {isExpanded && item.children && (
@@ -293,14 +295,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1",
+              "w-full justify-start p-3 h-auto text-sm font-normal text-white/80 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/5 mb-1 overflow-x-auto scrollbar-none",
               isActive &&
                 "bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white border-white/20 shadow-lg hover:from-blue-500/40 hover:to-purple-500/40",
             )}
             onClick={onClose}
           >
-            <Icon className="h-4 w-4" />
-            {item.title}
+            <Icon className="h-4 w-4 flex-shrink-0 mr-2" />
+            <span className="whitespace-nowrap overflow-x-auto scrollbar-none">
+              {item.title}
+            </span>
           </Button>
         </Link>
       );
