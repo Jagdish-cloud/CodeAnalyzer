@@ -35,6 +35,7 @@ interface MockTestQuestion {
 }
 
 const addMockTestSchema = insertMockTestSchema.extend({
+  subjects: z.string().min(1, "Subject is required"),
   questions: z.array(z.object({
     id: z.string(),
     questionText: z.string().min(1, "Question text is required"),
@@ -55,7 +56,7 @@ function AddMockTest() {
   const queryClient = useQueryClient();
   
   const [questions, setQuestions] = useState<MockTestQuestion[]>([]);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [availableDivisions, setAvailableDivisions] = useState<string[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -94,7 +95,7 @@ function AddMockTest() {
       mockEndDate: "",
       class: "",
       division: "",
-      subjects: [],
+      subjects: "",
       hasFileUpload: false,
       questions: [],
     },
@@ -107,10 +108,13 @@ function AddMockTest() {
       // Add all form fields, but use our questions state instead of form data
       Object.entries(data).forEach(([key, value]) => {
         if (key === 'subjects') {
-          formData.append(key, JSON.stringify(value));
+          formData.append(key, JSON.stringify([value])); // Convert single subject to array
         } else if (key === 'questions') {
           // Use the questions from our state instead of form data
           formData.append(key, JSON.stringify(questions));
+        } else if (key === 'hasFileUpload') {
+          // Handle boolean conversion for hasFileUpload
+          formData.append(key, value ? 'true' : 'false');
         } else if (value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
@@ -156,17 +160,14 @@ function AddMockTest() {
       setAvailableSubjects(mapping.subjects);
       form.setValue("class", selectedClass);
       form.setValue("division", "");
-      form.setValue("subjects", []);
-      setSelectedSubjects([]);
+      form.setValue("subjects", "");
+      setSelectedSubject("");
     }
   };
 
-  const handleSubjectToggle = (subject: string) => {
-    const newSubjects = selectedSubjects.includes(subject)
-      ? selectedSubjects.filter(s => s !== subject)
-      : [...selectedSubjects, subject];
-    setSelectedSubjects(newSubjects);
-    form.setValue("subjects", newSubjects);
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubject(subject);
+    form.setValue("subjects", subject);
   };
 
   const addQuestion = () => {
@@ -446,43 +447,32 @@ function AddMockTest() {
                   />
                 </div>
 
-                {/* Subjects */}
+                {/* Subject */}
                 {availableSubjects.length > 0 && (
-                  <div>
-                    <FormLabel className="text-base font-medium">Subjects</FormLabel>
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {availableSubjects.map((subject) => (
-                        <div key={subject} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`subject-${subject}`}
-                            checked={selectedSubjects.includes(subject)}
-                            onCheckedChange={() => handleSubjectToggle(subject)}
-                          />
-                          <Label htmlFor={`subject-${subject}`} className="text-sm">
-                            {subject}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                    {selectedSubjects.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {selectedSubjects.map((subject) => (
-                          <Badge key={subject} variant="secondary">
-                            {subject}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="ml-1 h-auto p-0 text-xs"
-                              onClick={() => handleSubjectToggle(subject)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
+                  <FormField
+                    control={form.control}
+                    name="subjects"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <Select onValueChange={handleSubjectChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select subject" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableSubjects.map((subject) => (
+                              <SelectItem key={subject} value={subject}>
+                                {subject}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 )}
 
                 {/* File Upload Section */}
@@ -781,7 +771,7 @@ function AddMockTest() {
                         ]
                       };
                       setQuestions([defaultQuestion]);
-                      setSelectedSubjects([]);
+                      setSelectedSubject("");
                       setSelectedFile(null);
                     }}
                     className="order-2"
