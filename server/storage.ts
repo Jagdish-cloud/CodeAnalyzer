@@ -393,6 +393,7 @@ export class MemStorage implements IStorage {
     this.initializeStaff();
     this.initializeWorkingDays();
     this.initializeSchoolSchedules();
+    this.initializeClassMappings();
   }
 
   private initializeRoles() {
@@ -709,6 +710,201 @@ export class MemStorage implements IStorage {
       const id = this.currentSchoolScheduleId++;
       const schedule: SchoolSchedule = { id, ...scheduleData };
       this.schoolSchedules.set(id, schedule);
+    });
+  }
+
+  private initializeClassMappings() {
+    const predefinedClassMappings = [
+      // Current Academic Year - Complete class structure
+      {
+        year: "2024-25",
+        class: "I",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "I",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "II",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "II",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Art & Craft", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "III",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "III",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "IV",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "IV",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "V",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "V",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VI",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VI",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VII",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VII",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VIII",
+        division: "A",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "VIII",
+        division: "B",
+        subjects: ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Sanskrit", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        division: "B",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        division: "B",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi", "Computer Science", "Physical Education"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "XI",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "Computer Science"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "XI",
+        division: "B",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Economics", "Political Science"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "XII",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "Computer Science"],
+        status: "Current working"
+      },
+      {
+        year: "2024-25",
+        class: "XII",
+        division: "B",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Economics", "Political Science"],
+        status: "Current working"
+      },
+      // Previous Academic Year - Some archived data
+      {
+        year: "2023-24",
+        class: "X",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "History", "Geography", "Hindi"],
+        status: "Completed"
+      },
+      {
+        year: "2023-24",
+        class: "XII",
+        division: "A",
+        subjects: ["Mathematics", "English", "Physics", "Chemistry", "Biology", "Computer Science"],
+        status: "Completed"
+      }
+    ];
+
+    predefinedClassMappings.forEach((mappingData) => {
+      const id = this.currentClassMappingId++;
+      const mapping: ClassMapping = { id, ...mappingData };
+      this.classMappings.set(id, mapping);
     });
   }
 
