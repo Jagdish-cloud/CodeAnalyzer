@@ -86,9 +86,9 @@ export default function AddTestResultPage() {
       if (!selectedTest) throw new Error("No test selected");
       
       // Generate PDF data structure
-      const subjects = selectedClassMappings
-        .filter(mapping => mapping.class === formData.class)
-        .flatMap(mapping => mapping.subjects);
+      const classSubjects = selectedClassMappings
+        .filter(mapping => mapping.class === formData.class && mapping.division === formData.division)
+        .flatMap(mapping => mapping.subjects || []);
 
       const pdfData = {
         testInfo: {
@@ -104,7 +104,7 @@ export default function AddTestResultPage() {
           rollNumber: student.rollNumber,
           studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
         })).sort((a, b) => a.rollNumber - b.rollNumber),
-        subjects: Array.from(new Set([selectedTest.subject, ...subjects])).slice(0, 3), // Max 3 subjects for layout
+        subjects: classSubjects.length > 0 ? classSubjects : [selectedTest.subject], // Use actual subjects from class mapping
       };
 
       // Generate and download PDF
@@ -167,9 +167,7 @@ export default function AddTestResultPage() {
             <tr>
               <th class="roll-number">Roll No</th>
               <th class="student-name">Student Name</th>
-              <th class="marks-cell">Subject 1</th>
-              <th class="marks-cell">Subject 2</th>
-              <th class="marks-cell">Subject 3</th>
+              ${data.subjects.map((subject: string) => `<th class="marks-cell">${subject}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -177,9 +175,7 @@ export default function AddTestResultPage() {
               <tr>
                 <td class="roll-number">${student.rollNumber}</td>
                 <td class="student-name">${student.studentName}</td>
-                <td class="marks-cell"></td>
-                <td class="marks-cell"></td>
-                <td class="marks-cell"></td>
+                ${data.subjects.map(() => '<td class="marks-cell"></td>').join('')}
               </tr>
             `).join('')}
           </tbody>
@@ -193,7 +189,7 @@ export default function AddTestResultPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `test-result-sheet-${data.testInfo.class}-${data.testInfo.division}-${data.testInfo.subject}.html`;
+    a.download = `test-result-sheet-class-${data.testInfo.class}-div-${data.testInfo.division}-${data.testInfo.year}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

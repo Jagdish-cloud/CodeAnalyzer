@@ -15,51 +15,85 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Plus, Edit, Trash2, FileText } from "lucide-react";
 
-// Define grouped test result type for display
-interface GroupedTestResult {
-  periodicTestId: number;
-  periodicTestName: string;
-  testName: string;
+// Define class group type for display
+interface ClassGroup {
   class: string;
   division: string;
-  subject: string;
   year: string;
+  subjects: string[];
+  tests: any[];
+  totalTests: number;
+  completedTests: number;
+  averageProgress: number;
   totalStudents: number;
-  completedResults: number;
 }
 
 export default function TestResultsPage() {
   const [location] = useLocation();
   const activeTab = location.includes('/add') ? 'add' : location.includes('/view') ? 'view' : 'landing';
 
-  const { data: testResults = [], isLoading: isLoadingResults } = useQuery<any[]>({
+  const { data: classMappings = [], isLoading: isLoadingMappings } = useQuery<any[]>({
+    queryKey: ['/api/class-mappings'],
+  });
+
+  const { data: testResults = [] } = useQuery<any[]>({
     queryKey: ['/api/test-results'],
   });
 
-  const { data: periodicTests = [], isLoading: isLoadingTests } = useQuery<any[]>({
+  const { data: periodicTests = [] } = useQuery<any[]>({
     queryKey: ['/api/periodic-tests'],
   });
 
-  // Group test results by periodic test
-  const groupedResults: GroupedTestResult[] = periodicTests.map((test) => {
-    const resultsForTest = testResults.filter(result => result.periodicTestId === test.id);
-    const totalStudents = resultsForTest.length;
-    const completedResults = resultsForTest.filter(result => result.marks !== null).length;
-
-    return {
-      periodicTestId: test.id,
-      periodicTestName: test.testName || `Test - ${test.class}`,
-      testName: test.testName || `${test.subject} Test`,
-      class: test.class,
-      division: Array.isArray(test.divisions) ? test.divisions.join(', ') : test.divisions,
-      subject: test.subject,
-      year: test.year,
-      totalStudents,
-      completedResults,
-    };
+  const { data: students = [] } = useQuery<any[]>({
+    queryKey: ['/api/students'],
   });
 
-  if (isLoadingResults || isLoadingTests) {
+  // Group by class and division
+  const classGroups: ClassGroup[] = classMappings.map(mapping => {
+    // Find tests for this class/division
+    const classTests = periodicTests.filter(test => 
+      test.class === mapping.class && 
+      (Array.isArray(test.divisions) ? test.divisions.includes(mapping.division) : test.divisions === mapping.division)
+    );
+    
+    // Calculate test progress for each test
+    const testsWithProgress = classTests.map(test => {
+      const testResultsForTest = testResults.filter(result => result.periodicTestId === test.id);
+      const completedResults = testResultsForTest.filter(result => result.marks !== null).length;
+      const totalStudents = testResultsForTest.length;
+      const progressPercentage = totalStudents > 0 ? (completedResults / totalStudents) * 100 : 0;
+      
+      return {
+        ...test,
+        completedResults,
+        totalStudents,
+        progressPercentage
+      };
+    });
+    
+    // Get total students for this class/division
+    const classStudents = students.filter(student => 
+      student.class === mapping.class && student.division === mapping.division
+    );
+    
+    return {
+      class: mapping.class,
+      division: mapping.division,
+      year: mapping.year,
+      subjects: mapping.subjects || [],
+      tests: testsWithProgress,
+      totalTests: classTests.length,
+      completedTests: testsWithProgress.filter(test => test.progressPercentage === 100).length,
+      averageProgress: testsWithProgress.length > 0 
+        ? testsWithProgress.reduce((sum, test) => sum + test.progressPercentage, 0) / testsWithProgress.length 
+        : 0,
+      totalStudents: classStudents.length
+    };
+  }).filter(group => group.tests.length > 0); // Only show classes that have tests
+
+  const isLoading = isLoadingMappings;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
         <div className="max-w-7xl mx-auto">
@@ -142,84 +176,99 @@ export default function TestResultsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50/50 dark:bg-slate-700/50 hover:bg-slate-100/50 dark:hover:bg-slate-600/50">
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Test Name</TableHead>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Class / Division / Subject</TableHead>
-                        <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Progress</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Class / Division</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Subjects</TableHead>
+                        <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Tests Progress</TableHead>
+                        <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Students</TableHead>
                         <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {groupedResults.length === 0 ? (
+                      {classGroups.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-12 text-slate-500 dark:text-slate-400">
+                          <TableCell colSpan={5} className="text-center py-12 text-slate-500 dark:text-slate-400">
                             <div className="space-y-3">
                               <FileText className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600" />
-                              <p className="text-lg font-medium">No test results found</p>
-                              <p className="text-sm">Create your first test result to get started</p>
+                              <p className="text-lg font-medium">No class data found</p>
+                              <p className="text-sm">Create class mappings and periodic tests to get started</p>
                             </div>
                           </TableCell>
                         </TableRow>
                       ) : (
-                        groupedResults.map((result) => (
+                        classGroups.map((classGroup) => (
                           <TableRow 
-                            key={result.periodicTestId}
+                            key={`${classGroup.class}-${classGroup.division}`}
                             className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-colors duration-200"
                           >
                             <TableCell className="font-medium text-slate-900 dark:text-slate-100">
-                              <div className="space-y-1">
-                                <div className="font-semibold">{result.testName}</div>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                                    Class {classGroup.class}
+                                  </Badge>
+                                  <Badge variant="secondary" className="bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                                    Div {classGroup.division}
+                                  </Badge>
+                                </div>
                                 <Badge variant="outline" className="text-xs">
-                                  {result.year}
+                                  {classGroup.year}
                                 </Badge>
                               </div>
                             </TableCell>
                             <TableCell className="text-slate-600 dark:text-slate-400">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                                    Class {result.class}
+                              <div className="space-y-1">
+                                {classGroup.subjects.slice(0, 3).map((subject, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs mr-1 mb-1">
+                                    {subject}
                                   </Badge>
-                                  <Badge variant="secondary" className="bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
-                                    Div {result.division}
+                                ))}
+                                {classGroup.subjects.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{classGroup.subjects.length - 3} more
                                   </Badge>
-                                </div>
-                                <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Subject: {result.subject}
-                                </div>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell className="text-center">
                               <div className="space-y-2">
                                 <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  {result.completedResults} / {result.totalStudents}
+                                  {classGroup.completedTests} / {classGroup.totalTests} Tests
                                 </div>
                                 <div className="flex items-center justify-center gap-1">
                                   <div className="w-16 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-300"
                                       style={{ 
-                                        width: `${result.totalStudents > 0 ? (result.completedResults / result.totalStudents) * 100 : 0}%` 
+                                        width: `${classGroup.averageProgress}%` 
                                       }}
                                     />
                                   </div>
                                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    {result.totalStudents > 0 ? Math.round((result.completedResults / result.totalStudents) * 100) : 0}%
+                                    {Math.round(classGroup.averageProgress)}%
                                   </span>
                                 </div>
                               </div>
                             </TableCell>
+                            <TableCell className="text-center">
+                              <div className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                                {classGroup.totalStudents}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="hover:bg-emerald-50 hover:border-emerald-300 dark:hover:bg-emerald-900/20"
-                                  asChild
-                                >
-                                  <Link href={`/test-results/view/${result.periodicTestId}`}>
-                                    <Eye className="h-4 w-4" />
-                                  </Link>
-                                </Button>
+                                {classGroup.tests.map((test) => (
+                                  <Button
+                                    key={test.id}
+                                    size="sm"
+                                    variant="outline"
+                                    className="hover:bg-emerald-50 hover:border-emerald-300 dark:hover:bg-emerald-900/20"
+                                    asChild
+                                  >
+                                    <Link href={`/test-results/view/${test.id}`}>
+                                      <Eye className="h-4 w-4" />
+                                    </Link>
+                                  </Button>
+                                ))}
                               </div>
                             </TableCell>
                           </TableRow>
