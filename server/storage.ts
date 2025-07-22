@@ -394,6 +394,7 @@ export class MemStorage implements IStorage {
     this.initializeWorkingDays();
     this.initializeSchoolSchedules();
     this.initializeClassMappings();
+    this.initializeSyllabusMasters();
   }
 
   private initializeRoles() {
@@ -905,6 +906,346 @@ export class MemStorage implements IStorage {
       const id = this.currentClassMappingId++;
       const mapping: ClassMapping = { id, ...mappingData };
       this.classMappings.set(id, mapping);
+    });
+  }
+
+  private initializeSyllabusMasters() {
+    const predefinedSyllabusMasters = [
+      // Mathematics Syllabus
+      {
+        year: "2024-25",
+        class: "I",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Numbers 1 to 20",
+        description: "Introduction to counting, number recognition, and basic addition/subtraction within 20",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "I",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 2",
+        topic: "Shapes and Patterns",
+        description: "Basic geometric shapes, pattern recognition, and simple classification activities",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "V",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Large Numbers",
+        description: "Reading and writing numbers up to 5 digits, place value, and comparison",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "V",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 2",
+        topic: "Operations on Large Numbers",
+        description: "Addition, subtraction, multiplication, and division of large numbers",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Real Numbers",
+        description: "Rational and irrational numbers, decimal representation, and operations",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        subject: "Mathematics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 2",
+        topic: "Polynomials",
+        description: "Introduction to polynomials, factorization, and algebraic identities",
+        status: "active"
+      },
+
+      // English Syllabus
+      {
+        year: "2024-25",
+        class: "III",
+        subject: "English",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Lesson 1",
+        topic: "The Magic Garden",
+        description: "Reading comprehension, vocabulary building, and creative writing based on nature themes",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "III",
+        subject: "English",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Lesson 2",
+        topic: "Grammar: Nouns and Pronouns",
+        description: "Understanding different types of nouns and pronouns with practical examples",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "VIII",
+        subject: "English",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "How the Camel Got His Hump",
+        description: "Reading Kipling's story, analyzing character traits, and understanding moral lessons",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "VIII",
+        subject: "English",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 2",
+        topic: "The Tsunami",
+        description: "Comprehension of factual accounts, disaster management awareness, and essay writing",
+        status: "active"
+      },
+
+      // Science Syllabus
+      {
+        year: "2024-25",
+        class: "VI",
+        subject: "Science",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Food: Where Does It Come From?",
+        description: "Sources of food, plant and animal products, and food habits of different animals",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "VI",
+        subject: "Science",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 2",
+        topic: "Components of Food",
+        description: "Nutrients in food, balanced diet, and deficiency diseases",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        subject: "Physics",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Motion",
+        description: "Types of motion, speed, velocity, acceleration, and equations of motion",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        subject: "Chemistry",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Matter in Our Surroundings",
+        description: "States of matter, properties of solids, liquids, and gases",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        subject: "Biology",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "The Fundamental Unit of Life",
+        description: "Cell structure, cell organelles, and basic functions of cells",
+        status: "active"
+      },
+
+      // Social Studies Syllabus
+      {
+        year: "2024-25",
+        class: "VII",
+        subject: "History",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Tracing Changes Through a Thousand Years",
+        description: "Medieval period in India, sources of historical information, and chronology",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "VII",
+        subject: "Geography",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Environment",
+        description: "Natural and human environment, environmental degradation, and conservation",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        subject: "History",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "The Rise of Nationalism in Europe",
+        description: "French Revolution, growth of nationalism, and unification of Germany and Italy",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "X",
+        subject: "Political Science",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Power Sharing",
+        description: "Democracy, federal government, and power sharing mechanisms",
+        status: "active"
+      },
+
+      // Computer Science Syllabus
+      {
+        year: "2024-25",
+        class: "VI",
+        subject: "Computer Science",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Unit 1",
+        topic: "Introduction to Computers",
+        description: "Basic components of computer, input/output devices, and computer applications",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "XI",
+        subject: "Computer Science",
+        divisions: ["A"],
+        chapterLessonNo: "Unit 1",
+        topic: "Introduction to Programming",
+        description: "Programming fundamentals, Python basics, and problem-solving techniques",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "XI",
+        subject: "Computer Science",
+        divisions: ["A"],
+        chapterLessonNo: "Unit 2",
+        topic: "Data Types and Operators",
+        description: "Python data types, variables, operators, and expressions",
+        status: "active"
+      },
+
+      // Hindi Syllabus
+      {
+        year: "2024-25",
+        class: "IV",
+        subject: "Hindi",
+        divisions: ["A", "B"],
+        chapterLessonNo: "पाठ 1",
+        topic: "मन के भोले-भाले बादल",
+        description: "कविता की समझ, भावना की अभिव्यक्ति, और शब्द भंडार का विकास",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "IX",
+        subject: "Hindi",
+        divisions: ["A", "B"],
+        chapterLessonNo: "गद्य खंड - पाठ 1",
+        topic: "दो बैलों की कथा",
+        description: "प्रेमचंद की कहानी, पात्र चरित्र विश्लेषण, और नैतिक मूल्यों की शिक्षा",
+        status: "active"
+      },
+
+      // Economics Syllabus
+      {
+        year: "2024-25",
+        class: "XI",
+        subject: "Economics",
+        divisions: ["B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Introduction to Economics",
+        description: "Basic concepts of microeconomics, scarcity, choice, and opportunity cost",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "XII",
+        subject: "Economics",
+        divisions: ["B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "National Income and Related Aggregates",
+        description: "Macroeconomic concepts, GDP, GNP, and national income accounting",
+        status: "active"
+      },
+
+      // Physical Education Syllabus
+      {
+        year: "2024-25",
+        class: "VIII",
+        subject: "Physical Education",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Unit 1",
+        topic: "Sports and Games",
+        description: "Introduction to various sports, rules, equipment, and basic techniques",
+        status: "active"
+      },
+      {
+        year: "2024-25",
+        class: "XII",
+        subject: "Physical Education",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Chapter 1",
+        topic: "Planning in Sports",
+        description: "Tournament planning, fixture preparation, and sports management",
+        status: "active"
+      },
+
+      // Art & Craft Syllabus
+      {
+        year: "2024-25",
+        class: "II",
+        subject: "Art & Craft",
+        divisions: ["A", "B"],
+        chapterLessonNo: "Activity 1",
+        topic: "Paper Folding and Cutting",
+        description: "Basic origami techniques, paper cutting patterns, and creative expression",
+        status: "active"
+      },
+
+      // Previous Year Data
+      {
+        year: "2023-24",
+        class: "X",
+        subject: "Mathematics",
+        divisions: ["A"],
+        chapterLessonNo: "Chapter 15",
+        topic: "Probability",
+        description: "Introduction to probability, experimental and theoretical probability",
+        status: "completed"
+      },
+      {
+        year: "2023-24",
+        class: "XII",
+        subject: "Physics",
+        divisions: ["A"],
+        chapterLessonNo: "Chapter 12",
+        topic: "Atoms",
+        description: "Atomic structure, Bohr's model, and energy levels in hydrogen atom",
+        status: "completed"
+      }
+    ];
+
+    predefinedSyllabusMasters.forEach((syllabusData) => {
+      const id = this.currentSyllabusMasterId++;
+      const syllabus: SyllabusMaster = { id, ...syllabusData };
+      this.syllabusMasters.set(id, syllabus);
     });
   }
 
