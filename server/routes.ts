@@ -2023,6 +2023,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (typeof bodyData.subjects === 'string') {
         bodyData.subjects = JSON.parse(bodyData.subjects);
       }
+      if (typeof bodyData.class === 'string') {
+        bodyData.class = JSON.parse(bodyData.class);
+      }
+      if (typeof bodyData.division === 'string') {
+        bodyData.division = JSON.parse(bodyData.division);
+      }
       if (typeof bodyData.questions === 'string') {
         bodyData.questions = JSON.parse(bodyData.questions);
       }
@@ -2086,6 +2092,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse JSON strings
       if (typeof bodyData.subjects === 'string') {
         bodyData.subjects = JSON.parse(bodyData.subjects);
+      }
+      if (typeof bodyData.class === 'string') {
+        bodyData.class = JSON.parse(bodyData.class);
+      }
+      if (typeof bodyData.division === 'string') {
+        bodyData.division = JSON.parse(bodyData.division);
       }
       if (typeof bodyData.questions === 'string') {
         bodyData.questions = JSON.parse(bodyData.questions);

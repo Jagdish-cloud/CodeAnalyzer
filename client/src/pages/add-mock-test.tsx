@@ -35,7 +35,9 @@ interface MockTestQuestion {
 }
 
 const addMockTestSchema = insertMockTestSchema.extend({
-  subjects: z.string().min(1, "Subject is required"),
+  class: z.array(z.string()).min(1, "At least one class is required"),
+  division: z.array(z.string()).min(1, "At least one division is required"),
+  subjects: z.array(z.string()).min(1, "At least one subject is required"),
   questions: z.array(z.object({
     id: z.string(),
     questionText: z.string().min(1, "Question text is required"),
@@ -56,10 +58,13 @@ function AddMockTest() {
   const queryClient = useQueryClient();
   
   const [questions, setQuestions] = useState<MockTestQuestion[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [availableDivisions, setAvailableDivisions] = useState<string[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [otherSubject, setOtherSubject] = useState<string>("");
 
   // Initialize with one default question
   useEffect(() => {
@@ -93,9 +98,9 @@ function AddMockTest() {
       description: "",
       mockStartDate: "",
       mockEndDate: "",
-      class: "",
-      division: "",
-      subjects: "",
+      class: [],
+      division: [],
+      subjects: [],
       hasFileUpload: false,
       questions: [],
     },
@@ -108,7 +113,16 @@ function AddMockTest() {
       // Add all form fields, but use our questions state instead of form data
       Object.entries(data).forEach(([key, value]) => {
         if (key === 'subjects') {
-          formData.append(key, JSON.stringify([value])); // Convert single subject to array
+          // Handle subjects array and replace "OTHERS" with actual custom subject
+          let subjects = Array.isArray(value) ? [...value] : [];
+          if (subjects.includes("OTHERS") && otherSubject.trim()) {
+            subjects = subjects.filter(s => s !== "OTHERS");
+            subjects.push(otherSubject.trim());
+          }
+          formData.append(key, JSON.stringify(subjects));
+        } else if (key === 'class' || key === 'division') {
+          // Handle arrays for class and division
+          formData.append(key, JSON.stringify(value));
         } else if (key === 'questions') {
           // Use the questions from our state instead of form data
           formData.append(key, JSON.stringify(questions));
@@ -153,21 +167,47 @@ function AddMockTest() {
     },
   });
 
-  const handleClassChange = (selectedClass: string) => {
-    const mapping = classMappings?.find(m => m.class === selectedClass);
-    if (mapping) {
-      setAvailableDivisions([mapping.division]);
-      setAvailableSubjects(mapping.subjects);
-      form.setValue("class", selectedClass);
-      form.setValue("division", "");
-      form.setValue("subjects", "");
-      setSelectedSubject("");
-    }
+  const handleClassChange = (classes: string[]) => {
+    // Update selected classes
+    setSelectedClasses(classes);
+    form.setValue("class", classes);
+    
+    // Get all available divisions and subjects from selected classes
+    const allDivisions = new Set<string>();
+    const allSubjects = new Set<string>();
+    
+    classes.forEach(selectedClass => {
+      const mappings = classMappings?.filter(m => m.class === selectedClass) || [];
+      mappings.forEach(mapping => {
+        allDivisions.add(mapping.division);
+        mapping.subjects.forEach(subject => allSubjects.add(subject));
+      });
+    });
+    
+    setAvailableDivisions(Array.from(allDivisions));
+    setAvailableSubjects(Array.from(allSubjects));
+    
+    // Reset selections when classes change
+    setSelectedDivisions([]);
+    setSelectedSubjects([]);
+    form.setValue("division", []);
+    form.setValue("subjects", []);
+    setOtherSubject("");
   };
 
-  const handleSubjectChange = (subject: string) => {
-    setSelectedSubject(subject);
-    form.setValue("subjects", subject);
+  const handleDivisionChange = (divisions: string[]) => {
+    setSelectedDivisions(divisions);
+    form.setValue("division", divisions);
+  };
+
+  const handleSubjectChange = (subjects: string[]) => {
+    setSelectedSubjects(subjects);
+    form.setValue("subjects", subjects);
+    
+    // Clear other subject if "OTHERS" is not selected
+    if (!subjects.includes("OTHERS")) {
+      setOtherSubject("");
+    }
   };
 
   const addQuestion = () => {
@@ -351,21 +391,52 @@ function AddMockTest() {
                       name="class"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Class</FormLabel>
-                          <Select onValueChange={handleClassChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select class" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {uniqueClasses.map((className) => (
-                                <SelectItem key={className} value={className}>
+                          <FormLabel>Classes</FormLabel>
+                          <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                            {uniqueClasses.map((className) => (
+                              <div key={className} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`class-${className}`}
+                                  checked={selectedClasses.includes(className)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      const newClasses = [...selectedClasses, className];
+                                      handleClassChange(newClasses);
+                                    } else {
+                                      const newClasses = selectedClasses.filter(c => c !== className);
+                                      handleClassChange(newClasses);
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={`class-${className}`} className="text-sm font-normal">
                                   Class {className}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                                </Label>
+                              </div>
+                            ))}
+                            <div className="flex items-center space-x-2 border-t pt-2 mt-2">
+                              <Checkbox
+                                id="class-all"
+                                checked={selectedClasses.length === uniqueClasses.length}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleClassChange([...uniqueClasses]);
+                                  } else {
+                                    handleClassChange([]);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor="class-all" className="text-sm font-medium text-blue-600">
+                                ALL
+                              </Label>
+                            </div>
+                          </div>
+                          {selectedClasses.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-500">
+                                Selected: {selectedClasses.map(c => `Class ${c}`).join(", ")}
+                              </p>
+                            </div>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -376,21 +447,58 @@ function AddMockTest() {
                       name="division"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Division</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select division" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {availableDivisions.map((division) => (
-                                <SelectItem key={division} value={division}>
-                                  Division {division}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Divisions</FormLabel>
+                          <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                            {availableDivisions.length > 0 ? (
+                              <>
+                                {availableDivisions.map((division) => (
+                                  <div key={division} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`division-${division}`}
+                                      checked={selectedDivisions.includes(division)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          const newDivisions = [...selectedDivisions, division];
+                                          handleDivisionChange(newDivisions);
+                                        } else {
+                                          const newDivisions = selectedDivisions.filter(d => d !== division);
+                                          handleDivisionChange(newDivisions);
+                                        }
+                                      }}
+                                    />
+                                    <Label htmlFor={`division-${division}`} className="text-sm font-normal">
+                                      Division {division}
+                                    </Label>
+                                  </div>
+                                ))}
+                                <div className="flex items-center space-x-2 border-t pt-2 mt-2">
+                                  <Checkbox
+                                    id="division-all"
+                                    checked={selectedDivisions.length === availableDivisions.length}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        handleDivisionChange([...availableDivisions]);
+                                      } else {
+                                        handleDivisionChange([]);
+                                      }
+                                    }}
+                                  />
+                                  <Label htmlFor="division-all" className="text-sm font-medium text-blue-600">
+                                    ALL
+                                  </Label>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-sm text-gray-500">Select classes first to see available divisions</p>
+                            )}
+                          </div>
+                          {selectedDivisions.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-500">
+                                Selected: {selectedDivisions.map(d => `Division ${d}`).join(", ")}
+                              </p>
+                            </div>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -448,32 +556,103 @@ function AddMockTest() {
                 </div>
 
                 {/* Subject */}
-                {availableSubjects.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="subjects"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subject</FormLabel>
-                        <Select onValueChange={handleSubjectChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select subject" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
+                <FormField
+                  control={form.control}
+                  name="subjects"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subjects</FormLabel>
+                      <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                        {availableSubjects.length > 0 ? (
+                          <>
                             {availableSubjects.map((subject) => (
-                              <SelectItem key={subject} value={subject}>
-                                {subject}
-                              </SelectItem>
+                              <div key={subject} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`subject-${subject}`}
+                                  checked={selectedSubjects.includes(subject)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      const newSubjects = [...selectedSubjects, subject];
+                                      handleSubjectChange(newSubjects);
+                                    } else {
+                                      const newSubjects = selectedSubjects.filter(s => s !== subject);
+                                      handleSubjectChange(newSubjects);
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={`subject-${subject}`} className="text-sm font-normal">
+                                  {subject}
+                                </Label>
+                              </div>
                             ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                            <div className="flex items-center space-x-2 border-t pt-2 mt-2">
+                              <Checkbox
+                                id="subject-all"
+                                checked={selectedSubjects.length === availableSubjects.length && !selectedSubjects.includes("OTHERS")}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleSubjectChange([...availableSubjects]);
+                                  } else {
+                                    handleSubjectChange([]);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor="subject-all" className="text-sm font-medium text-blue-600">
+                                ALL
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border-t pt-2 mt-1">
+                              <Checkbox
+                                id="subject-others"
+                                checked={selectedSubjects.includes("OTHERS")}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    const newSubjects = [...selectedSubjects, "OTHERS"];
+                                    handleSubjectChange(newSubjects);
+                                  } else {
+                                    const newSubjects = selectedSubjects.filter(s => s !== "OTHERS");
+                                    handleSubjectChange(newSubjects);
+                                    setOtherSubject("");
+                                  }
+                                }}
+                              />
+                              <Label htmlFor="subject-others" className="text-sm font-medium text-orange-600">
+                                OTHERS
+                              </Label>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">Select classes first to see available subjects</p>
+                        )}
+                      </div>
+                      
+                      {/* OTHERS text input */}
+                      {selectedSubjects.includes("OTHERS") && (
+                        <div className="mt-3">
+                          <Label htmlFor="other-subject" className="text-sm font-medium">
+                            Specify Other Subject:
+                          </Label>
+                          <Input
+                            id="other-subject"
+                            placeholder="Enter custom subject name"
+                            value={otherSubject}
+                            onChange={(e) => setOtherSubject(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                      
+                      {selectedSubjects.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500">
+                            Selected: {selectedSubjects.map(s => s === "OTHERS" && otherSubject ? otherSubject : s).join(", ")}
+                          </p>
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* File Upload Section */}
                 <div>
@@ -771,7 +950,10 @@ function AddMockTest() {
                         ]
                       };
                       setQuestions([defaultQuestion]);
-                      setSelectedSubject("");
+                      setSelectedClasses([]);
+                      setSelectedDivisions([]);
+                      setSelectedSubjects([]);
+                      setOtherSubject("");
                       setSelectedFile(null);
                     }}
                     className="order-2"
