@@ -21,6 +21,7 @@ import {
   polls,
   surveys,
   mockTests,
+  testResults,
   busRoutes,
   type User,
   type InsertUser,
@@ -66,6 +67,8 @@ import {
   type InsertSurvey,
   type MockTest,
   type InsertMockTest,
+  type TestResult,
+  type InsertTestResult,
   type BusRoute,
   type InsertBusRoute,
 } from "@shared/schema";
@@ -272,6 +275,16 @@ export interface IStorage {
   createMockTest(mockTest: InsertMockTest): Promise<MockTest>;
   updateMockTest(id: number, mockTest: Partial<InsertMockTest>): Promise<MockTest | undefined>;
   deleteMockTest(id: number): Promise<boolean>;
+  
+  // Test Result methods
+  getAllTestResults(): Promise<TestResult[]>;
+  getTestResult(id: number): Promise<TestResult | undefined>;
+  getTestResultsByPeriodicTest(periodicTestId: number): Promise<TestResult[]>;
+  getTestResultsByClassDivision(className: string, division: string): Promise<TestResult[]>;
+  createTestResult(testResult: InsertTestResult): Promise<TestResult>;
+  updateTestResult(id: number, testResult: Partial<InsertTestResult>): Promise<TestResult | undefined>;
+  deleteTestResult(id: number): Promise<boolean>;
+  bulkCreateTestResults(testResults: InsertTestResult[]): Promise<TestResult[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -298,6 +311,7 @@ export class MemStorage implements IStorage {
   private polls: Map<number, Poll>;
   private surveys: Map<number, Survey>;
   private mockTests: Map<number, MockTest>;
+  private testResults: Map<number, TestResult>;
   private currentUserId: number;
   private currentStaffId: number;
   private currentClassMappingId: number;
@@ -321,6 +335,7 @@ export class MemStorage implements IStorage {
   private currentPollId: number;
   private currentSurveyId: number;
   private currentMockTestId: number;
+  private currentTestResultId: number;
 
   constructor() {
     this.users = new Map();
@@ -346,6 +361,7 @@ export class MemStorage implements IStorage {
     this.polls = new Map();
     this.surveys = new Map();
     this.mockTests = new Map();
+    this.testResults = new Map();
     this.currentUserId = 1;
     this.currentStaffId = 1;
     this.currentClassMappingId = 1;
@@ -369,6 +385,7 @@ export class MemStorage implements IStorage {
     this.currentPollId = 1;
     this.currentSurveyId = 1;
     this.currentMockTestId = 1;
+    this.currentTestResultId = 1;
 
     // Initialize with pre-defined data
     this.initializeRoles();
@@ -1740,6 +1757,101 @@ export class MemStorage implements IStorage {
 
   async deleteMockTest(id: number): Promise<boolean> {
     return this.mockTests.delete(id);
+  }
+
+  // Test Result methods
+  async getAllTestResults(): Promise<TestResult[]> {
+    return Array.from(this.testResults.values());
+  }
+
+  async getTestResult(id: number): Promise<TestResult | undefined> {
+    return this.testResults.get(id);
+  }
+
+  async getTestResultsByPeriodicTest(periodicTestId: number): Promise<TestResult[]> {
+    return Array.from(this.testResults.values()).filter(
+      result => result.periodicTestId === periodicTestId
+    );
+  }
+
+  async getTestResultsByClassDivision(className: string, division: string): Promise<TestResult[]> {
+    return Array.from(this.testResults.values()).filter(
+      result => result.class === className && result.division === division
+    );
+  }
+
+  async createTestResult(insertTestResult: InsertTestResult): Promise<TestResult> {
+    const id = this.currentTestResultId++;
+    
+    // Auto-calculate grade based on marks percentage
+    let grade: string | null = null;
+    if (insertTestResult.marks !== null && insertTestResult.marks !== undefined) {
+      const percentage = (insertTestResult.marks / insertTestResult.maxMarks) * 100;
+      if (percentage >= 90) grade = "A+";
+      else if (percentage >= 80) grade = "A";
+      else if (percentage >= 70) grade = "B+";
+      else if (percentage >= 60) grade = "B";
+      else if (percentage >= 50) grade = "C";
+      else if (percentage >= 35) grade = "D";
+      else grade = "F";
+    }
+
+    const testResult: TestResult = {
+      ...insertTestResult,
+      id,
+      grade,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.testResults.set(id, testResult);
+    return testResult;
+  }
+
+  async updateTestResult(id: number, updateData: Partial<InsertTestResult>): Promise<TestResult | undefined> {
+    const existing = this.testResults.get(id);
+    if (!existing) return undefined;
+
+    // Auto-calculate grade if marks are updated
+    let grade = existing.grade;
+    if (updateData.marks !== undefined || updateData.maxMarks !== undefined) {
+      const marks = updateData.marks ?? existing.marks;
+      const maxMarks = updateData.maxMarks ?? existing.maxMarks;
+      
+      if (marks !== null && marks !== undefined) {
+        const percentage = (marks / maxMarks) * 100;
+        if (percentage >= 90) grade = "A+";
+        else if (percentage >= 80) grade = "A";
+        else if (percentage >= 70) grade = "B+";
+        else if (percentage >= 60) grade = "B";
+        else if (percentage >= 50) grade = "C";
+        else if (percentage >= 35) grade = "D";
+        else grade = "F";
+      }
+    }
+
+    const updated: TestResult = { 
+      ...existing, 
+      ...updateData,
+      grade,
+      updatedAt: new Date(),
+    };
+    this.testResults.set(id, updated);
+    return updated;
+  }
+
+  async deleteTestResult(id: number): Promise<boolean> {
+    return this.testResults.delete(id);
+  }
+
+  async bulkCreateTestResults(testResults: InsertTestResult[]): Promise<TestResult[]> {
+    const createdResults: TestResult[] = [];
+    
+    for (const testResult of testResults) {
+      const created = await this.createTestResult(testResult);
+      createdResults.push(created);
+    }
+    
+    return createdResults;
   }
 }
 

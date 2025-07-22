@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema, insertSurveySchema, insertMockTestSchema } from "@shared/schema";
+import { insertStaffSchema, insertClassMappingSchema, insertTeacherMappingSchema, insertRoleSchema, insertSubjectSchema, insertStudentSchema, insertWorkingDaySchema, insertSchoolScheduleSchema, insertTimeTableSchema, insertTimeTableEntrySchema, insertSyllabusMasterSchema, insertPeriodicTestSchema, insertPublicHolidaySchema, insertHandBookSchema, insertNewsletterSchema, insertEventSchema, insertBusRouteSchema, insertNewsCircularSchema, insertPhotoGallerySchema, insertPollSchema, insertSurveySchema, insertMockTestSchema, insertTestResultSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Configure multer for file uploads
@@ -2143,6 +2143,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete mock test" });
+    }
+  });
+
+  // Test Results routes
+  app.get("/api/test-results", async (req, res) => {
+    try {
+      const testResults = await storage.getAllTestResults();
+      res.json(testResults);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch test results" });
+    }
+  });
+
+  app.get("/api/test-results/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid test result ID" });
+      }
+
+      const testResult = await storage.getTestResult(id);
+      if (!testResult) {
+        return res.status(404).json({ message: "Test result not found" });
+      }
+
+      res.json(testResult);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch test result" });
+    }
+  });
+
+  app.get("/api/test-results/periodic-test/:periodicTestId", async (req, res) => {
+    try {
+      const periodicTestId = parseInt(req.params.periodicTestId);
+      if (isNaN(periodicTestId)) {
+        return res.status(400).json({ message: "Invalid periodic test ID" });
+      }
+
+      const testResults = await storage.getTestResultsByPeriodicTest(periodicTestId);
+      res.json(testResults);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch test results for periodic test" });
+    }
+  });
+
+  app.get("/api/test-results/class/:class/division/:division", async (req, res) => {
+    try {
+      const { class: className, division } = req.params;
+      const testResults = await storage.getTestResultsByClassDivision(className, division);
+      res.json(testResults);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch test results for class/division" });
+    }
+  });
+
+  app.post("/api/test-results", async (req, res) => {
+    try {
+      const result = insertTestResultSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const testResult = await storage.createTestResult(result.data);
+      res.status(201).json(testResult);
+    } catch (error) {
+      console.error("Test result creation error:", error);
+      res.status(500).json({ message: "Failed to create test result" });
+    }
+  });
+
+  app.post("/api/test-results/bulk", async (req, res) => {
+    try {
+      const results = z.array(insertTestResultSchema).safeParse(req.body);
+      
+      if (!results.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: results.error.errors 
+        });
+      }
+
+      const testResults = await storage.bulkCreateTestResults(results.data);
+      res.status(201).json(testResults);
+    } catch (error) {
+      console.error("Bulk test result creation error:", error);
+      res.status(500).json({ message: "Failed to create test results" });
+    }
+  });
+
+  app.put("/api/test-results/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid test result ID" });
+      }
+
+      const result = insertTestResultSchema.partial().safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const testResult = await storage.updateTestResult(id, result.data);
+      if (!testResult) {
+        return res.status(404).json({ message: "Test result not found" });
+      }
+
+      res.json(testResult);
+    } catch (error) {
+      console.error("Test result update error:", error);
+      res.status(500).json({ message: "Failed to update test result" });
+    }
+  });
+
+  app.delete("/api/test-results/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid test result ID" });
+      }
+
+      const success = await storage.deleteTestResult(id);
+      if (!success) {
+        return res.status(404).json({ message: "Test result not found" });
+      }
+
+      res.json({ message: "Test result deleted successfully" });
+    } catch (error) {
+      console.error("Test result deletion error:", error);
+      res.status(500).json({ message: "Failed to delete test result" });
     }
   });
 

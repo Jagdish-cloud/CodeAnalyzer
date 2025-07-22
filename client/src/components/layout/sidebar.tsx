@@ -93,6 +93,13 @@ const menuItems: { items: MenuItem[] } = {
           url: "/periodic-test",
         },
         {
+          id: "test-results",
+          title: "Test Result",
+          type: "item",
+          icon: "feather icon-file-text",
+          url: "/test-results",
+        },
+        {
           id: "teacher-mapping",
           title: "Teacher Subject/Class/Div Mapping",
           type: "item",

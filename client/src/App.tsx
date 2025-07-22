@@ -52,6 +52,9 @@ import ViewSurvey from "@/pages/view-survey";
 import MockTests from "@/pages/mock-tests";
 import AddMockTest from "@/pages/add-mock-test";
 import ViewMockTest from "@/pages/view-mock-test";
+import TestResults from "@/pages/test-results";
+import AddTestResult from "@/pages/add-test-result";
+import ViewTestResult from "@/pages/view-test-result";
 
 function Router() {
   return (
@@ -105,6 +108,9 @@ function Router() {
         <Route path="/mock-tests" component={MockTests} />
         <Route path="/mock-tests/add" component={AddMockTest} />
         <Route path="/mock-tests/view/:id" component={ViewMockTest} />
+        <Route path="/test-results" component={TestResults} />
+        <Route path="/test-results/add" component={AddTestResult} />
+        <Route path="/test-results/view/:id" component={ViewTestResult} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
