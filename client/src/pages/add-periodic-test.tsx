@@ -164,20 +164,16 @@ export default function AddPeriodicTestPage() {
         .flatMap(mapping => mapping.subjects)))
     : [];
 
-  // Get available chapters for selected class and subject
-  const availableChapters = selectedClass && selectedSubject
+  // Get all available chapters for selected class (from all subjects)
+  const availableChapters = selectedClass
     ? syllabusMasters
-        .filter(syllabus => 
-          syllabus.class === selectedClass &&
-          syllabus.subject === selectedSubject
-        )
+        .filter(syllabus => syllabus.class === selectedClass)
         .map(syllabus => syllabus.chapterLessonNo)
     : [];
 
-  // Clear subject when class changes
+  // Clear chapters when class changes
   useEffect(() => {
     if (selectedClass) {
-      form.setValue("subject", "");
       form.setValue("chapters", []);
     }
   }, [selectedClass, form]);
@@ -602,17 +598,7 @@ export default function AddPeriodicTestPage() {
                   />
                 )}
 
-                {/* Duration Display */}
-                {form.watch("duration") && (
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-                    <div className="flex items-center">
-                      <Clock className="h-5 w-5 text-blue-600 mr-2" />
-                      <span className="text-blue-800 font-medium">
-                        Test Duration: {form.watch("duration")}
-                      </span>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Submit Button */}
                 <div className="flex justify-end pt-6">
