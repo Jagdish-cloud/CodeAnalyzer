@@ -90,6 +90,9 @@ export default function AddTestResultPage() {
         .filter(mapping => mapping.class === formData.class && mapping.division === formData.division)
         .flatMap(mapping => mapping.subjects || []);
 
+      // Remove duplicates from subjects array
+      const uniqueSubjects = [...new Set(classSubjects)];
+
       const pdfData = {
         testInfo: {
           testName: selectedTest.testName || `${selectedTest.subject} Test`,
@@ -100,11 +103,16 @@ export default function AddTestResultPage() {
           date: selectedTest.testDate,
           duration: selectedTest.duration,
         },
-        students: students.map(student => ({
-          rollNumber: student.rollNumber,
-          studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
-        })).sort((a, b) => a.rollNumber - b.rollNumber),
-        subjects: classSubjects.length > 0 ? classSubjects : [selectedTest.subject], // Use actual subjects from class mapping
+        students: students
+          .map(student => ({
+            rollNumber: student.rollNumber,
+            studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
+          }))
+          .filter((student, index, array) => 
+            array.findIndex(s => s.rollNumber === student.rollNumber) === index
+          )
+          .sort((a, b) => a.rollNumber - b.rollNumber),
+        subjects: uniqueSubjects.length > 0 ? uniqueSubjects : [selectedTest.subject], // Use unique subjects from class mapping
       };
 
       // Generate and download PDF
