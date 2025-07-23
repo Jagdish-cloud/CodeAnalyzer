@@ -18,13 +18,22 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertPeriodicTestSchema } from "@shared/schema";
 import type { ClassMapping, SyllabusMaster } from "@shared/schema";
 
-const formSchema = insertPeriodicTestSchema.extend({
-  chapters: z.array(z.string()).optional().default([]),
-  fromTime: z.string().min(1, "From time is required"),
-  toTime: z.string().min(1, "To time is required"),
-  duration: z.string().optional(),
-  maximumMarks: z.number().optional(),
+const formSchema = z.object({
+  year: z.string().min(1, "Year is required"),
+  testName: z.string().min(1, "Test name is required"),
+  class: z.string().min(1, "Class is required"),
+  testDate: z.string().min(1, "Test start date is required"),
   testEndDate: z.string().min(1, "Test end date is required"),
+  status: z.string().default("active"),
+  chapters: z.array(z.string()).optional().default([]),
+  testDays: z.array(z.object({
+    date: z.string(),
+    subject: z.string().min(1, "Subject is required"),
+    maximumMarks: z.number().optional(),
+    fromTime: z.string().min(1, "From time is required"),
+    toTime: z.string().min(1, "To time is required"),
+    duration: z.string().optional(),
+  })).optional().default([]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -47,24 +56,18 @@ export default function AddPeriodicTestPage() {
       year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       testName: "",
       class: "",
-      subject: "",
-      chapters: [],
       testDate: "",
       testEndDate: "",
-      fromTime: "",
-      toTime: "",
-      duration: "",
-      maximumMarks: undefined,
       status: "active",
+      chapters: [],
+      testDays: [],
     },
   });
 
   const selectedClass = form.watch("class");
-  const selectedSubject = form.watch("subject");
-  const fromTime = form.watch("fromTime");
-  const toTime = form.watch("toTime");
   const testStartDate = form.watch("testDate");
   const testEndDate = form.watch("testEndDate");
+  const testDays = form.watch("testDays");
 
   // Calculate duration automatically
   const calculateDuration = (from: string, to: string): string => {
@@ -133,13 +136,26 @@ export default function AddPeriodicTestPage() {
 
   const dateRows = generateDateRows(testStartDate, testEndDate);
 
-  // Update duration when times change
+  // Update testDays array when date range changes
   useEffect(() => {
-    const duration = calculateDuration(fromTime, toTime);
-    if (duration !== form.getValues("duration")) {
-      form.setValue("duration", duration);
+    if (testStartDate && testEndDate) {
+      const newDateRows = generateDateRows(testStartDate, testEndDate);
+      const newTestDays = newDateRows.map(dateRow => ({
+        date: dateRow.dateStr,
+        subject: "",
+        maximumMarks: undefined,
+        fromTime: "",
+        toTime: "",
+        duration: "",
+      }));
+      form.setValue("testDays", newTestDays);
     }
-  }, [fromTime, toTime]);
+  }, [testStartDate, testEndDate, form]);
+
+  // Calculate duration for a specific day
+  const calculateDurationForDay = (fromTime: string, toTime: string): string => {
+    return calculateDuration(fromTime, toTime);
+  };
 
   // Get available subjects for selected class (union of all subjects from all divisions)
   const availableSubjects = selectedClass
@@ -168,37 +184,81 @@ export default function AddPeriodicTestPage() {
 
   const createTestMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return apiRequest("POST", "/api/periodic-tests", {
-        ...formData,
-        chapters: formData.chapters.length > 0 ? formData.chapters : ["No chapters available"],
+      // Create separate test entries for each day
+      const testPromises = formData.testDays.map((dayData) => {
+        return apiRequest("POST", "/api/periodic-tests", {
+          year: formData.year,
+          testName: formData.testName,
+          class: formData.class,
+          subject: dayData.subject,
+          chapters: formData.chapters.length > 0 ? formData.chapters : ["No chapters available"],
+          testDate: dayData.date,
+          testEndDate: dayData.date, // Each day is its own test
+          fromTime: dayData.fromTime,
+          toTime: dayData.toTime,
+          duration: dayData.duration,
+          maximumMarks: dayData.maximumMarks || 50,
+          status: formData.status,
+        });
       });
+      
+      return Promise.all(testPromises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/periodic-tests"] });
       toast({
         title: "Success",
-        description: "Periodic test has been created successfully",
+        description: "Periodic tests have been created successfully",
       });
       navigate("/periodic-test");
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create periodic test",
+        description: error.message || "Failed to create periodic tests",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: FormData) => {
-    // Validate time range
-    if (data.duration === "Invalid time range") {
+    // Validate that we have test days
+    if (!data.testDays || data.testDays.length === 0) {
       toast({
         title: "Validation Error",
-        description: "To Time must be after From Time",
+        description: "Please select start and end dates to generate test schedule",
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate each test day
+    for (let i = 0; i < data.testDays.length; i++) {
+      const day = data.testDays[i];
+      if (!day.subject) {
+        toast({
+          title: "Validation Error",
+          description: `Please select a subject for ${dateRows[i]?.displayText || `day ${i + 1}`}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!day.fromTime || !day.toTime) {
+        toast({
+          title: "Validation Error",
+          description: `Please set time range for ${dateRows[i]?.displayText || `day ${i + 1}`}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      if (day.duration === "Invalid time range") {
+        toast({
+          title: "Validation Error",
+          description: `Invalid time range for ${dateRows[i]?.displayText || `day ${i + 1}`}. To Time must be after From Time`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     createTestMutation.mutate(data);
@@ -364,7 +424,7 @@ export default function AddPeriodicTestPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {dateRows.length > 0 ? (
+                        {dateRows.length > 0 && testDays.length > 0 ? (
                           dateRows.map((dateRow, index) => (
                             <tr key={dateRow.dateStr}>
                               <td className="border border-slate-300 p-3">
@@ -375,7 +435,7 @@ export default function AddPeriodicTestPage() {
                               <td className="border border-slate-300 p-3">
                                 <FormField
                                   control={form.control}
-                                  name="subject"
+                                  name={`testDays.${index}.subject`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClass}>
@@ -400,14 +460,14 @@ export default function AddPeriodicTestPage() {
                               <td className="border border-slate-300 p-3">
                                 <FormField
                                   control={form.control}
-                                  name="maximumMarks"
+                                  name={`testDays.${index}.maximumMarks`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormControl>
                                         <Input
                                           type="number"
                                           {...field}
-                                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                          onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
                                           className="bg-white border-slate-200"
                                           placeholder="Enter marks"
                                         />
@@ -420,13 +480,22 @@ export default function AddPeriodicTestPage() {
                               <td className="border border-slate-300 p-3">
                                 <FormField
                                   control={form.control}
-                                  name="fromTime"
+                                  name={`testDays.${index}.fromTime`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormControl>
                                         <Input
                                           type="time"
                                           {...field}
+                                          onChange={(e) => {
+                                            field.onChange(e.target.value);
+                                            // Auto-calculate duration
+                                            const toTime = testDays[index]?.toTime || "";
+                                            if (e.target.value && toTime) {
+                                              const duration = calculateDurationForDay(e.target.value, toTime);
+                                              form.setValue(`testDays.${index}.duration`, duration);
+                                            }
+                                          }}
                                           className="bg-white border-slate-200"
                                           placeholder="14:00"
                                         />
@@ -439,13 +508,22 @@ export default function AddPeriodicTestPage() {
                               <td className="border border-slate-300 p-3">
                                 <FormField
                                   control={form.control}
-                                  name="toTime"
+                                  name={`testDays.${index}.toTime`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormControl>
                                         <Input
                                           type="time"
                                           {...field}
+                                          onChange={(e) => {
+                                            field.onChange(e.target.value);
+                                            // Auto-calculate duration
+                                            const fromTime = testDays[index]?.fromTime || "";
+                                            if (fromTime && e.target.value) {
+                                              const duration = calculateDurationForDay(fromTime, e.target.value);
+                                              form.setValue(`testDays.${index}.duration`, duration);
+                                            }
+                                          }}
                                           className="bg-white border-slate-200"
                                           placeholder="15:00"
                                         />

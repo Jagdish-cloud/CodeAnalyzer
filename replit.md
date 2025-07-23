@@ -385,6 +385,16 @@ Preferred communication style: Simple, everyday language.
   - Table displays formatted dates with day names (e.g., "17/07/2025 (Thu)")
   - Added proper fallback messaging when no dates selected or no valid dates in range
   - Enhanced form interactivity with real-time table updates on date changes
+- July 23, 2025: Enhanced Multi-Day Test Scheduling with Individual Day Management:
+  - Restructured form schema to support testDays array with separate data for each day
+  - Implemented individual form fields for each day allowing different subjects per day
+  - Created automatic testDays array population when date range changes
+  - Added separate subject, marks, and time field management for each table row
+  - Implemented automatic duration calculation for each individual day
+  - Enhanced form validation to check each day's data individually
+  - Updated submission logic to create separate periodic test entries for each day
+  - Added comprehensive validation messages with specific day references
+  - Enabled true multi-day test scheduling with independent daily configurations
 
 ## Changelog
 
