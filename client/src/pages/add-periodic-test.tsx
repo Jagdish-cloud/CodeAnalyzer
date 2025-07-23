@@ -23,24 +23,10 @@ const formSchema = insertPeriodicTestSchema.extend({
   fromTime: z.string().min(1, "From time is required"),
   toTime: z.string().min(1, "To time is required"),
   duration: z.string().optional(),
-  maximumMarks: z.number().min(1, "Maximum marks must be at least 1"),
+  maximumMarks: z.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-// Predefined test names
-const TEST_NAMES = [
-  "Unit Test 1",
-  "Unit Test 2", 
-  "Unit Test 3",
-  "Mid-Sem Exam",
-  "Final Exam",
-  "Assignment Test",
-  "Surprise Test",
-  "Weekly Test",
-  "Monthly Test",
-  "Quarterly Exam"
-];
 
 export default function AddPeriodicTestPage() {
   const [, navigate] = useLocation();
@@ -66,7 +52,7 @@ export default function AddPeriodicTestPage() {
       fromTime: "",
       toTime: "",
       duration: "",
-      maximumMarks: 50,
+      maximumMarks: undefined,
       status: "active",
     },
   });
@@ -239,7 +225,7 @@ export default function AddPeriodicTestPage() {
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-700 font-semibold">Select Class (VIII)</FormLabel>
+                        <FormLabel className="text-slate-700 font-semibold">Select Class</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="bg-white border-slate-200">
@@ -269,20 +255,13 @@ export default function AddPeriodicTestPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-700 font-semibold">Period Test Name</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-white border-slate-200">
-                            <SelectValue placeholder="Select test name" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {TEST_NAMES.map((testName) => (
-                            <SelectItem key={testName} value={testName}>
-                              {testName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Enter test name"
+                          className="bg-white border-slate-200"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -295,7 +274,7 @@ export default function AddPeriodicTestPage() {
                     name="testDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-700 font-semibold">Test Start Date : 17/7</FormLabel>
+                        <FormLabel className="text-slate-700 font-semibold">Test Start Date</FormLabel>
                         <FormControl>
                           <Input
                             type="date"
@@ -309,7 +288,7 @@ export default function AddPeriodicTestPage() {
                   />
 
                   <div>
-                    <Label className="text-slate-700 font-semibold">Test End Date : 22/7</Label>
+                    <Label className="text-slate-700 font-semibold">Test End Date</Label>
                     <Input
                       type="date"
                       className="bg-white border-slate-200 mt-2"
@@ -335,8 +314,8 @@ export default function AddPeriodicTestPage() {
                       <tbody>
                         <tr>
                           <td className="border border-slate-300 p-3">
-                            <div>17-07-2025(Thu)</div>
-                            <div className="mt-2">18-07-2025 (Fri)</div>
+                            <div className="text-slate-600">Date range from Start Date to End Date</div>
+                            <div className="text-xs text-slate-500 mt-1">(Excluding Sundays)</div>
                           </td>
                           <td className="border border-slate-300 p-3">
                             <FormField
@@ -375,7 +354,7 @@ export default function AddPeriodicTestPage() {
                                       {...field}
                                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                       className="bg-white border-slate-200"
-                                      placeholder="50"
+                                      placeholder="Enter marks"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -426,10 +405,7 @@ export default function AddPeriodicTestPage() {
                     </table>
                   </div>
                   
-                  <div className="mt-4 text-sm text-slate-600">
-                    <p>Continue for rest of the the week and</p>
-                    <p>Exclude Sunday</p>
-                  </div>
+
                 </div>
 
                 {/* Chapters Section */}

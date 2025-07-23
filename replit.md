@@ -366,6 +366,16 @@ Preferred communication style: Simple, everyday language.
   - Added complete CRUD operations for test results with bulk operations support in backend API
   - Applied consistent emerald-teal-cyan gradient theme matching educational assessment design
   - Enhanced system with progress tracking, completion percentages, and comprehensive analytics
+- July 23, 2025: Refined Add Periodic Test UI for Exact User Requirements:
+  - Converted Period Test Name from dropdown to text input field for custom test names
+  - Removed specific date format displays (17-07-2025(Thu), 18-07-2025(Fri)) from Date/Day column
+  - Updated Date/Day column to show generic "Date range from Start Date to End Date (Excluding Sundays)"
+  - Removed "50" default placeholder from Maximum Marks field, changed to "Enter marks"
+  - Cleaned up date field labels by removing specific date examples (": 17/7", ": 22/7")
+  - Removed explanatory text "Continue for rest of the week and Exclude Sunday" from form
+  - Updated class selection label to remove "(VIII)" example text for cleaner interface
+  - Made Maximum Marks field optional in form validation schema
+  - Enhanced form layout for better user experience and data entry flexibility
 
 ## Changelog
 
