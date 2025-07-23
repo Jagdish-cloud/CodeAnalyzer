@@ -90,7 +90,7 @@ export default function PeriodicTestPage() {
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              {test.testDate}
+                              {test.testDate} to {test.testEndDate}
                             </span>
                             <span className="text-sm text-gray-600">
                               {test.fromTime} - {test.toTime} ({test.duration})

@@ -24,6 +24,7 @@ const formSchema = insertPeriodicTestSchema.extend({
   toTime: z.string().min(1, "To time is required"),
   duration: z.string().optional(),
   maximumMarks: z.number().optional(),
+  testEndDate: z.string().min(1, "Test end date is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,6 +50,7 @@ export default function AddPeriodicTestPage() {
       subject: "",
       chapters: [],
       testDate: "",
+      testEndDate: "",
       fromTime: "",
       toTime: "",
       duration: "",
@@ -287,15 +289,23 @@ export default function AddPeriodicTestPage() {
                     )}
                   />
 
-                  <div>
-                    <Label className="text-slate-700 font-semibold">Test End Date</Label>
-                    <Input
-                      type="date"
-                      className="bg-white border-slate-200 mt-2"
-                      placeholder="End date (auto-calculated)"
-                      disabled
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="testEndDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-700 font-semibold">Test End Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="bg-white border-slate-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 {/* Table Section */}

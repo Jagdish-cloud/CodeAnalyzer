@@ -145,10 +145,11 @@ export const periodicTests = pgTable("periodic_tests", {
   subject: text("subject").notNull(),
   chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
   testDate: text("test_date").notNull(),
+  testEndDate: text("test_end_date").notNull(),
   fromTime: text("from_time").notNull(),
   toTime: text("to_time").notNull(),
   duration: text("duration").notNull(), // Auto-calculated from fromTime and toTime
-  maximumMarks: integer("maximum_marks").notNull().default(50),
+  maximumMarks: integer("maximum_marks"),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
