@@ -140,14 +140,15 @@ export const syllabusMasters = pgTable("syllabus_masters", {
 export const periodicTests = pgTable("periodic_tests", {
   id: serial("id").primaryKey(),
   year: text("year").notNull(),
+  testName: text("test_name").notNull(), // Unit Test 1, Mid-Sem Exam, etc.
   class: text("class").notNull(),
-  divisions: text("divisions").array().notNull(), // Array of divisions
   subject: text("subject").notNull(),
   chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
   testDate: text("test_date").notNull(),
   fromTime: text("from_time").notNull(),
   toTime: text("to_time").notNull(),
   duration: text("duration").notNull(), // Auto-calculated from fromTime and toTime
+  maximumMarks: integer("maximum_marks").notNull().default(50),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

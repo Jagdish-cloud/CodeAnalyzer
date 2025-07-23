@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,30 +19,32 @@ import { insertPeriodicTestSchema } from "@shared/schema";
 import type { ClassMapping, SyllabusMaster } from "@shared/schema";
 
 const formSchema = insertPeriodicTestSchema.extend({
-  divisions: z.array(z.string()).min(1, "At least one division must be selected"),
   chapters: z.array(z.string()).optional().default([]),
   fromTime: z.string().min(1, "From time is required"),
   toTime: z.string().min(1, "To time is required"),
   duration: z.string().optional(),
-}).omit({ testTime: true });
+  maximumMarks: z.number().min(1, "Maximum marks must be at least 1"),
+});
 
 type FormData = z.infer<typeof formSchema>;
 
-interface TestEntry {
-  id: string;
-  subject: string;
-  chapters: string[];
-  testDate: string;
-  fromTime: string;
-  toTime: string;
-  duration: string;
-}
+// Predefined test names
+const TEST_NAMES = [
+  "Unit Test 1",
+  "Unit Test 2", 
+  "Unit Test 3",
+  "Mid-Sem Exam",
+  "Final Exam",
+  "Assignment Test",
+  "Surprise Test",
+  "Weekly Test",
+  "Monthly Test",
+  "Quarterly Exam"
+];
 
 export default function AddPeriodicTestPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [testEntries, setTestEntries] = useState<TestEntry[]>([]);
 
   const { data: classMappings = [], isLoading: isClassMappingsLoading } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -56,20 +58,20 @@ export default function AddPeriodicTestPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      testName: "",
       class: "",
-      divisions: [],
       subject: "",
       chapters: [],
       testDate: "",
       fromTime: "",
       toTime: "",
       duration: "",
+      maximumMarks: 50,
       status: "active",
     },
   });
 
   const selectedClass = form.watch("class");
-  const selectedDivisions = form.watch("divisions");
   const selectedSubject = form.watch("subject");
   const fromTime = form.watch("fromTime");
   const toTime = form.watch("toTime");
@@ -109,89 +111,58 @@ export default function AddPeriodicTestPage() {
     }
   }, [fromTime, toTime]);
 
-  // Get available divisions for selected class
-  const availableDivisions = selectedClass 
+  // Get available subjects for selected class (union of all subjects from all divisions)
+  const availableSubjects = selectedClass
     ? Array.from(new Set(classMappings
         .filter(mapping => mapping.class === selectedClass)
-        .map(mapping => mapping.division)))
-    : [];
-
-  // Get available subjects for selected class and divisions
-  const availableSubjects = selectedClass && selectedDivisions.length > 0
-    ? Array.from(new Set(classMappings
-        .filter(mapping => 
-          mapping.class === selectedClass && 
-          selectedDivisions.some(div => mapping.division === div)
-        )
         .flatMap(mapping => mapping.subjects)))
     : [];
 
-  // Get available chapters for selected class, divisions, and subject
-  const availableChapters = selectedClass && selectedDivisions.length > 0 && selectedSubject
+  // Get available chapters for selected class and subject
+  const availableChapters = selectedClass && selectedSubject
     ? syllabusMasters
         .filter(syllabus => 
           syllabus.class === selectedClass &&
-          syllabus.subject === selectedSubject &&
-          syllabus.divisions.some(div => selectedDivisions.includes(div))
+          syllabus.subject === selectedSubject
         )
         .map(syllabus => syllabus.chapterLessonNo)
     : [];
 
-  // Validation logic
+  // Clear subject when class changes
   useEffect(() => {
-    const errors = [];
-    
-    // Check if only subjects mapped to class and division are shown
-    if (selectedClass && selectedDivisions.length > 0) {
-      const mappedSubjects = classMappings
-        .filter(mapping => 
-          mapping.class === selectedClass && 
-          selectedDivisions.some(div => mapping.division === div)
-        )
-        .flatMap(mapping => mapping.subjects);
-      
-      if (mappedSubjects.length === 0) {
-        errors.push("For Periodic Test only Subjects mapped to Class and Division should be shown");
-      }
+    if (selectedClass) {
+      form.setValue("subject", "");
+      form.setValue("chapters", []);
     }
+  }, [selectedClass, form]);
 
-    // Check multiselect validation
-    if (selectedDivisions.length > 1 && selectedSubject) {
-      const subjectInAllDivisions = selectedDivisions.every(division => 
-        classMappings.some(mapping => 
-          mapping.class === selectedClass && 
-          mapping.division === division && 
-          mapping.subjects.includes(selectedSubject)
-        )
-      );
-      
-      if (!subjectInAllDivisions) {
-        errors.push("On Multiselect where the subjects on the divisions may not be the same. Ensure the conflict");
-      }
-    }
-
-    setValidationErrors(errors);
-  }, [selectedClass, selectedDivisions, selectedSubject, classMappings]);
-
-  const addTestEntry = () => {
-    const subject = form.getValues("subject");
-    const chapters = form.getValues("chapters");
-    const testDate = form.getValues("testDate");
-    const fromTime = form.getValues("fromTime");
-    const toTime = form.getValues("toTime");
-    const duration = form.getValues("duration");
-
-    if (!subject || !testDate || !fromTime || !toTime) {
+  const createTestMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      return apiRequest("POST", "/api/periodic-tests", {
+        ...formData,
+        chapters: formData.chapters.length > 0 ? formData.chapters : ["No chapters available"],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/periodic-tests"] });
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields (Subject, Date, From Time, To Time) before adding to the table",
+        title: "Success",
+        description: "Periodic test has been created successfully",
+      });
+      navigate("/periodic-test");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create periodic test",
         variant: "destructive",
       });
-      return;
-    }
+    },
+  });
 
+  const onSubmit = (data: FormData) => {
     // Validate time range
-    if (duration === "Invalid time range") {
+    if (data.duration === "Invalid time range") {
       toast({
         title: "Validation Error",
         description: "To Time must be after From Time",
@@ -199,95 +170,8 @@ export default function AddPeriodicTestPage() {
       });
       return;
     }
-
-    // If no chapters are available but user has filled other required fields, allow with empty chapters
-    const finalChapters = chapters.length > 0 ? chapters : ["No chapters available"];
-
-    const newEntry: TestEntry = {
-      id: Date.now().toString(),
-      subject,
-      chapters: finalChapters,
-      testDate,
-      fromTime,
-      toTime,
-      duration,
-    };
-
-    setTestEntries([...testEntries, newEntry]);
     
-    // Clear subject-specific fields
-    form.setValue("subject", "");
-    form.setValue("chapters", []);
-    form.setValue("testDate", "");
-    form.setValue("fromTime", "");
-    form.setValue("toTime", "");
-    form.setValue("duration", "");
-  };
-
-  const removeTestEntry = (id: string) => {
-    setTestEntries(testEntries.filter(entry => entry.id !== id));
-  };
-
-  const createTestMutation = useMutation({
-    mutationFn: async (entries: TestEntry[]) => {
-      const year = form.getValues("year");
-      const className = form.getValues("class");
-      const divisions = form.getValues("divisions");
-      
-      const promises = entries.map(entry => 
-        apiRequest("POST", "/api/periodic-tests", {
-          year,
-          class: className,
-          divisions,
-          subject: entry.subject,
-          chapters: entry.chapters,
-          testDate: entry.testDate,
-          fromTime: entry.fromTime,
-          toTime: entry.toTime,
-          duration: entry.duration,
-          status: "active",
-        })
-      );
-      
-      return Promise.all(promises);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/periodic-tests"] });
-      toast({
-        title: "Success",
-        description: "All periodic tests scheduled successfully!",
-      });
-      navigate("/periodic-test");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to schedule periodic tests",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = () => {
-    if (testEntries.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one test entry to the table",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (validationErrors.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please resolve the validation issues before submitting",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    createTestMutation.mutate(testEntries);
+    createTestMutation.mutate(data);
   };
 
   if (isClassMappingsLoading || isSyllabusLoading) {
@@ -321,124 +205,270 @@ export default function AddPeriodicTestPage() {
           </h2>
         </div>
 
-        {/* Validation Errors */}
-        {validationErrors.length > 0 && (
-          <Card className="mb-6 bg-red-50/70 backdrop-blur-sm border-red-200 shadow-md">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-red-800 mb-2">Validations</h3>
-                  <ul className="space-y-1 text-red-700">
-                    {validationErrors.map((error, index) => (
-                      <li key={index} className="text-sm">{error}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <div className="mb-2" />
 
         {/* Form Card */}
-        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl text-gray-800">Test Schedule Information</CardTitle>
+        <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl max-w-5xl mx-auto">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-lg">
+            <CardTitle className="text-2xl font-bold flex items-center gap-2">
+              <Calendar className="h-6 w-6" />
+              Add Periodic Test
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <Form {...form}>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Select Year */}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Row 1: Year and Class */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="year"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Select Year *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="border-gray-200 focus:border-orange-300 focus:ring-orange-200">
-                              <SelectValue placeholder="Select year" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="2024-25">2024-25</SelectItem>
-                            <SelectItem value="2025-26">2025-26</SelectItem>
-                            <SelectItem value="2026-27">2026-27</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel className="text-slate-700 font-semibold">Select Year</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="bg-white border-slate-200" />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Select Class */}
                   <FormField
                     control={form.control}
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Select Class *</FormLabel>
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("divisions", []);
-                            form.setValue("subject", "");
-                            form.setValue("chapters", []);
-                          }} 
-                          defaultValue={field.value}
-                        >
+                        <FormLabel className="text-slate-700 font-semibold">Select Class (VIII)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="border-gray-200 focus:border-orange-300 focus:ring-orange-200">
+                            <SelectTrigger className="bg-white border-slate-200">
                               <SelectValue placeholder="Select class" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Array.from(new Set(classMappings.map(mapping => mapping.class))).map((className) => (
-                              <SelectItem key={className} value={className}>
-                                Class {className}
-                              </SelectItem>
-                            ))}
+                            {Array.from(new Set(classMappings.map(mapping => mapping.class)))
+                              .sort()
+                              .map((className) => (
+                                <SelectItem key={className} value={className}>
+                                  Class {className}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
 
-                  {/* Select Division */}
+                {/* Row 2: Test Name */}
+                <FormField
+                  control={form.control}
+                  name="testName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-700 font-semibold">Period Test Name</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-white border-slate-200">
+                            <SelectValue placeholder="Select test name" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TEST_NAMES.map((testName) => (
+                            <SelectItem key={testName} value={testName}>
+                              {testName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Row 3: Test Start Date and Test End Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="divisions"
+                    name="testDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-700 font-semibold">Test Start Date : 17/7</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="bg-white border-slate-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div>
+                    <Label className="text-slate-700 font-semibold">Test End Date : 22/7</Label>
+                    <Input
+                      type="date"
+                      className="bg-white border-slate-200 mt-2"
+                      placeholder="End date (auto-calculated)"
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                {/* Table Section */}
+                <div className="mt-8">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <table className="w-full border-collapse border border-slate-300">
+                      <thead>
+                        <tr className="bg-slate-100">
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Date / Day</th>
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Subject</th>
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Maximum Marks</th>
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Time From</th>
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Time To</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-slate-300 p-3">
+                            <div>17-07-2025(Thu)</div>
+                            <div className="mt-2">18-07-2025 (Fri)</div>
+                          </td>
+                          <td className="border border-slate-300 p-3">
+                            <FormField
+                              control={form.control}
+                              name="subject"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClass}>
+                                    <FormControl>
+                                      <SelectTrigger className="bg-white border-slate-200">
+                                        <SelectValue placeholder="Drop Down (all subject of class VIII of all divisions)" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {availableSubjects.map((subject) => (
+                                        <SelectItem key={subject} value={subject}>
+                                          {subject}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-3">
+                            <FormField
+                              control={form.control}
+                              name="maximumMarks"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                      className="bg-white border-slate-200"
+                                      placeholder="50"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-3">
+                            <FormField
+                              control={form.control}
+                              name="fromTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="time"
+                                      {...field}
+                                      className="bg-white border-slate-200"
+                                      placeholder="14:00"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-3">
+                            <FormField
+                              control={form.control}
+                              name="toTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="time"
+                                      {...field}
+                                      className="bg-white border-slate-200"
+                                      placeholder="15:00"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div className="mt-4 text-sm text-slate-600">
+                    <p>Continue for rest of the the week and</p>
+                    <p>Exclude Sunday</p>
+                  </div>
+                </div>
+
+                {/* Chapters Section */}
+                {availableChapters.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="chapters"
                     render={() => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Select Division(Multi select) *</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                          {availableDivisions.map((division) => (
+                        <FormLabel className="text-slate-700 font-semibold">Select Chapters (Optional)</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                          {availableChapters.map((chapter) => (
                             <FormField
-                              key={division}
+                              key={chapter}
                               control={form.control}
-                              name="divisions"
+                              name="chapters"
                               render={({ field }) => {
                                 return (
-                                  <FormItem key={division} className="flex flex-row items-start space-x-3 space-y-0">
+                                  <FormItem
+                                    key={chapter}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
                                     <FormControl>
                                       <Checkbox
-                                        checked={field.value?.includes(division)}
+                                        checked={field.value?.includes(chapter)}
                                         onCheckedChange={(checked) => {
-                                          const updated = checked
-                                            ? [...field.value, division]
-                                            : field.value?.filter((value) => value !== division);
-                                          field.onChange(updated);
-                                          form.setValue("subject", "");
-                                          form.setValue("chapters", []);
+                                          return checked
+                                            ? field.onChange([...field.value, chapter])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== chapter
+                                                )
+                                              )
                                         }}
-                                        className="border-gray-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                                        className="border-slate-300"
                                       />
                                     </FormControl>
-                                    <FormLabel className="text-sm font-normal text-gray-600">
-                                      Division {division}
+                                    <FormLabel className="text-sm font-normal text-slate-600">
+                                      {chapter}
                                     </FormLabel>
                                   </FormItem>
                                 )
@@ -450,253 +480,31 @@ export default function AddPeriodicTestPage() {
                       </FormItem>
                     )}
                   />
-                </div>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Subjects */}
-                  <FormField
-                    control={form.control}
-                    name="subject"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Subjects *</FormLabel>
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("chapters", []);
-                          }} 
-                          defaultValue={field.value}
-                          disabled={selectedDivisions.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="border-gray-200 focus:border-orange-300 focus:ring-orange-200">
-                              <SelectValue placeholder={selectedDivisions.length === 0 ? "Select divisions first" : "Select subject"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableSubjects.map((subject) => (
-                              <SelectItem key={subject} value={subject}>
-                                {subject}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Chapters */}
-                  <FormField
-                    control={form.control}
-                    name="chapters"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Chapters {availableChapters.length === 0 ? "(No chapters available)" : "(Optional)"}
-                        </FormLabel>
-                        {availableChapters.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-3 mt-2 max-h-32 overflow-y-auto">
-                            {availableChapters.map((chapter) => (
-                              <FormField
-                                key={chapter}
-                                control={form.control}
-                                name="chapters"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem key={chapter} className="flex flex-row items-start space-x-3 space-y-0">
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(chapter)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...field.value, chapter])
-                                              : field.onChange(field.value?.filter((value) => value !== chapter))
-                                          }}
-                                          className="border-gray-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="text-sm font-normal text-gray-600">
-                                        {chapter}
-                                      </FormLabel>
-                                    </FormItem>
-                                  )
-                                }}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <p className="text-sm text-gray-600">
-                              No chapters available for the selected class, division, and subject combination.
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              You can proceed without selecting chapters or add syllabus content first.
-                            </p>
-                          </div>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Test Date */}
-                <FormField
-                  control={form.control}
-                  name="testDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">Date of test *</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="date"
-                          className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Time Fields Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* From Time */}
-                  <FormField
-                    control={form.control}
-                    name="fromTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">From Time *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* To Time */}
-                  <FormField
-                    control={form.control}
-                    name="toTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">To Time *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            className="border-gray-200 focus:border-orange-300 focus:ring-orange-200"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Duration (Auto-calculated) */}
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Duration</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            readOnly
-                            placeholder="Auto-calculated"
-                            className="border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-                          />
-                        </FormControl>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Automatically calculated from From Time and To Time
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Add More Button */}
-                <div className="flex justify-center pt-6 border-t border-gray-100">
-                  <Button
-                    type="button"
-                    onClick={addTestEntry}
-                    className="px-8 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-200"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add More
-                  </Button>
-                </div>
-
-                {/* Test Entries Table */}
-                {testEntries.length > 0 && (
-                  <div className="mt-8 pt-6 border-t border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Scheduled Test Entries</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border border-gray-200 rounded-lg">
-                        <thead>
-                          <tr className="bg-gray-50">
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Subject</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Chapters</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Date</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">From Time</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">To Time</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Duration</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {testEntries.map((entry) => (
-                            <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="py-3 px-4 font-medium text-gray-800">{entry.subject}</td>
-                              <td className="py-3 px-4 text-gray-600">
-                                {entry.chapters.join(", ")}
-                              </td>
-                              <td className="py-3 px-4 text-gray-600">{entry.testDate}</td>
-                              <td className="py-3 px-4 text-gray-600">{entry.fromTime}</td>
-                              <td className="py-3 px-4 text-gray-600">{entry.toTime}</td>
-                              <td className="py-3 px-4 text-gray-600">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  {entry.duration}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => removeTestEntry(entry.id)}
-                                  className="border-red-200 text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                {/* Duration Display */}
+                {form.watch("duration") && (
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div className="flex items-center">
+                      <Clock className="h-5 w-5 text-blue-600 mr-2" />
+                      <span className="text-blue-800 font-medium">
+                        Test Duration: {form.watch("duration")}
+                      </span>
                     </div>
                   </div>
                 )}
 
-                {/* Save Button */}
-                <div className="flex justify-center pt-6 border-t border-gray-100">
+                {/* Submit Button */}
+                <div className="flex justify-end pt-6">
                   <Button
-                    type="button"
-                    onClick={onSubmit}
-                    disabled={createTestMutation.isPending || testEntries.length === 0}
-                    className="px-12 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg transition-all duration-200"
+                    type="submit"
+                    disabled={createTestMutation.isPending}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 py-2 rounded-lg font-semibold shadow-lg"
                   >
-                    {createTestMutation.isPending ? "Saving..." : "Save All Tests"}
+                    {createTestMutation.isPending ? "Creating..." : "Create Test"}
                   </Button>
                 </div>
-              </div>
+              </form>
             </Form>
           </CardContent>
         </Card>

@@ -11,26 +11,6 @@ export default function PeriodicTestPage() {
     queryKey: ["/api/periodic-tests"],
   });
 
-  // Group tests by class/division combination
-  const groupedTests = periodicTests.reduce((acc, test) => {
-    const key = `${test.class}-${test.divisions.join(",")}`;
-    if (!acc[key]) {
-      acc[key] = {
-        class: test.class,
-        divisions: test.divisions,
-        subjects: [],
-        tests: [],
-      };
-    }
-    
-    // Add subject if not already present
-    if (!acc[key].subjects.includes(test.subject)) {
-      acc[key].subjects.push(test.subject);
-    }
-    
-    acc[key].tests.push(test);
-    return acc;
-  }, {} as Record<string, { class: string; divisions: string[]; subjects: string[]; tests: PeriodicTest[] }>);
 
   if (isLoading) {
     return (
@@ -73,40 +53,48 @@ export default function PeriodicTestPage() {
             <CardTitle className="text-xl text-gray-800">Scheduled Tests</CardTitle>
           </CardHeader>
           <CardContent>
-            {Object.keys(groupedTests).length > 0 ? (
+            {periodicTests.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Class/Division</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Subjects</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Test Name</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Class/Subject</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.values(groupedTests).map((group, index) => (
-                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                    {periodicTests.map((test, index) => (
+                      <tr key={test.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              Class {group.class}
+                              {test.testName}
                             </span>
                             <span className="text-sm text-gray-600">
-                              {group.divisions.length > 1 
-                                ? `Divisions: ${group.divisions.join(", ")}`
-                                : `Division: ${group.divisions[0]}`
-                              }
+                              Max Marks: {test.maximumMarks || 50}
                             </span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              {group.subjects.join(", ")}
+                              Class {test.class} - {test.subject}
                             </span>
-                            <div className="text-sm text-gray-600 mt-1">
-                              {group.tests.length} test{group.tests.length !== 1 ? 's' : ''} scheduled
-                            </div>
+                            <Badge variant="outline" className="w-fit mt-1">
+                              {test.status}
+                            </Badge>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">
+                              {test.testDate}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {test.fromTime} - {test.toTime} ({test.duration})
+                            </span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
