@@ -63,6 +63,8 @@ export default function AddPeriodicTestPage() {
   const selectedSubject = form.watch("subject");
   const fromTime = form.watch("fromTime");
   const toTime = form.watch("toTime");
+  const testStartDate = form.watch("testDate");
+  const testEndDate = form.watch("testEndDate");
 
   // Calculate duration automatically
   const calculateDuration = (from: string, to: string): string => {
@@ -90,6 +92,46 @@ export default function AddPeriodicTestPage() {
       return `${minutes}m`;
     }
   };
+
+  // Generate date rows excluding Sundays
+  const generateDateRows = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return [];
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dates = [];
+    
+    // Validate date range
+    if (start > end) return [];
+    
+    let currentDate = new Date(start);
+    while (currentDate <= end) {
+      // Exclude Sundays (getDay() === 0)
+      if (currentDate.getDay() !== 0) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+        const formattedDate = currentDate.toLocaleDateString('en-GB', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+        
+        dates.push({
+          dateStr,
+          dayName,
+          formattedDate,
+          displayText: `${formattedDate} (${dayName})`
+        });
+      }
+      
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return dates;
+  };
+
+  const dateRows = generateDateRows(testStartDate, testEndDate);
 
   // Update duration when times change
   useEffect(() => {
@@ -322,95 +364,109 @@ export default function AddPeriodicTestPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="border border-slate-300 p-3">
-                            <div className="text-slate-600">Date range from Start Date to End Date</div>
-                            <div className="text-xs text-slate-500 mt-1">(Excluding Sundays)</div>
-                          </td>
-                          <td className="border border-slate-300 p-3">
-                            <FormField
-                              control={form.control}
-                              name="subject"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClass}>
-                                    <FormControl>
-                                      <SelectTrigger className="bg-white border-slate-200">
-                                        <SelectValue placeholder="Drop Down (all subject of class VIII of all divisions)" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {availableSubjects.map((subject) => (
-                                        <SelectItem key={subject} value={subject}>
-                                          {subject}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </td>
-                          <td className="border border-slate-300 p-3">
-                            <FormField
-                              control={form.control}
-                              name="maximumMarks"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                      className="bg-white border-slate-200"
-                                      placeholder="Enter marks"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </td>
-                          <td className="border border-slate-300 p-3">
-                            <FormField
-                              control={form.control}
-                              name="fromTime"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="bg-white border-slate-200"
-                                      placeholder="14:00"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </td>
-                          <td className="border border-slate-300 p-3">
-                            <FormField
-                              control={form.control}
-                              name="toTime"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      className="bg-white border-slate-200"
-                                      placeholder="15:00"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </td>
-                        </tr>
+                        {dateRows.length > 0 ? (
+                          dateRows.map((dateRow, index) => (
+                            <tr key={dateRow.dateStr}>
+                              <td className="border border-slate-300 p-3">
+                                <div className="text-slate-700 font-medium">
+                                  {dateRow.displayText}
+                                </div>
+                              </td>
+                              <td className="border border-slate-300 p-3">
+                                <FormField
+                                  control={form.control}
+                                  name="subject"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClass}>
+                                        <FormControl>
+                                          <SelectTrigger className="bg-white border-slate-200">
+                                            <SelectValue placeholder="Select subject" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {availableSubjects.map((subject) => (
+                                            <SelectItem key={subject} value={subject}>
+                                              {subject}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </td>
+                              <td className="border border-slate-300 p-3">
+                                <FormField
+                                  control={form.control}
+                                  name="maximumMarks"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                          className="bg-white border-slate-200"
+                                          placeholder="Enter marks"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </td>
+                              <td className="border border-slate-300 p-3">
+                                <FormField
+                                  control={form.control}
+                                  name="fromTime"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="time"
+                                          {...field}
+                                          className="bg-white border-slate-200"
+                                          placeholder="14:00"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </td>
+                              <td className="border border-slate-300 p-3">
+                                <FormField
+                                  control={form.control}
+                                  name="toTime"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="time"
+                                          {...field}
+                                          className="bg-white border-slate-200"
+                                          placeholder="15:00"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="border border-slate-300 p-6 text-center text-slate-500">
+                              {testStartDate && testEndDate 
+                                ? "No valid dates in range (excluding Sundays)"
+                                : "Please select start and end dates to see the test schedule"
+                              }
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>

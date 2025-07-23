@@ -376,6 +376,15 @@ Preferred communication style: Simple, everyday language.
   - Updated class selection label to remove "(VIII)" example text for cleaner interface
   - Made Maximum Marks field optional in form validation schema
   - Enhanced form layout for better user experience and data entry flexibility
+- July 23, 2025: Added Dynamic Date-Based Table Generation:
+  - Implemented functional Test End Date field with proper form validation
+  - Added testEndDate column to periodicTests database schema and applied migration
+  - Created dynamic table row generation based on selected start and end dates
+  - Built date range calculator that excludes Sundays automatically
+  - Each valid day between start and end dates creates a separate table row
+  - Table displays formatted dates with day names (e.g., "17/07/2025 (Thu)")
+  - Added proper fallback messaging when no dates selected or no valid dates in range
+  - Enhanced form interactivity with real-time table updates on date changes
 
 ## Changelog
 
