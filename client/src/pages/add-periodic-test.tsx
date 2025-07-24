@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ArrowLeft, Calendar, Clock, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -33,6 +34,7 @@ const formSchema = z.object({
     fromTime: z.string().min(1, "From time is required"),
     toTime: z.string().min(1, "To time is required"),
     duration: z.string().optional(),
+    syllabusChapters: z.array(z.string()).optional().default([]),
   })).optional().default([]),
 });
 
@@ -41,6 +43,9 @@ type FormData = z.infer<typeof formSchema>;
 export default function AddPeriodicTestPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [syllabusModalOpen, setSyllabusModalOpen] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
+  const [tempSelectedChapters, setTempSelectedChapters] = useState<string[]>([]);
 
   const { data: classMappings = [], isLoading: isClassMappingsLoading } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -147,6 +152,7 @@ export default function AddPeriodicTestPage() {
         fromTime: "",
         toTime: "",
         duration: "",
+        syllabusChapters: [],
       }));
       form.setValue("testDays", newTestDays);
     }
@@ -155,6 +161,39 @@ export default function AddPeriodicTestPage() {
   // Calculate duration for a specific day
   const calculateDurationForDay = (fromTime: string, toTime: string): string => {
     return calculateDuration(fromTime, toTime);
+  };
+
+  // Open syllabus modal for specific day
+  const openSyllabusModal = (dayIndex: number) => {
+    setSelectedDayIndex(dayIndex);
+    const currentDay = testDays[dayIndex];
+    if (currentDay) {
+      setTempSelectedChapters([...currentDay.syllabusChapters]);
+    }
+    setSyllabusModalOpen(true);
+  };
+
+  // Get available chapters for selected subject in modal
+  const getAvailableChaptersForDay = (dayIndex: number) => {
+    const currentDay = testDays[dayIndex];
+    if (!currentDay || !currentDay.subject || !selectedClass) return [];
+    
+    return syllabusMasters
+      .filter(syllabus => 
+        syllabus.class === selectedClass && 
+        syllabus.subject === currentDay.subject
+      )
+      .map(syllabus => syllabus.chapterLessonNo);
+  };
+
+  // Handle syllabus submission
+  const handleSyllabusSubmit = () => {
+    if (selectedDayIndex !== null) {
+      form.setValue(`testDays.${selectedDayIndex}.syllabusChapters`, tempSelectedChapters);
+    }
+    setSyllabusModalOpen(false);
+    setSelectedDayIndex(null);
+    setTempSelectedChapters([]);
   };
 
   // Get available subjects for selected class (union of all subjects from all divisions)
@@ -187,7 +226,7 @@ export default function AddPeriodicTestPage() {
           testName: formData.testName,
           class: formData.class,
           subject: dayData.subject,
-          chapters: formData.chapters.length > 0 ? formData.chapters : ["No chapters available"],
+          chapters: dayData.syllabusChapters.length > 0 ? dayData.syllabusChapters : ["No chapters available"],
           testDate: dayData.date,
           testEndDate: dayData.date, // Each day is its own test
           fromTime: dayData.fromTime,
@@ -417,6 +456,7 @@ export default function AddPeriodicTestPage() {
                           <th className="border border-slate-300 p-3 text-left font-semibold">Maximum Marks</th>
                           <th className="border border-slate-300 p-3 text-left font-semibold">Time From</th>
                           <th className="border border-slate-300 p-3 text-left font-semibold">Time To</th>
+                          <th className="border border-slate-300 p-3 text-left font-semibold">Syllabus</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -529,11 +569,39 @@ export default function AddPeriodicTestPage() {
                                   )}
                                 />
                               </td>
+                              <td className="border border-slate-300 p-3">
+                                <div className="flex flex-col space-y-2">
+                                  <Button
+                                    type="button"
+                                    onClick={() => openSyllabusModal(index)}
+                                    disabled={!testDays[index]?.subject}
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-xs px-3 py-1 rounded"
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Add Syllabus
+                                  </Button>
+                                  {testDays[index]?.syllabusChapters?.length > 0 && (
+                                    <div className="text-xs text-slate-600">
+                                      {testDays[index].syllabusChapters.length} chapter{testDays[index].syllabusChapters.length > 1 ? 's' : ''} selected
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {testDays[index].syllabusChapters.slice(0, 2).map((chapter, idx) => (
+                                          <span key={idx} className="bg-blue-100 text-blue-600 px-1 py-0.5 rounded text-xs">
+                                            {chapter}
+                                          </span>
+                                        ))}
+                                        {testDays[index].syllabusChapters.length > 2 && (
+                                          <span className="text-blue-600 text-xs">+{testDays[index].syllabusChapters.length - 2} more</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="border border-slate-300 p-6 text-center text-slate-500">
+                            <td colSpan={6} className="border border-slate-300 p-6 text-center text-slate-500">
                               {testStartDate && testEndDate 
                                 ? "No valid dates in range (excluding Sundays)"
                                 : "Please select start and end dates to see the test schedule"
@@ -614,6 +682,77 @@ export default function AddPeriodicTestPage() {
             </Form>
           </CardContent>
         </Card>
+
+        {/* Syllabus Selection Modal */}
+        <Dialog open={syllabusModalOpen} onOpenChange={setSyllabusModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-slate-800">
+                Select Syllabus Chapters
+                {selectedDayIndex !== null && testDays[selectedDayIndex] && (
+                  <span className="text-sm text-slate-600 ml-2">
+                    - {testDays[selectedDayIndex].subject}
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="py-4">
+              {selectedDayIndex !== null && (
+                <div className="space-y-4">
+                  {getAvailableChaptersForDay(selectedDayIndex).length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {getAvailableChaptersForDay(selectedDayIndex).map((chapter) => (
+                        <div key={chapter} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+                          <Checkbox
+                            checked={tempSelectedChapters.includes(chapter)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setTempSelectedChapters([...tempSelectedChapters, chapter]);
+                              } else {
+                                setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter));
+                              }
+                            }}
+                            className="border-slate-300"
+                          />
+                          <label className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
+                            {chapter}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-slate-500">
+                      <p>No syllabus chapters available for this subject.</p>
+                      <p className="text-sm mt-2">Please ensure syllabus is mapped for this class and subject.</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setSyllabusModalOpen(false);
+                        setTempSelectedChapters([]);
+                      }}
+                      className="text-slate-600 border-slate-300"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleSyllabusSubmit}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

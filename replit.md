@@ -395,6 +395,15 @@ Preferred communication style: Simple, everyday language.
   - Updated submission logic to create separate periodic test entries for each day
   - Added comprehensive validation messages with specific day references
   - Enabled true multi-day test scheduling with independent daily configurations
+- July 24, 2025: Added Syllabus Column with Modal-Based Chapter Selection:
+  - Added new "Syllabus" column to the test scheduling table
+  - Implemented "Add Syllabus" button for each day with dynamic enabling based on subject selection
+  - Created modal dialog for syllabus chapter selection with checkbox interface
+  - Added syllabusChapters field to testDays schema for storing selected chapters per day
+  - Implemented subject-specific chapter filtering based on class and subject mapping
+  - Added visual indicators showing selected chapter count and chapter names in table cells
+  - Enhanced form submission to use day-specific syllabus chapters instead of global chapters
+  - Applied consistent blue-purple gradient theme to syllabus selection components
 
 ## Changelog
 
