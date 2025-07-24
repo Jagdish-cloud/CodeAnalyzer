@@ -26,7 +26,6 @@ const formSchema = z.object({
   testDate: z.string().min(1, "Test start date is required"),
   testEndDate: z.string().min(1, "Test end date is required"),
   status: z.string().default("active"),
-  chapters: z.array(z.string()).optional().default([]),
   testDays: z.array(z.object({
     date: z.string(),
     subject: z.string().min(1, "Subject is required"),
@@ -64,7 +63,6 @@ export default function AddPeriodicTestPage() {
       testDate: "",
       testEndDate: "",
       status: "active",
-      chapters: [],
       testDays: [],
     },
   });
@@ -203,19 +201,9 @@ export default function AddPeriodicTestPage() {
         .flatMap(mapping => mapping.subjects)))
     : [];
 
-  // Get all available chapters for selected class (from all subjects)
-  const availableChapters = selectedClass
-    ? syllabusMasters
-        .filter(syllabus => syllabus.class === selectedClass)
-        .map(syllabus => syllabus.chapterLessonNo)
-    : [];
 
-  // Clear chapters when class changes
-  useEffect(() => {
-    if (selectedClass) {
-      form.setValue("chapters", []);
-    }
-  }, [selectedClass, form]);
+
+
 
   const createTestMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -615,56 +603,6 @@ export default function AddPeriodicTestPage() {
                   
 
                 </div>
-
-                {/* Chapters Section */}
-                {availableChapters.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="chapters"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700 font-semibold">Select Chapters (Optional)</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                          {availableChapters.map((chapter) => (
-                            <FormField
-                              key={chapter}
-                              control={form.control}
-                              name="chapters"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem
-                                    key={chapter}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(chapter)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, chapter])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== chapter
-                                                )
-                                              )
-                                        }}
-                                        className="border-slate-300"
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="text-sm font-normal text-slate-600">
-                                      {chapter}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
 
 
