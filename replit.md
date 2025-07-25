@@ -404,6 +404,10 @@ Preferred communication style: Simple, everyday language.
   - Added visual indicators showing selected chapter count and chapter names in table cells
   - Enhanced form submission to use day-specific syllabus chapters instead of global chapters
   - Applied consistent blue-purple gradient theme to syllabus selection components
+  - Removed redundant global "Select Chapters" section for cleaner UI
+  - Updated modal to display both chapter number and chapter name (e.g., "1 - Introduction to Mathematics")
+  - Modified cell display to show only chapter numbers with hover tooltips revealing chapter names
+  - Enhanced user experience with intuitive chapter selection and display workflow
 
 ## Changelog
 

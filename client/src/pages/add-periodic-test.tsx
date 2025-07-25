@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowLeft, Calendar, Clock, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -181,7 +182,18 @@ export default function AddPeriodicTestPage() {
         syllabus.class === selectedClass && 
         syllabus.subject === currentDay.subject
       )
-      .map(syllabus => syllabus.chapterLessonNo);
+      .map(syllabus => ({
+        chapterNo: syllabus.chapterLessonNo,
+        chapterName: syllabus.description || `Chapter ${syllabus.chapterLessonNo}`,
+        fullText: `${syllabus.chapterLessonNo} - ${syllabus.description || `Chapter ${syllabus.chapterLessonNo}`}`
+      }));
+  };
+
+  // Get chapter name by chapter number
+  const getChapterNameByNumber = (chapterNo: string, dayIndex: number) => {
+    const availableChapters = getAvailableChaptersForDay(dayIndex);
+    const chapter = availableChapters.find(ch => ch.chapterNo === chapterNo);
+    return chapter ? chapter.chapterName : chapterNo;
   };
 
   // Handle syllabus submission
@@ -572,13 +584,22 @@ export default function AddPeriodicTestPage() {
                                     <div className="text-xs text-slate-600">
                                       {testDays[index].syllabusChapters.length} chapter{testDays[index].syllabusChapters.length > 1 ? 's' : ''} selected
                                       <div className="flex flex-wrap gap-1 mt-1">
-                                        {testDays[index].syllabusChapters.slice(0, 2).map((chapter, idx) => (
-                                          <span key={idx} className="bg-blue-100 text-blue-600 px-1 py-0.5 rounded text-xs">
-                                            {chapter}
-                                          </span>
-                                        ))}
-                                        {testDays[index].syllabusChapters.length > 2 && (
-                                          <span className="text-blue-600 text-xs">+{testDays[index].syllabusChapters.length - 2} more</span>
+                                        <TooltipProvider>
+                                          {testDays[index].syllabusChapters.slice(0, 3).map((chapterNo, idx) => (
+                                            <Tooltip key={idx}>
+                                              <TooltipTrigger asChild>
+                                                <span className="bg-blue-100 text-blue-600 px-1 py-0.5 rounded text-xs cursor-pointer hover:bg-blue-200">
+                                                  {chapterNo}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>{getChapterNameByNumber(chapterNo, index)}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ))}
+                                        </TooltipProvider>
+                                        {testDays[index].syllabusChapters.length > 3 && (
+                                          <span className="text-blue-600 text-xs">+{testDays[index].syllabusChapters.length - 3} more</span>
                                         )}
                                       </div>
                                     </div>
@@ -641,20 +662,20 @@ export default function AddPeriodicTestPage() {
                   {getAvailableChaptersForDay(selectedDayIndex).length > 0 ? (
                     <div className="grid grid-cols-1 gap-3">
                       {getAvailableChaptersForDay(selectedDayIndex).map((chapter) => (
-                        <div key={chapter} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+                        <div key={chapter.chapterNo} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
                           <Checkbox
-                            checked={tempSelectedChapters.includes(chapter)}
+                            checked={tempSelectedChapters.includes(chapter.chapterNo)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setTempSelectedChapters([...tempSelectedChapters, chapter]);
+                                setTempSelectedChapters([...tempSelectedChapters, chapter.chapterNo]);
                               } else {
-                                setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter));
+                                setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter.chapterNo));
                               }
                             }}
                             className="border-slate-300"
                           />
                           <label className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
-                            {chapter}
+                            {chapter.fullText}
                           </label>
                         </div>
                       ))}
