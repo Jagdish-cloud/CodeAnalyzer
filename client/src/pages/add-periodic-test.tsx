@@ -46,6 +46,8 @@ export default function AddPeriodicTestPage() {
   const [syllabusModalOpen, setSyllabusModalOpen] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const [tempSelectedChapters, setTempSelectedChapters] = useState<string[]>([]);
+  const [showNewTestNameInput, setShowNewTestNameInput] = useState(false);
+  const [newTestName, setNewTestName] = useState("");
 
   const { data: classMappings = [], isLoading: isClassMappingsLoading } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -54,6 +56,13 @@ export default function AddPeriodicTestPage() {
   const { data: syllabusMasters = [], isLoading: isSyllabusLoading } = useQuery<SyllabusMaster[]>({
     queryKey: ["/api/syllabus-masters"],
   });
+
+  const { data: existingTests = [] } = useQuery<any[]>({
+    queryKey: ["/api/periodic-tests"],
+  });
+
+  // Get unique test names from existing tests
+  const uniqueTestNames = Array.from(new Set(existingTests.map(test => test.testName)));
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -394,13 +403,58 @@ export default function AddPeriodicTestPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-700 font-semibold">Period Test Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Enter test name"
-                          className="bg-white border-slate-200"
-                        />
-                      </FormControl>
+                      {!showNewTestNameInput ? (
+                        <Select onValueChange={(value) => {
+                          if (value === "add_new") {
+                            setShowNewTestNameInput(true);
+                            field.onChange("");
+                          } else {
+                            field.onChange(value);
+                          }
+                        }} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-slate-200">
+                              <SelectValue placeholder="Select test name" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {uniqueTestNames.map((testName) => (
+                              <SelectItem key={testName} value={testName}>
+                                {testName}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="add_new">
+                              <span className="text-blue-600 font-medium">+ Add New Test Name</span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input 
+                              value={newTestName}
+                              onChange={(e) => {
+                                setNewTestName(e.target.value);
+                                field.onChange(e.target.value);
+                              }}
+                              placeholder="Enter new test name"
+                              className="bg-white border-slate-200 flex-1"
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowNewTestNameInput(false);
+                              setNewTestName("");
+                              field.onChange("");
+                            }}
+                            className="px-3"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

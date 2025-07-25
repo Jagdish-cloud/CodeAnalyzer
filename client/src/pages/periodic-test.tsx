@@ -11,6 +11,37 @@ export default function PeriodicTestPage() {
     queryKey: ["/api/periodic-tests"],
   });
 
+  // Group tests by class and test name
+  const groupedTests = periodicTests.reduce((acc, test) => {
+    const key = `${test.class}-${test.testName}`;
+    if (!acc[key]) {
+      acc[key] = {
+        class: test.class,
+        testName: test.testName,
+        subjects: [],
+        startDate: test.testDate,
+        endDate: test.testEndDate,
+        maxMarks: test.maximumMarks || 50,
+        status: test.status
+      };
+    }
+    
+    // Add subject to the group
+    acc[key].subjects.push(test.subject);
+    
+    // Update date range if needed
+    if (test.testDate < acc[key].startDate) {
+      acc[key].startDate = test.testDate;
+    }
+    if (test.testEndDate > acc[key].endDate) {
+      acc[key].endDate = test.testEndDate;
+    }
+    
+    return acc;
+  }, {} as Record<string, any>);
+
+  const groupedTestArray = Object.values(groupedTests);
+
 
   if (isLoading) {
     return (
@@ -53,7 +84,7 @@ export default function PeriodicTestPage() {
             <CardTitle className="text-xl text-gray-800">Scheduled Tests</CardTitle>
           </CardHeader>
           <CardContent>
-            {periodicTests.length > 0 ? (
+            {groupedTestArray.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -65,35 +96,32 @@ export default function PeriodicTestPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {periodicTests.map((test, index) => (
-                      <tr key={test.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    {groupedTestArray.map((testGroup, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              {test.testName}
+                              {testGroup.testName}
                             </span>
                             <span className="text-sm text-gray-600">
-                              Max Marks: {test.maximumMarks || 50}
+                              Max Marks: {testGroup.maxMarks}
                             </span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              Class {test.class} - {test.subject}
+                              Class {testGroup.class} - {testGroup.subjects.join(', ')}
                             </span>
                             <Badge variant="outline" className="w-fit mt-1">
-                              {test.status}
+                              {testGroup.status}
                             </Badge>
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              {test.testDate} to {test.testEndDate}
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              {test.fromTime} - {test.toTime} ({test.duration})
+                              {testGroup.startDate} to {testGroup.endDate}
                             </span>
                           </div>
                         </td>

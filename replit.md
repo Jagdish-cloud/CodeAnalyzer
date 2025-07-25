@@ -408,6 +408,13 @@ Preferred communication style: Simple, everyday language.
   - Updated modal to display both chapter number and chapter name (e.g., "1 - Introduction to Mathematics")
   - Modified cell display to show only chapter numbers with hover tooltips revealing chapter names
   - Enhanced user experience with intuitive chapter selection and display workflow
+- July 24, 2025: Enhanced Periodic Test Display and Form Interface:
+  - Restructured landing page to group tests by Class and Test Name instead of individual subjects
+  - Modified display to show all subjects for a test group in single row (e.g., "Class X - Mathematics, English, Biology")
+  - Simplified date display to show only start date to end date without time details
+  - Updated test name field to dropdown with existing test names and "Add New" option
+  - Implemented dynamic text input that appears when "Add New" is selected with cancel functionality
+  - Enhanced user experience with streamlined test creation and better organized test overview
 
 ## Changelog
 
