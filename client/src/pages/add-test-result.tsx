@@ -68,26 +68,58 @@ export default function AddTestResultPage() {
   // Filter periodic tests based on selected year
   const filteredPeriodicTests = periodicTests.filter(test => test.year === watchedValues.year);
 
+  // Get available classes for selected test (if test is selected)
+  const testsForSelectedTestName = watchedValues.periodicTestId 
+    ? periodicTests.filter(t => t.testName === watchedValues.periodicTestId && t.year === watchedValues.year)
+    : [];
+  const classesForSelectedTest = [...new Set(testsForSelectedTestName.map(t => t.class))].sort();
+  
+  // Use classes from selected test if available, otherwise use all available classes
+  const availableClassesForForm = watchedValues.periodicTestId && classesForSelectedTest.length > 0 
+    ? classesForSelectedTest 
+    : availableClasses;
+
   // Get divisions for selected class
   const selectedClassMappings = classMappings.filter(mapping => mapping.class === watchedValues.class);
   const availableDivisions = Array.from(new Set(selectedClassMappings.flatMap(mapping => mapping.division))).sort();
 
-  // Update selected test when periodicTestId changes
+  // Update selected test when periodicTestId or class changes
   useEffect(() => {
-    if (watchedValues.periodicTestId) {
-      // Find the first test with this test name to get basic info
-      const test = periodicTests.find(t => t.testName === watchedValues.periodicTestId && t.year === watchedValues.year);
-      setSelectedTest(test);
-      if (test) {
-        form.setValue("class", test.class);
-        if (Array.isArray(test.divisions) && test.divisions.length === 1) {
-          form.setValue("division", test.divisions[0]);
-        } else {
-          form.setValue("division", "");
-        }
+    if (watchedValues.periodicTestId && watchedValues.year) {
+      // Get all classes for this test name
+      const testsForName = periodicTests.filter(t => 
+        t.testName === watchedValues.periodicTestId && 
+        t.year === watchedValues.year
+      );
+      const classesForTest = [...new Set(testsForName.map(t => t.class))];
+      
+      // Only auto-populate class if there's only one class for this test
+      if (classesForTest.length === 1 && !watchedValues.class) {
+        form.setValue("class", classesForTest[0]);
+      }
+      
+      // Find specific test when both test name and class are selected
+      if (watchedValues.class) {
+        const specificTest = periodicTests.find(t => 
+          t.testName === watchedValues.periodicTestId && 
+          t.year === watchedValues.year && 
+          t.class === watchedValues.class
+        );
+        setSelectedTest(specificTest);
+      } else {
+        // Use first test for basic info display
+        const firstTest = testsForName[0];
+        setSelectedTest(firstTest);
       }
     }
-  }, [watchedValues.periodicTestId, periodicTests, form, watchedValues.year]);
+  }, [watchedValues.periodicTestId, watchedValues.class, watchedValues.year, periodicTests, form]);
+
+  // Clear division when class changes
+  useEffect(() => {
+    if (watchedValues.class) {
+      form.setValue("division", "");
+    }
+  }, [watchedValues.class, form]);
 
   const generateDataStructure = (formData: TestResultFormData) => {
     if (!selectedTest) throw new Error("No test selected");
@@ -404,14 +436,14 @@ export default function AddTestResultPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-slate-700 dark:text-slate-300 font-semibold">Class</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!!selectedTest}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!watchedValues.periodicTestId}>
                               <FormControl>
                                 <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
                                   <SelectValue placeholder="Select class" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {availableClasses.map((className) => (
+                                {availableClassesForForm.map((className) => (
                                   <SelectItem key={className} value={className}>
                                     Class {className}
                                   </SelectItem>

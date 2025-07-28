@@ -423,6 +423,8 @@ Preferred communication style: Simple, everyday language.
   - Enhanced data structure generation to include all subjects for selected test name and class
   - Applied consistent emerald-teal gradient styling to both download buttons
   - Improved test result sheet format to include date range and comprehensive test information
+  - Fixed class selection issue for tests with multiple classes - now allows manual class selection
+  - Enhanced form logic to handle test names spanning multiple classes with proper validation
 
 ## Changelog
 
