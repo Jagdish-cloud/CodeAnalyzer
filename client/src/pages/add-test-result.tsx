@@ -72,7 +72,7 @@ export default function AddTestResultPage() {
   const testsForSelectedTestName = watchedValues.periodicTestId 
     ? periodicTests.filter(t => t.testName === watchedValues.periodicTestId && t.year === watchedValues.year)
     : [];
-  const classesForSelectedTest = [...new Set(testsForSelectedTestName.map(t => t.class))].sort();
+  const classesForSelectedTest = Array.from(new Set(testsForSelectedTestName.map(t => t.class))).sort();
   
   // Use classes from selected test if available, otherwise use all available classes
   const availableClassesForForm = watchedValues.periodicTestId && classesForSelectedTest.length > 0 
@@ -91,7 +91,7 @@ export default function AddTestResultPage() {
         t.testName === watchedValues.periodicTestId && 
         t.year === watchedValues.year
       );
-      const classesForTest = [...new Set(testsForName.map(t => t.class))];
+      const classesForTest = Array.from(new Set(testsForName.map(t => t.class)));
       
       // Only auto-populate class if there's only one class for this test
       if (classesForTest.length === 1 && !watchedValues.class) {
@@ -135,12 +135,13 @@ export default function AddTestResultPage() {
 
     return {
       testInfo: {
-        testName: selectedTest.testName,
+        schoolName: "Greenwood International School",
+        testName: selectedTest.testName, // This will be the periodic test name like "Unit Test 1"
         class: formData.class,
         division: formData.division,
         year: formData.year,
-        date: selectedTest.testDate,
-        endDate: selectedTest.testEndDate,
+        fromDate: selectedTest.testDate,
+        toDate: selectedTest.testEndDate || selectedTest.testDate,
         duration: selectedTest.duration,
       },
       students: students
@@ -220,7 +221,7 @@ export default function AddTestResultPage() {
       </head>
       <body>
         <div class="header">
-          <h1>Test Result Sheet</h1>
+          <h1>${data.testInfo.schoolName}</h1>
           <h2>${data.testInfo.testName}</h2>
         </div>
         
@@ -228,7 +229,8 @@ export default function AddTestResultPage() {
           <div><strong>Class:</strong> ${data.testInfo.class}</div>
           <div><strong>Division:</strong> ${data.testInfo.division}</div>
           <div><strong>Year:</strong> ${data.testInfo.year}</div>
-          <div><strong>Date:</strong> ${data.testInfo.date} to ${data.testInfo.endDate}</div>
+          <div><strong>From Date:</strong> ${data.testInfo.fromDate}</div>
+          <div><strong>To Date:</strong> ${data.testInfo.toDate}</div>
           <div><strong>Duration:</strong> ${data.testInfo.duration}</div>
         </div>
         
@@ -270,12 +272,14 @@ export default function AddTestResultPage() {
     // Create Excel content as CSV format
     const csvContent = [
       // Header rows
-      [`Test Result Sheet - ${data.testInfo.testName}`],
+      [data.testInfo.schoolName],
+      [data.testInfo.testName],
       [],
       [`Class: ${data.testInfo.class}`],
       [`Division: ${data.testInfo.division}`],
       [`Year: ${data.testInfo.year}`],
-      [`Date: ${data.testInfo.date} to ${data.testInfo.endDate}`],
+      [`From Date: ${data.testInfo.fromDate}`],
+      [`To Date: ${data.testInfo.toDate}`],
       [`Duration: ${data.testInfo.duration}`],
       [],
       // Table headers

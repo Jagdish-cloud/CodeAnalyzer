@@ -425,6 +425,10 @@ Preferred communication style: Simple, everyday language.
   - Improved test result sheet format to include date range and comprehensive test information
   - Fixed class selection issue for tests with multiple classes - now allows manual class selection
   - Enhanced form logic to handle test names spanning multiple classes with proper validation
+  - Updated PDF/Excel headers with hardcoded school name "Greenwood International School"
+  - Replaced subject-specific test headers with periodic test names (e.g., "Unit Test 1")
+  - Removed redundant subject field from upper section as subjects appear in table columns
+  - Added proper date range display with "From Date" and "To Date" from scheduled test data
 
 ## Changelog
 
