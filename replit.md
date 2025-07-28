@@ -415,6 +415,14 @@ Preferred communication style: Simple, everyday language.
   - Updated test name field to dropdown with existing test names and "Add New" option
   - Implemented dynamic text input that appears when "Add New" is selected with cancel functionality
   - Enhanced user experience with streamlined test creation and better organized test overview
+- July 24, 2025: Enhanced Add Test Results with Period Test Integration and Excel Download:
+  - Updated Periodic Test dropdown to fetch test names from "Period Test Name" field in Schedule Periodic Test
+  - Modified test selection to use unique test names instead of individual test entries
+  - Added Excel download functionality generating CSV files with same data structure as PDF sheets
+  - Implemented dual download buttons for both PDF and Excel file generation
+  - Enhanced data structure generation to include all subjects for selected test name and class
+  - Applied consistent emerald-teal gradient styling to both download buttons
+  - Improved test result sheet format to include date range and comprehensive test information
 
 ## Changelog
 

@@ -58,6 +58,13 @@ export default function AddTestResultPage() {
   const years = Array.from(new Set(periodicTests.map(test => test.year))).sort().reverse();
   const availableClasses = Array.from(new Set(classMappings.map(mapping => mapping.class))).sort();
 
+  // Get unique test names from periodic tests for the selected year
+  const uniqueTestNames = Array.from(new Set(
+    periodicTests
+      .filter(test => test.year === watchedValues.year)
+      .map(test => test.testName)
+  )).sort();
+
   // Filter periodic tests based on selected year
   const filteredPeriodicTests = periodicTests.filter(test => test.year === watchedValues.year);
 
@@ -68,7 +75,8 @@ export default function AddTestResultPage() {
   // Update selected test when periodicTestId changes
   useEffect(() => {
     if (watchedValues.periodicTestId) {
-      const test = periodicTests.find(t => t.id.toString() === watchedValues.periodicTestId);
+      // Find the first test with this test name to get basic info
+      const test = periodicTests.find(t => t.testName === watchedValues.periodicTestId && t.year === watchedValues.year);
       setSelectedTest(test);
       if (test) {
         form.setValue("class", test.class);
@@ -79,45 +87,47 @@ export default function AddTestResultPage() {
         }
       }
     }
-  }, [watchedValues.periodicTestId, periodicTests, form]);
+  }, [watchedValues.periodicTestId, periodicTests, form, watchedValues.year]);
+
+  const generateDataStructure = (formData: TestResultFormData) => {
+    if (!selectedTest) throw new Error("No test selected");
+    
+    // Get all subjects for the selected test name, class, and division
+    const testsForName = periodicTests.filter(test => 
+      test.testName === selectedTest.testName && 
+      test.class === formData.class &&
+      test.year === formData.year
+    );
+    
+    const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
+
+    return {
+      testInfo: {
+        testName: selectedTest.testName,
+        class: formData.class,
+        division: formData.division,
+        year: formData.year,
+        date: selectedTest.testDate,
+        endDate: selectedTest.testEndDate,
+        duration: selectedTest.duration,
+      },
+      students: students
+        .map(student => ({
+          rollNumber: student.rollNumber,
+          studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
+        }))
+        .filter((student, index, array) => 
+          array.findIndex(s => s.rollNumber === student.rollNumber) === index
+        )
+        .sort((a, b) => a.rollNumber - b.rollNumber),
+      subjects: testSubjects,
+    };
+  };
 
   const createPDFMutation = useMutation({
     mutationFn: async (formData: TestResultFormData) => {
-      if (!selectedTest) throw new Error("No test selected");
-      
-      // Generate PDF data structure
-      const classSubjects = selectedClassMappings
-        .filter(mapping => mapping.class === formData.class && mapping.division === formData.division)
-        .flatMap(mapping => mapping.subjects || []);
-
-      // Remove duplicates from subjects array
-      const uniqueSubjects = [...new Set(classSubjects)];
-
-      const pdfData = {
-        testInfo: {
-          testName: selectedTest.testName || `${selectedTest.subject} Test`,
-          class: formData.class,
-          division: formData.division,
-          year: formData.year,
-          subject: selectedTest.subject,
-          date: selectedTest.testDate,
-          duration: selectedTest.duration,
-        },
-        students: students
-          .map(student => ({
-            rollNumber: student.rollNumber,
-            studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
-          }))
-          .filter((student, index, array) => 
-            array.findIndex(s => s.rollNumber === student.rollNumber) === index
-          )
-          .sort((a, b) => a.rollNumber - b.rollNumber),
-        subjects: uniqueSubjects.length > 0 ? uniqueSubjects : [selectedTest.subject], // Use unique subjects from class mapping
-      };
-
-      // Generate and download PDF
+      const pdfData = generateDataStructure(formData);
       generatePDF(pdfData);
-      
       return pdfData;
     },
     onSuccess: () => {
@@ -130,6 +140,27 @@ export default function AddTestResultPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to generate PDF",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createExcelMutation = useMutation({
+    mutationFn: async (formData: TestResultFormData) => {
+      const excelData = generateDataStructure(formData);
+      generateExcel(excelData);
+      return excelData;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Excel Generated Successfully",
+        description: "The Excel file has been downloaded.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate Excel",
         variant: "destructive",
       });
     },
@@ -164,9 +195,8 @@ export default function AddTestResultPage() {
         <div class="test-info">
           <div><strong>Class:</strong> ${data.testInfo.class}</div>
           <div><strong>Division:</strong> ${data.testInfo.division}</div>
-          <div><strong>Subject:</strong> ${data.testInfo.subject}</div>
           <div><strong>Year:</strong> ${data.testInfo.year}</div>
-          <div><strong>Date:</strong> ${data.testInfo.date}</div>
+          <div><strong>Date:</strong> ${data.testInfo.date} to ${data.testInfo.endDate}</div>
           <div><strong>Duration:</strong> ${data.testInfo.duration}</div>
         </div>
         
@@ -204,8 +234,51 @@ export default function AddTestResultPage() {
     window.URL.revokeObjectURL(url);
   };
 
-  const onSubmit = (data: TestResultFormData) => {
+  const generateExcel = (data: any) => {
+    // Create Excel content as CSV format
+    const csvContent = [
+      // Header rows
+      [`Test Result Sheet - ${data.testInfo.testName}`],
+      [],
+      [`Class: ${data.testInfo.class}`],
+      [`Division: ${data.testInfo.division}`],
+      [`Year: ${data.testInfo.year}`],
+      [`Date: ${data.testInfo.date} to ${data.testInfo.endDate}`],
+      [`Duration: ${data.testInfo.duration}`],
+      [],
+      // Table headers
+      ['Roll No', 'Student Name', ...data.subjects],
+      // Student rows
+      ...data.students.map((student: any) => [
+        student.rollNumber,
+        student.studentName,
+        ...data.subjects.map(() => '') // Empty cells for marks
+      ])
+    ];
+
+    // Convert to CSV string
+    const csvString = csvContent
+      .map(row => row.map((cell: any) => `"${cell}"`).join(','))
+      .join('\n');
+
+    // Create a blob and download
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `test-result-sheet-class-${data.testInfo.class}-div-${data.testInfo.division}-${data.testInfo.year}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const onSubmitPDF = (data: TestResultFormData) => {
     createPDFMutation.mutate(data);
+  };
+
+  const onSubmitExcel = (data: TestResultFormData) => {
+    createExcelMutation.mutate(data);
   };
 
   const canGeneratePDF = watchedValues.year && watchedValues.periodicTestId && watchedValues.class && watchedValues.division && students.length > 0;
@@ -270,7 +343,7 @@ export default function AddTestResultPage() {
               
               <CardContent className="p-8">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <div className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Year Field */}
                       <FormField
@@ -312,9 +385,9 @@ export default function AddTestResultPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {filteredPeriodicTests.map((test) => (
-                                  <SelectItem key={test.id} value={test.id.toString()}>
-                                    {test.testName || `${test.subject} Test`} - Class {test.class}
+                                {uniqueTestNames.map((testName) => (
+                                  <SelectItem key={testName} value={testName}>
+                                    {testName}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -404,10 +477,26 @@ export default function AddTestResultPage() {
                       </div>
                     )}
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end pt-6">
+                    {/* Submit Buttons */}
+                    <div className="flex justify-end gap-4 pt-6">
                       <Button
-                        type="submit"
+                        type="button"
+                        onClick={form.handleSubmit(onSubmitExcel)}
+                        disabled={!canGeneratePDF || createExcelMutation.isPending}
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        {createExcelMutation.isPending ? (
+                          "Generating Excel..."
+                        ) : (
+                          <>
+                            <FileDown className="h-5 w-5 mr-2" />
+                            Download Excel File
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={form.handleSubmit(onSubmitPDF)}
                         disabled={!canGeneratePDF || createPDFMutation.isPending}
                         className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                       >
@@ -421,7 +510,7 @@ export default function AddTestResultPage() {
                         )}
                       </Button>
                     </div>
-                  </form>
+                  </div>
                 </Form>
               </CardContent>
             </Card>
