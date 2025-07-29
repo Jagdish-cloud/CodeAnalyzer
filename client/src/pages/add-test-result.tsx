@@ -143,6 +143,9 @@ export default function AddTestResultPage() {
     );
     
     const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
+    
+    console.log("Debug - Total students before processing:", students.length);
+    console.log("Debug - Students data:", students.map(s => ({ name: s.firstName, class: s.class, division: s.division })));
 
     // If "All" divisions selected, get subjects available for each division
     let subjectAvailability: { [subject: string]: string[] } = {};
@@ -160,6 +163,24 @@ export default function AddTestResultPage() {
       });
     }
 
+    const processedStudents = students
+      .filter(student => {
+        // If "All" divisions selected, include all students from the class
+        if (formData.division === "All") {
+          return student.class === formData.class;
+        }
+        // Otherwise, include only students from the specific division
+        return student.class === formData.class && student.division === formData.division;
+      })
+      .map(student => ({
+        rollNumber: student.rollNumber,
+        studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
+        division: student.division,
+      }))
+      .sort((a, b) => a.rollNumber - b.rollNumber);
+        
+    console.log("Debug - Final processed students:", processedStudents);
+    
     return {
       testInfo: {
         schoolName: "Greenwood International School",
@@ -171,16 +192,7 @@ export default function AddTestResultPage() {
         toDate: selectedTest.testEndDate || selectedTest.testDate,
         duration: selectedTest.duration,
       },
-      students: students
-        .map(student => ({
-          rollNumber: student.rollNumber,
-          studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
-          division: student.division,
-        }))
-        .filter((student, index, array) => 
-          array.findIndex(s => s.rollNumber === student.rollNumber) === index
-        )
-        .sort((a, b) => a.rollNumber - b.rollNumber),
+      students: processedStudents,
       subjects: testSubjects,
       subjectAvailability: subjectAvailability,
     };
