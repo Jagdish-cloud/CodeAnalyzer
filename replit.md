@@ -437,6 +437,7 @@ Preferred communication style: Simple, everyday language.
   - Enhanced Excel generation to include division column and subject availability logic
   - Updated student count display to show "All Divisions" when appropriate
   - Applied subject-division mapping validation for proper test result accuracy
+  - Fixed subject availability logic to use class mappings instead of periodic tests for accurate division-subject associations
 
 ## Changelog
 

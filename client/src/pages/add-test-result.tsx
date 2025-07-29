@@ -147,21 +147,16 @@ export default function AddTestResultPage() {
     // If "All" divisions selected, get subjects available for each division
     let subjectAvailability: { [subject: string]: string[] } = {};
     if (formData.division === "All") {
-      // Get all divisions for the class from class mappings
-      const classMapping = classMappings.find(cm => cm.class === formData.class);
-      const allDivisions = classMapping ? classMapping.division : [];
-      
-      // For each subject, check which divisions have it
+      // For each subject, check which divisions have it mapped in class mappings
       testSubjects.forEach(subject => {
-        const availableDivisions = periodicTests
-          .filter(test => 
-            test.testName === selectedTest.testName && 
-            test.class === formData.class &&
-            test.year === formData.year &&
-            test.subject === subject
+        const divisionsWithSubject = classMappings
+          .filter(mapping => 
+            mapping.class === formData.class &&
+            mapping.subjects && 
+            mapping.subjects.includes(subject)
           )
-          .flatMap(test => test.divisions || []);
-        subjectAvailability[subject] = Array.from(new Set(availableDivisions));
+          .map(mapping => mapping.division); // Each mapping has one division
+        subjectAvailability[subject] = Array.from(new Set(divisionsWithSubject));
       });
     }
 
