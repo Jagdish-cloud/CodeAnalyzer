@@ -429,6 +429,14 @@ Preferred communication style: Simple, everyday language.
   - Replaced subject-specific test headers with periodic test names (e.g., "Unit Test 1")
   - Removed redundant subject field from upper section as subjects appear in table columns
   - Added proper date range display with "From Date" and "To Date" from scheduled test data
+- July 25, 2025: Enhanced Add Test Results with All Divisions Support and Proper PDF Generation:
+  - Added "All Divisions" option in division dropdown for comprehensive test result sheets
+  - Implemented subject availability checking for "All" divisions with N/A marking for unavailable subjects
+  - Fixed PDF generation to create actual PDF files using jsPDF library instead of HTML downloads
+  - Added proper table formatting with landscape orientation and grey-out functionality for N/A cells
+  - Enhanced Excel generation to include division column and subject availability logic
+  - Updated student count display to show "All Divisions" when appropriate
+  - Applied subject-division mapping validation for proper test result accuracy
 
 ## Changelog
 

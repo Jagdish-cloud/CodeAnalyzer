@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, FileDown, Plus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const testResultFormSchema = z.object({
   year: z.string().min(1, "Year is required"),
@@ -49,10 +51,19 @@ export default function AddTestResultPage() {
   });
 
   // Fetch students based on selected class and division
-  const { data: students = [], isLoading: isLoadingStudents } = useQuery<any[]>({
-    queryKey: [`/api/students/class/${watchedValues.class}/division/${watchedValues.division}`],
+  const studentsQueryKey = watchedValues.division === "All" 
+    ? [`/api/students`] 
+    : [`/api/students/class/${watchedValues.class}/division/${watchedValues.division}`];
+  
+  const { data: allStudents = [], isLoading: isLoadingStudents } = useQuery<any[]>({
+    queryKey: studentsQueryKey,
     enabled: !!(watchedValues.class && watchedValues.division),
   });
+
+  // Filter students for class if "All" divisions selected
+  const students = watchedValues.division === "All" 
+    ? allStudents.filter(student => student.class === watchedValues.class)
+    : allStudents;
 
   // Get unique years and classes
   const years = Array.from(new Set(periodicTests.map(test => test.year))).sort().reverse();
@@ -133,6 +144,27 @@ export default function AddTestResultPage() {
     
     const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
 
+    // If "All" divisions selected, get subjects available for each division
+    let subjectAvailability: { [subject: string]: string[] } = {};
+    if (formData.division === "All") {
+      // Get all divisions for the class from class mappings
+      const classMapping = classMappings.find(cm => cm.class === formData.class);
+      const allDivisions = classMapping ? classMapping.division : [];
+      
+      // For each subject, check which divisions have it
+      testSubjects.forEach(subject => {
+        const availableDivisions = periodicTests
+          .filter(test => 
+            test.testName === selectedTest.testName && 
+            test.class === formData.class &&
+            test.year === formData.year &&
+            test.subject === subject
+          )
+          .flatMap(test => test.divisions || []);
+        subjectAvailability[subject] = Array.from(new Set(availableDivisions));
+      });
+    }
+
     return {
       testInfo: {
         schoolName: "Greenwood International School",
@@ -148,12 +180,14 @@ export default function AddTestResultPage() {
         .map(student => ({
           rollNumber: student.rollNumber,
           studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
+          division: student.division,
         }))
         .filter((student, index, array) => 
           array.findIndex(s => s.rollNumber === student.rollNumber) === index
         )
         .sort((a, b) => a.rollNumber - b.rollNumber),
       subjects: testSubjects,
+      subjectAvailability: subjectAvailability,
     };
   };
 
@@ -200,72 +234,75 @@ export default function AddTestResultPage() {
   });
 
   const generatePDF = (data: any) => {
-    // Create a simple HTML table for PDF generation
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Test Result Sheet - ${data.testInfo.testName}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .test-info { margin-bottom: 20px; }
-          .test-info div { margin-bottom: 5px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-          th { background-color: #f0f0f0; font-weight: bold; }
-          .marks-cell { width: 80px; text-align: center; }
-          .student-name { width: 200px; }
-          .roll-number { width: 80px; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${data.testInfo.schoolName}</h1>
-          <h2>${data.testInfo.testName}</h2>
-        </div>
-        
-        <div class="test-info">
-          <div><strong>Class:</strong> ${data.testInfo.class}</div>
-          <div><strong>Division:</strong> ${data.testInfo.division}</div>
-          <div><strong>Year:</strong> ${data.testInfo.year}</div>
-          <div><strong>From Date:</strong> ${data.testInfo.fromDate}</div>
-          <div><strong>To Date:</strong> ${data.testInfo.toDate}</div>
-          <div><strong>Duration:</strong> ${data.testInfo.duration}</div>
-        </div>
-        
-        <table>
-          <thead>
-            <tr>
-              <th class="roll-number">Roll No</th>
-              <th class="student-name">Student Name</th>
-              ${data.subjects.map((subject: string) => `<th class="marks-cell">${subject}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${data.students.map((student: any) => `
-              <tr>
-                <td class="roll-number">${student.rollNumber}</td>
-                <td class="student-name">${student.studentName}</td>
-                ${data.subjects.map(() => '<td class="marks-cell"></td>').join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
+    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation for better table fit
+    
+    // School Header
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.testInfo.schoolName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    
+    // Test Header
+    doc.setFontSize(16);
+    doc.text(data.testInfo.testName, doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+    
+    // Basic Info
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    const infoY = 35;
+    doc.text(`Class: ${data.testInfo.class}`, 20, infoY);
+    doc.text(`Division: ${data.testInfo.division}`, 80, infoY);
+    doc.text(`Year: ${data.testInfo.year}`, 140, infoY);
+    doc.text(`From Date: ${data.testInfo.fromDate}`, 20, infoY + 8);
+    doc.text(`To Date: ${data.testInfo.toDate}`, 80, infoY + 8);
+    doc.text(`Duration: ${data.testInfo.duration}`, 140, infoY + 8);
+    
+    // Prepare table data
+    const tableHeaders = ['Roll No', 'Student Name', 'Division', ...data.subjects];
+    const tableData = data.students.map((student: any) => [
+      student.rollNumber,
+      student.studentName,
+      student.division || '',
+      ...data.subjects.map((subject: string) => {
+        // If "All" divisions and subject not available for this student's division, mark as N/A
+        if (data.testInfo.division === "All" && data.subjectAvailability && data.subjectAvailability[subject]) {
+          const studentDivision = student.division;
+          const isSubjectAvailable = data.subjectAvailability[subject].includes(studentDivision);
+          return isSubjectAvailable ? '' : 'N/A';
+        }
+        return '';
+      })
+    ]);
 
-    // Create a blob and download
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-result-sheet-class-${data.testInfo.class}-div-${data.testInfo.division}-${data.testInfo.year}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    // Add table using autoTable
+    autoTable(doc, {
+      head: [tableHeaders],
+      body: tableData,
+      startY: infoY + 20,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+      },
+      columnStyles: {
+        0: { cellWidth: 20 }, // Roll No
+        1: { cellWidth: 50 }, // Student Name  
+        2: { cellWidth: 20 }, // Division
+      },
+      didParseCell: (data: any) => {
+        // Grey out N/A cells
+        if (data.cell.text[0] === 'N/A') {
+          data.cell.styles.fillColor = [220, 220, 220];
+          data.cell.styles.textColor = [100, 100, 100];
+        }
+      }
+    });
+    
+    // Save the PDF
+    doc.save(`test-result-sheet-${data.testInfo.class}-${data.testInfo.division}-${data.testInfo.year}.pdf`);
   };
 
   const generateExcel = (data: any) => {
@@ -283,12 +320,21 @@ export default function AddTestResultPage() {
       [`Duration: ${data.testInfo.duration}`],
       [],
       // Table headers
-      ['Roll No', 'Student Name', ...data.subjects],
+      ['Roll No', 'Student Name', 'Division', ...data.subjects],
       // Student rows
       ...data.students.map((student: any) => [
         student.rollNumber,
         student.studentName,
-        ...data.subjects.map(() => '') // Empty cells for marks
+        student.division || '',
+        ...data.subjects.map((subject: string) => {
+          // If "All" divisions and subject not available for this student's division, mark as N/A
+          if (data.testInfo.division === "All" && data.subjectAvailability && data.subjectAvailability[subject]) {
+            const studentDivision = student.division;
+            const isSubjectAvailable = data.subjectAvailability[subject].includes(studentDivision);
+            return isSubjectAvailable ? '' : 'N/A';
+          }
+          return '';
+        })
       ])
     ];
 
@@ -302,7 +348,7 @@ export default function AddTestResultPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `test-result-sheet-class-${data.testInfo.class}-div-${data.testInfo.division}-${data.testInfo.year}.csv`;
+    a.download = `test-result-sheet-${data.testInfo.class}-${data.testInfo.division}-${data.testInfo.year}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -473,6 +519,7 @@ export default function AddTestResultPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="All">All Divisions</SelectItem>
                                 {availableDivisions.map((division) => (
                                   <SelectItem key={division} value={division}>
                                     Division {division}
@@ -506,7 +553,11 @@ export default function AddTestResultPage() {
                           <div>
                             <h3 className="font-semibold text-slate-800 dark:text-slate-200">Students Found</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {isLoadingStudents ? 'Loading...' : `${students.length} students in Class ${watchedValues.class} - Division ${watchedValues.division}`}
+                              {isLoadingStudents ? 'Loading...' : 
+                                watchedValues.division === "All" 
+                                  ? `${students.length} students in Class ${watchedValues.class} - All Divisions`
+                                  : `${students.length} students in Class ${watchedValues.class} - Division ${watchedValues.division}`
+                              }
                             </p>
                           </div>
                         </div>
