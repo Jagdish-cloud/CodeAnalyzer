@@ -258,6 +258,9 @@ export default function AddTimeTable() {
       ...electiveSubjects
     ];
 
+    // Create a Set to track already added elective groups to avoid duplicates
+    const addedElectiveGroups = new Set<string>();
+    
     relevantMappings.forEach(mapping => {
       // Only include subjects that are actually assigned to this class-division
       if (!allClassSubjects.includes(mapping.subject)) return;
@@ -284,21 +287,32 @@ export default function AddTimeTable() {
               .find((group: any) => group.subjects?.includes(mapping.subject));
             
             let displayLabel;
+            let optionValue;
+            
             if (electiveGroup) {
+              // For elective groups, only add once per group
+              const groupKey = `${electiveGroup.groupName}-${division}`;
+              if (addedElectiveGroups.has(groupKey)) return;
+              addedElectiveGroups.add(groupKey);
+              
               // Format: "Elective Group Name (Subject1/Subject2/...)"
               const groupSubjects = electiveGroup.subjects.join('/');
               displayLabel = hasConflict 
                 ? `${electiveGroup.groupName} (${groupSubjects}) (Conflict!)` 
                 : `${electiveGroup.groupName} (${groupSubjects})`;
+              
+              // Use a group-based value instead of individual subject
+              optionValue = `elective-group-${electiveGroup.groupName}-division-${division}`;
             } else {
               // Core subject format: "Subject - Teacher Name"
               displayLabel = hasConflict 
                 ? `${mapping.subject} - ${teacher.name} (Conflict!)` 
                 : `${mapping.subject} - ${teacher.name}`;
+              optionValue = `subject-${subject.id}-teacher-${teacher.id}`;
             }
             
             options.push({
-              value: `subject-${subject.id}-teacher-${teacher.id}`,
+              value: optionValue,
               label: displayLabel,
               subjectId: subject.id,
               teacherId: teacher.id,
@@ -365,17 +379,58 @@ export default function AddTimeTable() {
       if (value && value !== "no-assignment") {
         const [day, slot] = key.split('-');
         
-        // Parse teacher and subject IDs from the value
-        const match = value.match(/subject-(\d+)-teacher-(\d+)/);
-        if (match) {
-          const [, subjectId, teacherId] = match;
-          entries.push({
-            timeTableId: 0, // Will be set after time table creation
-            dayOfWeek: day,
-            scheduleSlot: slot,
-            subjectId: parseInt(subjectId),
-            teacherId: parseInt(teacherId),
-          });
+        // Handle both regular subjects and elective groups
+        if (value.startsWith('elective-group-')) {
+          // For elective groups, we need to create entries for all subjects in the group
+          // Extract the group name and division from the value
+          const electiveMatch = value.match(/elective-group-(.+)-division-(.+)/);
+          if (electiveMatch) {
+            const [, groupName, divisionName] = electiveMatch;
+            
+            // Find the elective group in class mapping
+            const [className] = selectedClassDivision.split('-');
+            const classMapping = classMappings.find(cm => cm.class === className && cm.division === divisionName);
+            const electiveGroup = (classMapping?.electiveGroups as any[] || [])
+              .find((group: any) => group.groupName === groupName);
+            
+            if (electiveGroup && electiveGroup.subjects) {
+              // Create entries for all subjects in the elective group
+              electiveGroup.subjects.forEach((subjectName: string) => {
+                const subject = subjects.find(s => s.subjectName === subjectName);
+                const teacherMapping = teacherMappings.find(tm => 
+                  tm.class === className && tm.subject === subjectName
+                );
+                
+                if (subject && teacherMapping && teacherMapping.divisions) {
+                  const divisionData = (teacherMapping.divisions as any[])
+                    .find(div => div.division === divisionName);
+                  
+                  if (divisionData && divisionData.teacherId) {
+                    entries.push({
+                      timeTableId: 0, // Will be set after time table creation
+                      dayOfWeek: day,
+                      scheduleSlot: slot,
+                      subjectId: subject.id,
+                      teacherId: divisionData.teacherId,
+                    });
+                  }
+                }
+              });
+            }
+          }
+        } else {
+          // Parse regular subject entries
+          const match = value.match(/subject-(\d+)-teacher-(\d+)/);
+          if (match) {
+            const [, subjectId, teacherId] = match;
+            entries.push({
+              timeTableId: 0, // Will be set after time table creation
+              dayOfWeek: day,
+              scheduleSlot: slot,
+              subjectId: parseInt(subjectId),
+              teacherId: parseInt(teacherId),
+            });
+          }
         }
       }
     });
