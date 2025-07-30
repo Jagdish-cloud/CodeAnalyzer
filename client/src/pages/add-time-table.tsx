@@ -188,7 +188,7 @@ export default function AddTimeTable() {
       value: `${mapping.class}-${mapping.division}`,
       label: `Class ${mapping.class} - Division ${mapping.division}`,
       subjects: mapping.subjects || [],
-      electiveSubjects: mapping.electiveSubjects || [],
+      electiveGroups: mapping.electiveGroups || [],
     }));
 
   // Get working days that have schedules configured
@@ -248,9 +248,14 @@ export default function AddTimeTable() {
     
     // Get the class mapping to access both core and elective subjects
     const classMapping = classMappings.find(cm => cm.class === className && cm.division === division);
+    
+    // Extract all subjects from elective groups
+    const electiveSubjects = (classMapping?.electiveGroups as any[] || [])
+      .flatMap((group: any) => group.subjects || []);
+    
     const allClassSubjects = [
       ...(classMapping?.subjects || []),
-      ...(classMapping?.electiveSubjects || [])
+      ...electiveSubjects
     ];
 
     relevantMappings.forEach(mapping => {
@@ -274,11 +279,27 @@ export default function AddTimeTable() {
             // Check for teacher conflicts on the same day and time
             const hasConflict = checkTeacherConflict(teacher.id, day, timeFrom, timeTo);
             
+            // Check if this subject is part of an elective group
+            const electiveGroup = (classMapping?.electiveGroups as any[] || [])
+              .find((group: any) => group.subjects?.includes(mapping.subject));
+            
+            let displayLabel;
+            if (electiveGroup) {
+              // Format: "Elective Group Name (Subject1/Subject2/...)"
+              const groupSubjects = electiveGroup.subjects.join('/');
+              displayLabel = hasConflict 
+                ? `${electiveGroup.groupName} (${groupSubjects}) (Conflict!)` 
+                : `${electiveGroup.groupName} (${groupSubjects})`;
+            } else {
+              // Core subject format: "Subject - Teacher Name"
+              displayLabel = hasConflict 
+                ? `${mapping.subject} - ${teacher.name} (Conflict!)` 
+                : `${mapping.subject} - ${teacher.name}`;
+            }
+            
             options.push({
               value: `subject-${subject.id}-teacher-${teacher.id}`,
-              label: hasConflict 
-                ? `${mapping.subject} - ${teacher.name} (Conflict!)` 
-                : `${mapping.subject} - ${teacher.name}`,
+              label: displayLabel,
               subjectId: subject.id,
               teacherId: teacher.id,
             });

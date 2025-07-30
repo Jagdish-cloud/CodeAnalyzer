@@ -444,6 +444,10 @@ Preferred communication style: Simple, everyday language.
   - Modified Student Master module to support elective group selection using radio buttons for each group
   - Updated Class Mapping landing page to properly display organized elective groups with group names and subjects
   - Fixed Teacher Mapping module to break down elective groups into individual subjects for teacher assignment
+  - Updated Time Table Creation module to support elective groups with custom formatting:
+    - Core subjects display as "Subject - Teacher Name"
+    - Elective subjects display as "Elective Group Name (Subject1/Subject2/...)"
+    - Properly extracts all subjects from elective groups for teacher assignment
   - Enhanced form validation and data handling across all updated modules for the new grouping system
   - Applied consistent elective group display throughout the application interface
 
