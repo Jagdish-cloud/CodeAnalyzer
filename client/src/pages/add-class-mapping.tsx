@@ -44,8 +44,10 @@ const formSchema = insertClassMappingSchema.extend({
   class: z.string().min(1, "Class is required"),
   division: z.string().min(1, "Division is required"),
   subjects: z.array(z.string()).min(1, "At least one core subject is required"),
-  electiveSubjects: z.array(z.string()).optional(),
-  maxElectiveSubjects: z.number().min(0).optional(),
+  electiveGroups: z.array(z.object({
+    groupName: z.string().min(1, "Group name is required"),
+    subjects: z.array(z.string()).min(1, "At least one elective subject per group is required"),
+  })).optional().default([]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -117,6 +119,8 @@ export default function AddClassMapping() {
   const [isDivisionModalOpen, setIsDivisionModalOpen] = useState(false);
   const [newClass, setNewClass] = useState("");
   const [newDivision, setNewDivision] = useState("");
+  const [currentElectiveGroup, setCurrentElectiveGroup] = useState({ groupName: "", subjects: [] as string[] });
+  const [isElectiveGroupModalOpen, setIsElectiveGroupModalOpen] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -125,8 +129,7 @@ export default function AddClassMapping() {
       class: "",
       division: "",
       subjects: [],
-      electiveSubjects: [],
-      maxElectiveSubjects: 0,
+      electiveGroups: [],
       status: "Current working",
     },
   });
@@ -138,8 +141,7 @@ export default function AddClassMapping() {
         class: data.class,
         division: data.division,
         subjects: data.subjects,
-        electiveSubjects: data.electiveSubjects || [],
-        maxElectiveSubjects: data.maxElectiveSubjects || 0,
+        electiveGroups: data.electiveGroups || [],
         status: data.status || "Current working",
       };
 
@@ -516,127 +518,191 @@ export default function AddClassMapping() {
                     )}
                   />
 
-                  {/* Elective Subjects Configuration */}
+                  {/* Elective Groups Configuration */}
                   <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
-                      Elective Subjects Configuration
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2 flex-1">
+                        Elective Groups Configuration
+                      </h3>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsElectiveGroupModalOpen(true)}
+                        className="ml-4"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Elective Group
+                      </Button>
+                    </div>
 
                     <FormField
                       control={form.control}
-                      name="maxElectiveSubjects"
+                      name="electiveGroups"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">
-                            Maximum Elective Subjects per Student
+                            Elective Groups (Each student selects one subject from each group)
                           </FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              placeholder="Enter maximum number (0 for no electives)"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                            />
-                          </FormControl>
+                          <div className="space-y-4">
+                            {field.value && field.value.length > 0 ? (
+                              field.value.map((group: any, index: number) => (
+                                <div key={index} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                                      {group.groupName}
+                                    </h4>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => {
+                                        const updatedGroups = field.value?.filter((_: any, i: number) => i !== index);
+                                        field.onChange(updatedGroups);
+                                      }}
+                                    >
+                                      Remove
+                                    </Button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {group.subjects.map((subject: string) => (
+                                      <Badge key={subject} variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                        {subject}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8 text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
+                                No elective groups configured. Click "Add Elective Group" to create groups.
+                              </div>
+                            )}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {form.watch("maxElectiveSubjects") > 0 && (
-                      <FormField
-                        control={form.control}
-                        name="electiveSubjects"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">
-                              Available Elective Subjects
-                            </FormLabel>
-                            <div className="space-y-3">
+                    {/* Elective Group Creation Modal */}
+                    <Dialog open={isElectiveGroupModalOpen} onOpenChange={setIsElectiveGroupModalOpen}>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Create Elective Group</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Group Name</label>
+                            <Input
+                              placeholder="e.g., Elective 1, Language Choice, etc."
+                              value={currentElectiveGroup.groupName}
+                              onChange={(e) => setCurrentElectiveGroup(prev => ({ ...prev, groupName: e.target.value }))}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Subjects in this Group</label>
+                            <div className="space-y-2">
                               <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
-                                {field.value && field.value.length > 0 ? (
-                                  field.value.map((subject: string) => (
-                                    <Badge
-                                      key={subject}
-                                      variant="secondary"
-                                      className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                    >
+                                {currentElectiveGroup.subjects.length > 0 ? (
+                                  currentElectiveGroup.subjects.map((subject: string) => (
+                                    <Badge key={subject} variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                                       {subject}
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          const newSubjects = field.value?.filter(
-                                            (s: string) => s !== subject,
-                                          );
-                                          field.onChange(newSubjects);
+                                          setCurrentElectiveGroup(prev => ({
+                                            ...prev,
+                                            subjects: prev.subjects.filter(s => s !== subject)
+                                          }));
                                         }}
-                                        className="ml-1 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                                        className="ml-1 text-purple-600 hover:text-purple-800"
                                       >
                                         ×
                                       </button>
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-slate-500 dark:text-slate-400">
-                                    No elective subjects selected
-                                  </span>
+                                  <span className="text-slate-500 dark:text-slate-400">No subjects selected for this group</span>
                                 )}
                               </div>
+                              
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
                                 {isLoadingElectiveSubjects ? (
-                                  <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
-                                    Loading elective subjects...
-                                  </div>
+                                  <div className="col-span-full text-center py-4 text-slate-500">Loading elective subjects...</div>
                                 ) : electiveSubjects && electiveSubjects.length > 0 ? (
                                   electiveSubjects
                                     .filter((subject: Subject) => subject.status === "active")
                                     .map((subject: Subject) => (
-                                      <div
-                                        key={subject.id}
-                                        className="flex items-center space-x-2"
-                                      >
+                                      <div key={subject.id} className="flex items-center space-x-2">
                                         <Checkbox
-                                          id={`elective-${subject.subjectName}`}
-                                          checked={
-                                            field.value?.includes(subject.subjectName) || false
-                                          }
+                                          id={`group-elective-${subject.subjectName}`}
+                                          checked={currentElectiveGroup.subjects.includes(subject.subjectName)}
                                           onCheckedChange={(checked) => {
                                             if (checked) {
-                                              field.onChange([
-                                                ...(field.value || []),
-                                                subject.subjectName,
-                                              ]);
+                                              setCurrentElectiveGroup(prev => ({
+                                                ...prev,
+                                                subjects: [...prev.subjects, subject.subjectName]
+                                              }));
                                             } else {
-                                              field.onChange(
-                                                field.value?.filter(
-                                                  (s: string) => s !== subject.subjectName,
-                                                ) || [],
-                                              );
+                                              setCurrentElectiveGroup(prev => ({
+                                                ...prev,
+                                                subjects: prev.subjects.filter(s => s !== subject.subjectName)
+                                              }));
                                             }
                                           }}
                                         />
                                         <label
-                                          htmlFor={`elective-${subject.subjectName}`}
-                                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
+                                          htmlFor={`group-elective-${subject.subjectName}`}
+                                          className="text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-300"
                                         >
                                           {subject.subjectName}
                                         </label>
                                       </div>
                                     ))
                                 ) : (
-                                  <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
-                                    No elective subjects available. Please add elective subjects first.
-                                  </div>
+                                  <div className="col-span-full text-center py-4 text-slate-500">No elective subjects available</div>
                                 )}
                               </div>
                             </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
+                          </div>
+                          
+                          <div className="flex justify-end space-x-2 pt-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setCurrentElectiveGroup({ groupName: "", subjects: [] });
+                                setIsElectiveGroupModalOpen(false);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                if (currentElectiveGroup.groupName && currentElectiveGroup.subjects.length > 0) {
+                                  const currentGroups = form.getValues("electiveGroups") || [];
+                                  form.setValue("electiveGroups", [...currentGroups, currentElectiveGroup]);
+                                  setCurrentElectiveGroup({ groupName: "", subjects: [] });
+                                  setIsElectiveGroupModalOpen(false);
+                                } else {
+                                  toast({
+                                    title: "Validation Error",
+                                    description: "Please provide group name and select at least one subject",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                            >
+                              Add Group
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 pt-6">

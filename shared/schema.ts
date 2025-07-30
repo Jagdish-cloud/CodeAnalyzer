@@ -29,8 +29,7 @@ export const classMappings = pgTable("class_mappings", {
   class: text("class").notNull(),
   division: text("division").notNull(),
   subjects: text("subjects").array().notNull(), // Core subjects
-  electiveSubjects: text("elective_subjects").array().notNull().default([]), // Available elective subjects for this class-division
-  maxElectiveSubjects: integer("max_elective_subjects").default(0), // Maximum elective subjects a student can choose
+  electiveGroups: json("elective_groups").notNull().default([]), // Array of elective groups [{groupName: "Elective 1", subjects: ["Dance", "Yoga", "Art"]}, {groupName: "Elective 2", subjects: ["French", "German", "Japanese"]}]
   status: text("status").notNull().default("Current working"),
 });
 
@@ -75,8 +74,8 @@ export const students = pgTable("students", {
   class: text("class").notNull(),
   division: text("division").notNull(),
   rollNumber: integer("roll_number").notNull(),
-  // Elective subject selections
-  selectedElectiveSubjects: text("selected_elective_subjects").array().notNull().default([]),
+  // Elective group selections - stores the selected subject from each group
+  selectedElectiveGroups: json("selected_elective_groups").default([]), // [{groupName: "Elective 1", selectedSubject: "Dance"}, {groupName: "Elective 2", selectedSubject: "French"}]
   // Father information (optional)
   fatherName: text("father_name"),
   fatherMobileNumber: text("father_mobile_number"),

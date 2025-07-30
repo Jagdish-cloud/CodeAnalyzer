@@ -221,7 +221,7 @@ export default function AddPeriodicTestPage() {
         .filter(mapping => mapping.class === selectedClass)
         .flatMap(mapping => [
           ...(mapping.subjects || []),
-          ...(mapping.electiveSubjects || [])
+          ...((mapping.electiveGroups as any[]) || []).flatMap((group: any) => group.subjects || [])
         ])))
     : [];
 

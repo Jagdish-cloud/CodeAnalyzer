@@ -158,7 +158,7 @@ export default function AddStudent() {
       guardianRelation: "",
       apaarId: "",
       aadharNumber: "",
-      selectedElectiveSubjects: [],
+      electiveSelections: {},
     },
   });
 
@@ -197,7 +197,10 @@ export default function AddStudent() {
         guardianRelation: data.guardianRelation || undefined,
         apaarId: data.apaarId,
         aadharNumber: data.aadharNumber,
-        selectedElectiveSubjects: data.selectedElectiveSubjects || [],
+        selectedElectiveGroups: Object.entries(data.electiveSelections || {}).map(([groupName, selectedSubject]) => ({
+          groupName,
+          selectedSubject
+        })),
       };
 
       return apiRequest("POST", "/api/students", studentData);
@@ -235,8 +238,8 @@ export default function AddStudent() {
     
     setSelectedClassMapping(mapping || null);
     
-    // Clear any previously selected elective subjects when class/division changes
-    form.setValue("selectedElectiveSubjects", []);
+    // Clear any previously selected elective selections when class/division changes
+    form.setValue("electiveSelections", {});
   };
 
   // Get unique class-division combinations
@@ -663,91 +666,63 @@ export default function AddStudent() {
                       )}
                     />
 
-                    {/* Elective Subjects Selection */}
-                    {selectedClassMapping && selectedClassMapping.maxElectiveSubjects && selectedClassMapping.maxElectiveSubjects > 0 && selectedClassMapping.electiveSubjects && selectedClassMapping.electiveSubjects.length > 0 && (
-                      <div className="space-y-4">
+                    {/* Elective Groups Selection */}
+                    {selectedClassMapping && selectedClassMapping.electiveGroups && (selectedClassMapping.electiveGroups as any[]).length > 0 && (
+                      <div className="space-y-6">
                         <div>
                           <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
-                            Elective Subjects Selection
+                            Elective Groups Selection
                           </h4>
                           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            Choose up to {selectedClassMapping.maxElectiveSubjects} elective subjects for this student
+                            Select one subject from each elective group
                           </p>
                         </div>
 
                         <FormField
                           control={form.control}
-                          name="selectedElectiveSubjects"
+                          name="electiveSelections"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="space-y-3">
-                                <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
-                                  {field.value && field.value.length > 0 ? (
-                                    field.value.map((subject: string) => (
-                                      <Badge
-                                        key={subject}
-                                        variant="secondary"
-                                        className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                      >
-                                        {subject}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const newSubjects = field.value?.filter(
-                                              (s: string) => s !== subject,
-                                            );
-                                            field.onChange(newSubjects);
-                                          }}
-                                          className="ml-1 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
-                                        >
-                                          ×
-                                        </button>
-                                      </Badge>
-                                    ))
-                                  ) : (
-                                    <span className="text-slate-500 dark:text-slate-400">
-                                      No elective subjects selected
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
-                                  {selectedClassMapping.electiveSubjects.map((subject: string) => (
-                                    <div key={subject} className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`elective-${subject}`}
-                                        checked={field.value?.includes(subject) || false}
-                                        disabled={(field.value?.length || 0) >= (selectedClassMapping.maxElectiveSubjects || 0) && !field.value?.includes(subject)}
-                                        onCheckedChange={(checked) => {
-                                          if (checked) {
-                                            if ((field.value?.length || 0) < (selectedClassMapping.maxElectiveSubjects || 0)) {
-                                              field.onChange([
-                                                ...(field.value || []),
-                                                subject,
-                                              ]);
-                                            }
-                                          } else {
-                                            field.onChange(
-                                              field.value?.filter(
-                                                (s: string) => s !== subject,
-                                              ) || [],
-                                            );
-                                          }
-                                        }}
-                                      />
-                                      <label
-                                        htmlFor={`elective-${subject}`}
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
-                                      >
-                                        {subject}
-                                      </label>
+                              <div className="space-y-6">
+                                {(selectedClassMapping.electiveGroups as any[]).map((group: any, groupIndex: number) => (
+                                  <div key={groupIndex} className="border border-purple-200 dark:border-purple-700 rounded-lg p-4 bg-purple-50/50 dark:bg-purple-900/10">
+                                    <div className="mb-3">
+                                      <h5 className="font-semibold text-slate-900 dark:text-slate-100">
+                                        {group.groupName}
+                                      </h5>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                                        Choose one subject from this group
+                                      </p>
                                     </div>
-                                  ))}
-                                </div>
-                                {(field.value?.length || 0) >= (selectedClassMapping.maxElectiveSubjects || 0) && (
-                                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                                    Maximum number of elective subjects ({selectedClassMapping.maxElectiveSubjects}) reached
-                                  </p>
-                                )}
+                                    
+                                    <div className="space-y-2">
+                                      {group.subjects?.map((subject: string) => (
+                                        <div key={subject} className="flex items-center space-x-3">
+                                          <input
+                                            type="radio"
+                                            id={`${group.groupName}-${subject}`}
+                                            name={`elective-group-${groupIndex}`}
+                                            checked={(field.value as any)?.[group.groupName] === subject}
+                                            onChange={() => {
+                                              const currentSelections = field.value as any || {};
+                                              field.onChange({
+                                                ...currentSelections,
+                                                [group.groupName]: subject
+                                              });
+                                            }}
+                                            className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500"
+                                          />
+                                          <label
+                                            htmlFor={`${group.groupName}-${subject}`}
+                                            className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                                          >
+                                            {subject}
+                                          </label>
+                                        </div>
+                                      )) || <div className="text-slate-500 dark:text-slate-400 text-sm">No subjects available in this group</div>}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                               <FormMessage />
                             </FormItem>

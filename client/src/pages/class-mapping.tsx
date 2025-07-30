@@ -163,8 +163,25 @@ export default function ClassMapping() {
                               <div className="font-semibold text-slate-900 dark:text-slate-100">
                                 Class {mapping.class} - Division {mapping.division}
                               </div>
-                              <div className="text-sm text-slate-600 dark:text-slate-400">
-                                Subject: {Array.isArray(mapping.subjects) ? mapping.subjects.join(', ') : mapping.subjects}
+                              <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                                <div>
+                                  <span className="font-medium">Core:</span> {Array.isArray(mapping.subjects) ? mapping.subjects.join(', ') : mapping.subjects || 'None'}
+                                </div>
+                                {mapping.electiveGroups && (mapping.electiveGroups as any[]).length > 0 && (
+                                  <div>
+                                    <span className="font-medium">Elective Groups:</span>
+                                    <div className="mt-1 space-y-1">
+                                      {(mapping.electiveGroups as any[]).map((group: any, groupIndex: number) => (
+                                        <div key={groupIndex} className="text-xs">
+                                          <span className="font-medium text-purple-700 dark:text-purple-300">{group.groupName}:</span>{' '}
+                                          <span className="text-slate-600 dark:text-slate-400">
+                                            {group.subjects?.join(', ') || 'None'}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </TableCell>
