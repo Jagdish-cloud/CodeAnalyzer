@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSubjectSchema, type InsertSubject } from "@shared/schema";
@@ -22,6 +23,7 @@ import { Link } from "wouter";
 
 const formSchema = insertSubjectSchema.extend({
   subjectName: z.string().min(1, "Subject name is required").trim(),
+  subjectType: z.enum(["core", "elective"]).default("core"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -35,6 +37,7 @@ export default function AddSubject() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       subjectName: "",
+      subjectType: "core",
       status: "active",
     },
   });
@@ -43,6 +46,7 @@ export default function AddSubject() {
     mutationFn: async (data: FormData) => {
       const subjectData: InsertSubject = {
         subjectName: data.subjectName,
+        subjectType: data.subjectType || "core",
         status: data.status || "active",
       };
 
@@ -115,6 +119,28 @@ export default function AddSubject() {
                           <FormControl>
                             <Input placeholder="Enter subject name" {...field} />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="subjectType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Subject Type *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select subject type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="core">Core Subject</SelectItem>
+                              <SelectItem value="elective">Elective Subject</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

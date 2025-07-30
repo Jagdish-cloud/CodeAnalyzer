@@ -26,6 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -107,6 +109,7 @@ export default function AddStudent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedClassMapping, setSelectedClassMapping] = useState<ClassMapping | null>(null);
 
   // Fetch class mappings to populate class/division dropdown
   const { data: classMappings } = useQuery({
@@ -155,6 +158,7 @@ export default function AddStudent() {
       guardianRelation: "",
       apaarId: "",
       aadharNumber: "",
+      selectedElectiveSubjects: [],
     },
   });
 
@@ -193,6 +197,7 @@ export default function AddStudent() {
         guardianRelation: data.guardianRelation || undefined,
         apaarId: data.apaarId,
         aadharNumber: data.aadharNumber,
+        selectedElectiveSubjects: data.selectedElectiveSubjects || [],
       };
 
       return apiRequest("POST", "/api/students", studentData);
@@ -219,6 +224,19 @@ export default function AddStudent() {
 
   const onSubmit = (data: FormData) => {
     createStudentMutation.mutate(data);
+  };
+
+  // Handle class-division selection to update available elective subjects
+  const handleClassDivisionChange = (value: string) => {
+    const [selectedClass, selectedDivision] = value.split("-");
+    const mapping = classMappings?.find(
+      (m) => m.class === selectedClass && m.division === selectedDivision
+    );
+    
+    setSelectedClassMapping(mapping || null);
+    
+    // Clear any previously selected elective subjects when class/division changes
+    form.setValue("selectedElectiveSubjects", []);
   };
 
   // Get unique class-division combinations
@@ -616,6 +634,7 @@ export default function AddStudent() {
                                 value.split("-");
                               field.onChange(classValue);
                               form.setValue("division", divisionValue);
+                              handleClassDivisionChange(value);
                             }}
                             defaultValue={
                               field.value
@@ -643,6 +662,99 @@ export default function AddStudent() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Elective Subjects Selection */}
+                    {selectedClassMapping && selectedClassMapping.maxElectiveSubjects && selectedClassMapping.maxElectiveSubjects > 0 && selectedClassMapping.electiveSubjects && selectedClassMapping.electiveSubjects.length > 0 && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                            Elective Subjects Selection
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            Choose up to {selectedClassMapping.maxElectiveSubjects} elective subjects for this student
+                          </p>
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="selectedElectiveSubjects"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="space-y-3">
+                                <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
+                                  {field.value && field.value.length > 0 ? (
+                                    field.value.map((subject: string) => (
+                                      <Badge
+                                        key={subject}
+                                        variant="secondary"
+                                        className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                      >
+                                        {subject}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newSubjects = field.value?.filter(
+                                              (s: string) => s !== subject,
+                                            );
+                                            field.onChange(newSubjects);
+                                          }}
+                                          className="ml-1 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                                        >
+                                          ×
+                                        </button>
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <span className="text-slate-500 dark:text-slate-400">
+                                      No elective subjects selected
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
+                                  {selectedClassMapping.electiveSubjects.map((subject: string) => (
+                                    <div key={subject} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`elective-${subject}`}
+                                        checked={field.value?.includes(subject) || false}
+                                        disabled={(field.value?.length || 0) >= (selectedClassMapping.maxElectiveSubjects || 0) && !field.value?.includes(subject)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            if ((field.value?.length || 0) < (selectedClassMapping.maxElectiveSubjects || 0)) {
+                                              field.onChange([
+                                                ...(field.value || []),
+                                                subject,
+                                              ]);
+                                            }
+                                          } else {
+                                            field.onChange(
+                                              field.value?.filter(
+                                                (s: string) => s !== subject,
+                                              ) || [],
+                                            );
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={`elective-${subject}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
+                                      >
+                                        {subject}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                                {(field.value?.length || 0) >= (selectedClassMapping.maxElectiveSubjects || 0) && (
+                                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                                    Maximum number of elective subjects ({selectedClassMapping.maxElectiveSubjects}) reached
+                                  </p>
+                                )}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Parent/Guardian Information */}

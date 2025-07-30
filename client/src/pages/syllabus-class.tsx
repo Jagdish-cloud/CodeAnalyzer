@@ -21,7 +21,11 @@ export default function SyllabusClassPage() {
   // Filter class mappings for this class
   const classData = classMappings.filter(mapping => mapping.class === className);
   const uniqueDivisions = Array.from(new Set(classData.map(mapping => mapping.division)));
-  const allSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects)));
+  
+  // Get both core and elective subjects
+  const coreSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects || [])));
+  const electiveSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.electiveSubjects || [])));
+  const allSubjects = [...coreSubjects, ...electiveSubjects];
 
   // Filter syllabus masters for this class
   const classSyllabusMasters = syllabusMasters.filter(syllabus => syllabus.class === className);
@@ -85,12 +89,31 @@ export default function SyllabusClassPage() {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">Subjects</h4>
-                <div className="flex flex-wrap gap-2">
-                  {allSubjects.map((subject) => (
-                    <Badge key={subject} variant="outline" className="border-purple-200 text-purple-700">
-                      {subject}
-                    </Badge>
-                  ))}
+                <div className="space-y-2">
+                  {coreSubjects.length > 0 && (
+                    <div>
+                      <span className="text-xs text-gray-500 mb-1 block">Core Subjects:</span>
+                      <div className="flex flex-wrap gap-2">
+                        {coreSubjects.map((subject) => (
+                          <Badge key={subject} variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                            {subject}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {electiveSubjects.length > 0 && (
+                    <div>
+                      <span className="text-xs text-gray-500 mb-1 block">Elective Subjects:</span>
+                      <div className="flex flex-wrap gap-2">
+                        {electiveSubjects.map((subject) => (
+                          <Badge key={subject} variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">
+                            {subject}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -111,12 +134,21 @@ export default function SyllabusClassPage() {
         <div className="space-y-6">
           {allSubjects.map((subject) => {
             const subjectSyllabi = syllabusGroupedBySubject[subject] || [];
+            const isElective = electiveSubjects.includes(subject);
             
             return (
               <Card key={subject} className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-xl text-gray-800">{subject}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-xl text-gray-800">{subject}</CardTitle>
+                      <Badge 
+                        variant="outline" 
+                        className={isElective ? "border-purple-200 text-purple-700 bg-purple-50" : "border-blue-200 text-blue-700 bg-blue-50"}
+                      >
+                        {isElective ? "Elective" : "Core"}
+                      </Badge>
+                    </div>
                     <Badge 
                       variant={subjectSyllabi.length > 0 ? "default" : "secondary"}
                       className={subjectSyllabi.length > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}

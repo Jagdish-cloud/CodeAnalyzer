@@ -28,7 +28,9 @@ export const classMappings = pgTable("class_mappings", {
   year: text("year").notNull(),
   class: text("class").notNull(),
   division: text("division").notNull(),
-  subjects: text("subjects").array().notNull(),
+  subjects: text("subjects").array().notNull(), // Core subjects
+  electiveSubjects: text("elective_subjects").array().notNull().default([]), // Available elective subjects for this class-division
+  maxElectiveSubjects: integer("max_elective_subjects").default(0), // Maximum elective subjects a student can choose
   status: text("status").notNull().default("Current working"),
 });
 
@@ -49,6 +51,7 @@ export const roles = pgTable("roles", {
 export const subjects = pgTable("subjects", {
   id: serial("id").primaryKey(),
   subjectName: text("subject_name").notNull().unique(),
+  subjectType: text("subject_type").notNull().default("core"), // "core" or "elective"
   status: text("status").notNull().default("active"),
 });
 
@@ -72,6 +75,8 @@ export const students = pgTable("students", {
   class: text("class").notNull(),
   division: text("division").notNull(),
   rollNumber: integer("roll_number").notNull(),
+  // Elective subject selections
+  selectedElectiveSubjects: text("selected_elective_subjects").array().notNull().default([]),
   // Father information (optional)
   fatherName: text("father_name"),
   fatherMobileNumber: text("father_mobile_number"),
@@ -129,6 +134,7 @@ export const syllabusMasters = pgTable("syllabus_masters", {
   id: serial("id").primaryKey(),
   year: text("year").notNull(),
   subject: text("subject").notNull(),
+  subjectType: text("subject_type").notNull().default("core"), // "core" or "elective"
   class: text("class").notNull(),
   divisions: text("divisions").array().notNull(), // Array of divisions
   chapterLessonNo: text("chapter_lesson_no").notNull(),
@@ -143,6 +149,7 @@ export const periodicTests = pgTable("periodic_tests", {
   testName: text("test_name").notNull(), // Unit Test 1, Mid-Sem Exam, etc.
   class: text("class").notNull(),
   subject: text("subject").notNull(),
+  subjectType: text("subject_type").notNull().default("core"), // "core" or "elective"
   chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
   testDate: text("test_date").notNull(),
   testEndDate: text("test_end_date").notNull(),
@@ -438,6 +445,7 @@ export const testResults = pgTable("test_results", {
   class: text("class").notNull(),
   division: text("division").notNull(),
   subject: text("subject").notNull(),
+  subjectType: text("subject_type").notNull().default("core"), // "core" or "elective"
   studentId: integer("student_id").notNull(), // References students.id
   studentName: text("student_name").notNull(), // Stored for quick access
   rollNumber: integer("roll_number").notNull(),

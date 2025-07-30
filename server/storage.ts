@@ -108,6 +108,7 @@ export interface IStorage {
   deleteRole(id: number): Promise<boolean>;
   getSubject(id: number): Promise<Subject | undefined>;
   getAllSubjects(): Promise<Subject[]>;
+  getSubjectsByType(subjectType: "core" | "elective"): Promise<Subject[]>;
   createSubject(subject: InsertSubject): Promise<Subject>;
   updateSubject(
     id: number,
@@ -119,6 +120,13 @@ export interface IStorage {
   getStudentsByClassDivision(
     classname: string,
     division: string,
+  ): Promise<Student[]>;
+  updateStudentElectiveSubjects(
+    studentId: number,
+    electiveSubjects: string[]
+  ): Promise<Student | undefined>;
+  getStudentsWithElectiveSubject(
+    subjectName: string
   ): Promise<Student[]>;
   createStudent(student: InsertStudent): Promise<Student>;
   updateStudent(
@@ -423,26 +431,26 @@ export class MemStorage implements IStorage {
 
   private initializeSubjects() {
     const predefinedSubjects = [
-      { subjectName: "Mathematics", status: "active" },
-      { subjectName: "English", status: "active" },
-      { subjectName: "Science", status: "active" },
-      { subjectName: "Social Studies", status: "active" },
-      { subjectName: "Hindi", status: "active" },
-      { subjectName: "Physics", status: "active" },
-      { subjectName: "Chemistry", status: "active" },
-      { subjectName: "Biology", status: "active" },
-      { subjectName: "History", status: "active" },
-      { subjectName: "Geography", status: "active" },
-      { subjectName: "Economics", status: "active" },
-      { subjectName: "Political Science", status: "active" },
-      { subjectName: "Computer Science", status: "active" },
-      { subjectName: "Physical Education", status: "active" },
-      { subjectName: "Art & Craft", status: "active" },
-      { subjectName: "Music", status: "active" },
-      { subjectName: "Dance", status: "active" },
-      { subjectName: "Sanskrit", status: "active" },
-      { subjectName: "French", status: "active" },
-      { subjectName: "German", status: "active" },
+      { subjectName: "Mathematics", subjectType: "core", status: "active" },
+      { subjectName: "English", subjectType: "core", status: "active" },
+      { subjectName: "Science", subjectType: "core", status: "active" },
+      { subjectName: "Social Studies", subjectType: "core", status: "active" },
+      { subjectName: "Hindi", subjectType: "core", status: "active" },
+      { subjectName: "Physics", subjectType: "core", status: "active" },
+      { subjectName: "Chemistry", subjectType: "core", status: "active" },
+      { subjectName: "Biology", subjectType: "core", status: "active" },
+      { subjectName: "History", subjectType: "core", status: "active" },
+      { subjectName: "Geography", subjectType: "core", status: "active" },
+      { subjectName: "Economics", subjectType: "elective", status: "active" },
+      { subjectName: "Political Science", subjectType: "elective", status: "active" },
+      { subjectName: "Computer Science", subjectType: "elective", status: "active" },
+      { subjectName: "Physical Education", subjectType: "elective", status: "active" },
+      { subjectName: "Art & Craft", subjectType: "elective", status: "active" },
+      { subjectName: "Music", subjectType: "elective", status: "active" },
+      { subjectName: "Dance", subjectType: "elective", status: "active" },
+      { subjectName: "Sanskrit", subjectType: "elective", status: "active" },
+      { subjectName: "French", subjectType: "elective", status: "active" },
+      { subjectName: "German", subjectType: "elective", status: "active" },
     ];
 
     predefinedSubjects.forEach((subjectData) => {
@@ -905,7 +913,12 @@ export class MemStorage implements IStorage {
 
     predefinedClassMappings.forEach((mappingData) => {
       const id = this.currentClassMappingId++;
-      const mapping: ClassMapping = { id, ...mappingData };
+      const mapping: ClassMapping = { 
+        id, 
+        ...mappingData,
+        electiveSubjects: [],
+        maxElectiveSubjects: 0
+      };
       this.classMappings.set(id, mapping);
     });
   }
@@ -1245,7 +1258,11 @@ export class MemStorage implements IStorage {
 
     predefinedSyllabusMasters.forEach((syllabusData) => {
       const id = this.currentSyllabusMasterId++;
-      const syllabus: SyllabusMaster = { id, ...syllabusData };
+      const syllabus: SyllabusMaster = { 
+        id, 
+        ...syllabusData,
+        subjectType: "core"
+      };
       this.syllabusMasters.set(id, syllabus);
     });
   }
@@ -1595,7 +1612,11 @@ export class MemStorage implements IStorage {
 
     predefinedStudents.forEach((studentData) => {
       const id = this.currentStudentId++;
-      const student: Student = { id, ...studentData };
+      const student: Student = { 
+        id, 
+        ...studentData,
+        selectedElectiveSubjects: []
+      };
       this.students.set(id, student);
     });
   }
@@ -1675,6 +1696,8 @@ export class MemStorage implements IStorage {
       ...insertMapping,
       id,
       status: insertMapping.status || "Current working",
+      electiveSubjects: insertMapping.electiveSubjects || [],
+      maxElectiveSubjects: insertMapping.maxElectiveSubjects || 0,
     };
     this.classMappings.set(id, mapping);
     return mapping;
@@ -1777,11 +1800,18 @@ export class MemStorage implements IStorage {
     return Array.from(this.subjects.values());
   }
 
+  async getSubjectsByType(subjectType: "core" | "elective"): Promise<Subject[]> {
+    return Array.from(this.subjects.values()).filter(
+      (subject) => subject.subjectType === subjectType
+    );
+  }
+
   async createSubject(insertSubject: InsertSubject): Promise<Subject> {
     const id = this.currentSubjectId++;
     const subject: Subject = {
       id,
       subjectName: insertSubject.subjectName,
+      subjectType: insertSubject.subjectType || "core",
       status: insertSubject.status || "active",
     };
     this.subjects.set(id, subject);
@@ -1819,6 +1849,29 @@ export class MemStorage implements IStorage {
   ): Promise<Student[]> {
     return Array.from(this.students.values()).filter(
       (student) => student.class === classname && student.division === division,
+    );
+  }
+
+  async updateStudentElectiveSubjects(
+    studentId: number,
+    electiveSubjects: string[]
+  ): Promise<Student | undefined> {
+    const existing = this.students.get(studentId);
+    if (!existing) return undefined;
+
+    const updated: Student = { 
+      ...existing, 
+      selectedElectiveSubjects: electiveSubjects
+    };
+    this.students.set(studentId, updated);
+    return updated;
+  }
+
+  async getStudentsWithElectiveSubject(
+    subjectName: string
+  ): Promise<Student[]> {
+    return Array.from(this.students.values()).filter(
+      (student) => student.selectedElectiveSubjects.includes(subjectName)
     );
   }
 
@@ -1876,6 +1929,8 @@ export class MemStorage implements IStorage {
       class: insertStudent.class,
       division: insertStudent.division,
       rollNumber,
+      // Elective subjects
+      selectedElectiveSubjects: insertStudent.selectedElectiveSubjects || [],
       // Father information (optional)
       fatherName: insertStudent.fatherName || null,
       fatherMobileNumber: insertStudent.fatherMobileNumber || null,
@@ -2196,6 +2251,8 @@ export class MemStorage implements IStorage {
       ...insertSyllabus,
       id,
       status: insertSyllabus.status || "active",
+      subjectType: insertSyllabus.subjectType || "core",
+      description: insertSyllabus.description || null,
     };
     this.syllabusMasters.set(id, syllabus);
     return syllabus;
@@ -2230,6 +2287,8 @@ export class MemStorage implements IStorage {
     const id = this.currentPeriodicTestId++;
     const test: PeriodicTest = {
       ...insertTest,
+      subjectType: insertTest.subjectType || "core",
+      maximumMarks: insertTest.maximumMarks || null,
       id,
       status: insertTest.status || "active",
       createdAt: new Date(),
@@ -2674,7 +2733,8 @@ export class MemStorage implements IStorage {
     // Auto-calculate grade based on marks percentage
     let grade: string | null = null;
     if (insertTestResult.marks !== null && insertTestResult.marks !== undefined) {
-      const percentage = (insertTestResult.marks / insertTestResult.maxMarks) * 100;
+      const maxMarks = insertTestResult.maxMarks || 100;
+      const percentage = (insertTestResult.marks / maxMarks) * 100;
       if (percentage >= 90) grade = "A+";
       else if (percentage >= 80) grade = "A";
       else if (percentage >= 70) grade = "B+";
@@ -2688,6 +2748,7 @@ export class MemStorage implements IStorage {
       ...insertTestResult,
       id,
       grade,
+      subjectType: insertTestResult.subjectType || "core",
       createdAt: new Date(),
       updatedAt: new Date(),
     };

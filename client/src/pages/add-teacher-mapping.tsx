@@ -62,8 +62,8 @@ type FormData = z.infer<typeof formSchema>;
 
 interface SubjectAssignment {
   subject: string;
-  teacherId?: number;
-  teacherName?: string;
+  teacherId: number;
+  teacherName: string;
   isClassTeacher: boolean;
 }
 
@@ -127,15 +127,21 @@ export default function AddTeacherMapping() {
             mapping.division === selectedDivision,
         ) || [];
 
-      // Extract all unique subjects from the mappings
-      const subjects = Array.from(
+      // Extract core subjects and elective subjects from the mappings
+      const coreSubjects = Array.from(
         new Set(relevantMappings.flatMap((mapping) => mapping.subjects || [])),
       );
+      const electiveSubjects = Array.from(
+        new Set(relevantMappings.flatMap((mapping) => mapping.electiveSubjects || [])),
+      );
+      
+      // Combine all subjects (core + elective)
+      const allSubjects = [...coreSubjects, ...electiveSubjects];
 
-      const assignments: SubjectAssignment[] = subjects.map((subject) => ({
+      const assignments: SubjectAssignment[] = allSubjects.map((subject) => ({
         subject,
-        teacherId: undefined,
-        teacherName: undefined,
+        teacherId: 0,
+        teacherName: "",
         isClassTeacher: false,
       }));
 

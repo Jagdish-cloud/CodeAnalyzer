@@ -188,6 +188,7 @@ export default function AddTimeTable() {
       value: `${mapping.class}-${mapping.division}`,
       label: `Class ${mapping.class} - Division ${mapping.division}`,
       subjects: mapping.subjects || [],
+      electiveSubjects: mapping.electiveSubjects || [],
     }));
 
   // Get working days that have schedules configured
@@ -244,8 +245,18 @@ export default function AddTimeTable() {
 
     // Get teacher mappings for the selected class
     const relevantMappings = teacherMappings.filter(mapping => mapping.class === className);
+    
+    // Get the class mapping to access both core and elective subjects
+    const classMapping = classMappings.find(cm => cm.class === className && cm.division === division);
+    const allClassSubjects = [
+      ...(classMapping?.subjects || []),
+      ...(classMapping?.electiveSubjects || [])
+    ];
 
     relevantMappings.forEach(mapping => {
+      // Only include subjects that are actually assigned to this class-division
+      if (!allClassSubjects.includes(mapping.subject)) return;
+      
       const subject = subjects.find(s => s.subjectName === mapping.subject);
       if (subject && mapping.divisions) {
         // Check if the mapping has divisions data

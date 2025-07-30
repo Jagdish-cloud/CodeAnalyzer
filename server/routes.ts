@@ -413,8 +413,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subject Routes
   app.get("/api/subjects", async (req, res) => {
     try {
-      const subjects = await storage.getAllSubjects();
-      res.json(subjects);
+      const { type } = req.query;
+      
+      if (type && (type === "core" || type === "elective")) {
+        const subjects = await storage.getSubjectsByType(type);
+        res.json(subjects);
+      } else {
+        const subjects = await storage.getAllSubjects();
+        res.json(subjects);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch subjects" });
     }
@@ -529,6 +536,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch class division stats" });
+    }
+  });
+
+  // New route for getting students with a specific elective subject
+  app.get("/api/students/elective/:subjectName", async (req, res) => {
+    try {
+      const { subjectName } = req.params;
+      const students = await storage.getStudentsWithElectiveSubject(subjectName);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch students with elective subject" });
+    }
+  });
+
+  // New route for updating student's elective subjects
+  app.patch("/api/students/:id/electives", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid student ID" });
+      }
+
+      const { electiveSubjects } = req.body;
+      if (!Array.isArray(electiveSubjects)) {
+        return res.status(400).json({ message: "Elective subjects must be an array" });
+      }
+
+      const student = await storage.updateStudentElectiveSubjects(id, electiveSubjects);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.json(student);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update student elective subjects" });
     }
   });
 

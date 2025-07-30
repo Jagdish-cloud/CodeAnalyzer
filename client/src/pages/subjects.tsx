@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Plus, Eye, Edit, Book } from "lucide-react";
+import { Plus, Eye, Edit, Book, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,13 +12,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 import type { Subject } from "@shared/schema";
 
 export default function Subjects() {
+  const [subjectTypeFilter, setSubjectTypeFilter] = useState<"all" | "core" | "elective">("all");
+
   const { data: subjects, isLoading } = useQuery({
-    queryKey: ["/api/subjects"],
+    queryKey: ["/api/subjects", subjectTypeFilter],
     queryFn: async () => {
-      const response = await fetch("/api/subjects");
+      const url = subjectTypeFilter === "all" 
+        ? "/api/subjects" 
+        : `/api/subjects?type=${subjectTypeFilter}`;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch subjects");
       }
@@ -54,12 +61,25 @@ export default function Subjects() {
                 Manage all subjects in your institution
               </p>
             </div>
-            <Link href="/add-subject">
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                <Plus className="h-5 w-5 mr-2" />
-                Add Subject
-              </Button>
-            </Link>
+            <div className="flex gap-4">
+              <Select value={subjectTypeFilter} onValueChange={(value: "all" | "core" | "elective") => setSubjectTypeFilter(value)}>
+                <SelectTrigger className="w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  <SelectItem value="core">Core Subjects</SelectItem>
+                  <SelectItem value="elective">Elective Subjects</SelectItem>
+                </SelectContent>
+              </Select>
+              <Link href="/add-subject">
+                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Subject
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Subjects Table */}
@@ -95,6 +115,9 @@ export default function Subjects() {
                           Subject
                         </TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">
+                          Type
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">
                           Status
                         </TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">
@@ -110,6 +133,18 @@ export default function Subjects() {
                         >
                           <TableCell className="font-medium text-slate-800 dark:text-slate-200">
                             {subject.subjectName}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={subject.subjectType === "core" ? "default" : "outline"}
+                              className={
+                                subject.subjectType === "core"
+                                  ? "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 dark:from-blue-900/30 dark:to-indigo-900/30 dark:text-blue-300 border-0"
+                                  : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900/30 dark:to-pink-900/30 dark:text-purple-300 border-0"
+                              }
+                            >
+                              {subject.subjectType === "core" ? "Core" : "Elective"}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge 

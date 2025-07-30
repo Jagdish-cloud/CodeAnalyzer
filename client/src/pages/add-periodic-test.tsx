@@ -215,11 +215,14 @@ export default function AddPeriodicTestPage() {
     setTempSelectedChapters([]);
   };
 
-  // Get available subjects for selected class (union of all subjects from all divisions)
+  // Get available subjects for selected class (union of core and elective subjects from all divisions)
   const availableSubjects = selectedClass
     ? Array.from(new Set(classMappings
         .filter(mapping => mapping.class === selectedClass)
-        .flatMap(mapping => mapping.subjects)))
+        .flatMap(mapping => [
+          ...(mapping.subjects || []),
+          ...(mapping.electiveSubjects || [])
+        ])))
     : [];
 
 

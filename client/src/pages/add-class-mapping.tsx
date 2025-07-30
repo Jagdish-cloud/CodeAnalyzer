@@ -43,7 +43,9 @@ const formSchema = insertClassMappingSchema.extend({
   year: z.string().min(1, "Year is required"),
   class: z.string().min(1, "Class is required"),
   division: z.string().min(1, "Division is required"),
-  subjects: z.array(z.string()).min(1, "At least one subject is required"),
+  subjects: z.array(z.string()).min(1, "At least one core subject is required"),
+  electiveSubjects: z.array(z.string()).optional(),
+  maxElectiveSubjects: z.number().min(0).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -86,13 +88,24 @@ export default function AddClassMapping() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch subjects from API
-  const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
-    queryKey: ["/api/subjects"],
+  // Fetch core and elective subjects from API
+  const { data: coreSubjects, isLoading: isLoadingCoreSubjects } = useQuery({
+    queryKey: ["/api/subjects", "core"],
     queryFn: async () => {
-      const response = await fetch("/api/subjects");
+      const response = await fetch("/api/subjects?type=core");
       if (!response.ok) {
-        throw new Error("Failed to fetch subjects");
+        throw new Error("Failed to fetch core subjects");
+      }
+      return response.json() as Promise<Subject[]>;
+    },
+  });
+
+  const { data: electiveSubjects, isLoading: isLoadingElectiveSubjects } = useQuery({
+    queryKey: ["/api/subjects", "elective"],
+    queryFn: async () => {
+      const response = await fetch("/api/subjects?type=elective");
+      if (!response.ok) {
+        throw new Error("Failed to fetch elective subjects");
       }
       return response.json() as Promise<Subject[]>;
     },
@@ -112,6 +125,8 @@ export default function AddClassMapping() {
       class: "",
       division: "",
       subjects: [],
+      electiveSubjects: [],
+      maxElectiveSubjects: 0,
       status: "Current working",
     },
   });
@@ -123,6 +138,8 @@ export default function AddClassMapping() {
         class: data.class,
         division: data.division,
         subjects: data.subjects,
+        electiveSubjects: data.electiveSubjects || [],
+        maxElectiveSubjects: data.maxElectiveSubjects || 0,
         status: data.status || "Current working",
       };
 
@@ -447,14 +464,14 @@ export default function AddClassMapping() {
                             )}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
-                            {isLoadingSubjects ? (
+                            {isLoadingCoreSubjects ? (
                               <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
-                                Loading subjects...
+                                Loading core subjects...
                               </div>
-                            ) : subjects && subjects.length > 0 ? (
-                              subjects
-                                .filter((subject) => subject.status === "active")
-                                .map((subject) => (
+                            ) : coreSubjects && coreSubjects.length > 0 ? (
+                              coreSubjects
+                                .filter((subject: Subject) => subject.status === "active")
+                                .map((subject: Subject) => (
                                   <div
                                     key={subject.id}
                                     className="flex items-center space-x-2"
@@ -489,7 +506,7 @@ export default function AddClassMapping() {
                                 ))
                             ) : (
                               <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
-                                No subjects available. Please add subjects first.
+                                No core subjects available. Please add core subjects first.
                               </div>
                             )}
                           </div>
@@ -498,6 +515,129 @@ export default function AddClassMapping() {
                       </FormItem>
                     )}
                   />
+
+                  {/* Elective Subjects Configuration */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
+                      Elective Subjects Configuration
+                    </h3>
+
+                    <FormField
+                      control={form.control}
+                      name="maxElectiveSubjects"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">
+                            Maximum Elective Subjects per Student
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              placeholder="Enter maximum number (0 for no electives)"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("maxElectiveSubjects") > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="electiveSubjects"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-slate-900 dark:text-slate-100 font-medium">
+                              Available Elective Subjects
+                            </FormLabel>
+                            <div className="space-y-3">
+                              <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">
+                                {field.value && field.value.length > 0 ? (
+                                  field.value.map((subject: string) => (
+                                    <Badge
+                                      key={subject}
+                                      variant="secondary"
+                                      className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                    >
+                                      {subject}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newSubjects = field.value?.filter(
+                                            (s: string) => s !== subject,
+                                          );
+                                          field.onChange(newSubjects);
+                                        }}
+                                        className="ml-1 text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                                      >
+                                        ×
+                                      </button>
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-slate-500 dark:text-slate-400">
+                                    No elective subjects selected
+                                  </span>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900">
+                                {isLoadingElectiveSubjects ? (
+                                  <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
+                                    Loading elective subjects...
+                                  </div>
+                                ) : electiveSubjects && electiveSubjects.length > 0 ? (
+                                  electiveSubjects
+                                    .filter((subject: Subject) => subject.status === "active")
+                                    .map((subject: Subject) => (
+                                      <div
+                                        key={subject.id}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        <Checkbox
+                                          id={`elective-${subject.subjectName}`}
+                                          checked={
+                                            field.value?.includes(subject.subjectName) || false
+                                          }
+                                          onCheckedChange={(checked) => {
+                                            if (checked) {
+                                              field.onChange([
+                                                ...(field.value || []),
+                                                subject.subjectName,
+                                              ]);
+                                            } else {
+                                              field.onChange(
+                                                field.value?.filter(
+                                                  (s: string) => s !== subject.subjectName,
+                                                ) || [],
+                                              );
+                                            }
+                                          }}
+                                        />
+                                        <label
+                                          htmlFor={`elective-${subject.subjectName}`}
+                                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700 dark:text-slate-300"
+                                        >
+                                          {subject.subjectName}
+                                        </label>
+                                      </div>
+                                    ))
+                                ) : (
+                                  <div className="col-span-full text-center py-4 text-slate-500 dark:text-slate-400">
+                                    No elective subjects available. Please add elective subjects first.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 pt-6">
                     <Button
