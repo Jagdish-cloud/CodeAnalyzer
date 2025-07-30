@@ -131,8 +131,16 @@ export default function AddTeacherMapping() {
       const coreSubjects = Array.from(
         new Set(relevantMappings.flatMap((mapping) => mapping.subjects || [])),
       );
+      
+      // Extract all subjects from elective groups
       const electiveSubjects = Array.from(
-        new Set(relevantMappings.flatMap((mapping) => mapping.electiveSubjects || [])),
+        new Set(
+          relevantMappings.flatMap((mapping) => 
+            (mapping.electiveGroups as any[] || []).flatMap((group: any) => 
+              group.subjects || []
+            )
+          )
+        )
       );
       
       // Combine all subjects (core + elective)
