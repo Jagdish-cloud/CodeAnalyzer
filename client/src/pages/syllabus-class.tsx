@@ -22,13 +22,24 @@ export default function SyllabusClassPage() {
   const classData = classMappings.filter(mapping => mapping.class === className);
   const uniqueDivisions = Array.from(new Set(classData.map(mapping => mapping.division)));
   
-  // Get both core and elective subjects
+  // Get both core and elective subjects (ensuring uniqueness across all divisions)
   const coreSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects || [])));
+  
+  // For elective subjects, we need to be more careful to avoid duplicates
+  // Get all unique elective groups first, then extract subjects
+  const allElectiveGroups = new Map<string, any>();
+  classData.forEach(mapping => {
+    (mapping.electiveGroups as any[] || []).forEach((group: any) => {
+      if (group.groupName && !allElectiveGroups.has(group.groupName)) {
+        allElectiveGroups.set(group.groupName, group);
+      }
+    });
+  });
+  
   const electiveSubjects = Array.from(new Set(
-    classData.flatMap(mapping => 
-      (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
-    )
+    Array.from(allElectiveGroups.values()).flatMap((group: any) => group.subjects || [])
   ));
+  
   const allSubjects = [...coreSubjects, ...electiveSubjects];
 
   // Filter syllabus masters for this class
