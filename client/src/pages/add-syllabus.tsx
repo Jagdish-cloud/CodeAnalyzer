@@ -20,9 +20,15 @@ import { insertSyllabusMasterSchema } from "@shared/schema";
 import type { ClassMapping, Subject } from "@shared/schema";
 
 const formSchema = insertSyllabusMasterSchema.extend({
-  divisions: z.array(z.string()).min(1, "At least one division must be selected"),
+  divisions: z.array(z.string()),
   description: z.string().optional(),
   allDivisions: z.boolean().optional(),
+}).refine((data) => {
+  // Skip division validation for now - we'll handle it in onSubmit
+  return true;
+}, {
+  message: "Invalid form data",
+  path: ["root"]
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -112,12 +118,31 @@ export default function AddSyllabusPage() {
   });
 
   const onSubmit = (data: FormData) => {
-    // If subject is elective, set divisions to all available divisions
+    // Validate divisions based on subject type
     if (isSelectedSubjectElective) {
+      // For elective subjects, automatically set to all available divisions
       data.divisions = availableDivisions;
     } else if (data.allDivisions) {
       // If "All Divisions" is checked for core subjects, set divisions to all available divisions
       data.divisions = availableDivisions;
+    } else if (!data.divisions || data.divisions.length === 0) {
+      // For core subjects, ensure at least one division is selected
+      toast({
+        title: "Error",
+        description: "Please select at least one division or check 'Apply to All Divisions'",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate that we have divisions
+    if (!data.divisions || data.divisions.length === 0) {
+      toast({
+        title: "Error",
+        description: "No divisions available for the selected class",
+        variant: "destructive",
+      });
+      return;
     }
     
     // Remove the allDivisions field as it's not part of the schema
