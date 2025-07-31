@@ -24,7 +24,11 @@ export default function SyllabusClassPage() {
   
   // Get both core and elective subjects
   const coreSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects || [])));
-  const electiveSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.electiveSubjects || [])));
+  const electiveSubjects = Array.from(new Set(
+    classData.flatMap(mapping => 
+      (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
+    )
+  ));
   const allSubjects = [...coreSubjects, ...electiveSubjects];
 
   // Filter syllabus masters for this class

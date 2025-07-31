@@ -67,11 +67,20 @@ export default function AddSyllabusPage() {
         .map(mapping => mapping.division)))
     : [];
 
-  // Get available subjects for selected class
+  // Get available subjects for selected class (including elective subjects from groups)
   const availableSubjects = selectedClass
-    ? Array.from(new Set(classMappings
-        .filter(mapping => mapping.class === selectedClass)
-        .flatMap(mapping => mapping.subjects)))
+    ? Array.from(new Set([
+        // Core subjects
+        ...classMappings
+          .filter(mapping => mapping.class === selectedClass)
+          .flatMap(mapping => mapping.subjects || []),
+        // Elective subjects from groups
+        ...classMappings
+          .filter(mapping => mapping.class === selectedClass)
+          .flatMap(mapping => 
+            (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
+          )
+      ]))
     : [];
 
   const createSyllabusMutation = useMutation({

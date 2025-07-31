@@ -75,7 +75,12 @@ export default function SyllabusMasterPage() {
                       <strong>Divisions:</strong> {uniqueDivisions.join(", ")}
                     </div>
                     <div className="text-sm text-gray-600">
-                      <strong>Subjects:</strong> {Array.from(new Set(classData.flatMap(mapping => mapping.subjects))).join(", ")}
+                      <strong>Subjects:</strong> {Array.from(new Set([
+                        ...classData.flatMap(mapping => mapping.subjects || []),
+                        ...classData.flatMap(mapping => 
+                          (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
+                        )
+                      ])).join(", ")}
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">

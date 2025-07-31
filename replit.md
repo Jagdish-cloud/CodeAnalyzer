@@ -448,6 +448,11 @@ Preferred communication style: Simple, everyday language.
     - Core subjects display as "Subject - Teacher Name"
     - Elective subjects display as "Elective Group Name (Subject1/Subject2/...)"
     - Properly extracts all subjects from elective groups for teacher assignment
+  - Updated Syllabus Master module to support elective groups with individual subject breakdown:
+    - Fixed syllabus master landing page to display all subjects including electives from groups
+    - Updated add syllabus page to show elective subjects in dropdown for syllabus creation
+    - Fixed syllabus class detail page to properly extract elective subjects from groups
+    - Ensures elective subjects are applicable to all divisions of the class for syllabus mapping
   - Enhanced form validation and data handling across all updated modules for the new grouping system
   - Applied consistent elective group display throughout the application interface
 
