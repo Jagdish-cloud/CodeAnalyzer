@@ -181,28 +181,70 @@ export default function AddPeriodicTestPage() {
     setSyllabusModalOpen(true);
   };
 
+  // Check if selected value is an elective group
+  const isElectiveGroup = (subject: string) => {
+    return electiveGroups.some(group => group.groupName === subject);
+  };
+
+  // Get subjects for an elective group
+  const getSubjectsInElectiveGroup = (groupName: string) => {
+    const group = electiveGroups.find(g => g.groupName === groupName);
+    return group ? group.subjects : [];
+  };
+
   // Get available chapters for selected subject in modal
   const getAvailableChaptersForDay = (dayIndex: number) => {
     const currentDay = testDays[dayIndex];
     if (!currentDay || !currentDay.subject || !selectedClass) return [];
     
-    return syllabusMasters
-      .filter(syllabus => 
-        syllabus.class === selectedClass && 
-        syllabus.subject === currentDay.subject
-      )
-      .map(syllabus => ({
-        chapterNo: syllabus.chapterLessonNo,
-        chapterName: syllabus.description || `Chapter ${syllabus.chapterLessonNo}`,
-        fullText: `${syllabus.chapterLessonNo} - ${syllabus.description || `Chapter ${syllabus.chapterLessonNo}`}`
-      }));
+    let subjectsToQuery = [];
+    
+    // If it's an elective group, get all subjects in that group
+    if (isElectiveGroup(currentDay.subject)) {
+      subjectsToQuery = getSubjectsInElectiveGroup(currentDay.subject);
+    } else {
+      // If it's a regular subject
+      subjectsToQuery = [currentDay.subject];
+    }
+    
+    // Get chapters for all subjects
+    const chaptersGroupedBySubject = subjectsToQuery.map(subject => {
+      const chapters = syllabusMasters
+        .filter(syllabus => 
+          syllabus.class === selectedClass && 
+          syllabus.subject === subject
+        )
+        .map(syllabus => ({
+          chapterNo: syllabus.chapterLessonNo,
+          chapterName: syllabus.description || `Chapter ${syllabus.chapterLessonNo}`,
+          fullText: `${syllabus.chapterLessonNo} - ${syllabus.description || `Chapter ${syllabus.chapterLessonNo}`}`,
+          subject: subject as string
+        }));
+        
+      return {
+        subject: subject as string,
+        chapters: chapters
+      };
+    });
+    
+    return chaptersGroupedBySubject;
   };
 
   // Get chapter name by chapter number
   const getChapterNameByNumber = (chapterNo: string, dayIndex: number) => {
     const availableChapters = getAvailableChaptersForDay(dayIndex);
-    const chapter = availableChapters.find(ch => ch.chapterNo === chapterNo);
-    return chapter ? chapter.chapterName : chapterNo;
+    
+    // Handle elective groups (array of subject groups)
+    if (Array.isArray(availableChapters) && availableChapters.length > 0 && availableChapters[0].subject) {
+      for (const subjectGroup of availableChapters) {
+        const chapter = subjectGroup.chapters.find((ch: any) => ch.chapterNo === chapterNo);
+        if (chapter) {
+          return chapter.chapterName;
+        }
+      }
+    }
+    
+    return chapterNo;
   };
 
   // Handle syllabus submission
@@ -215,15 +257,41 @@ export default function AddPeriodicTestPage() {
     setTempSelectedChapters([]);
   };
 
-  // Get available subjects for selected class (union of core and elective subjects from all divisions)
-  const availableSubjects = selectedClass
-    ? Array.from(new Set(classMappings
-        .filter(mapping => mapping.class === selectedClass)
-        .flatMap(mapping => [
-          ...(mapping.subjects || []),
-          ...((mapping.electiveGroups as any[]) || []).flatMap((group: any) => group.subjects || [])
-        ])))
-    : [];
+  // Get structured subjects with elective groups for selected class
+  const getStructuredSubjects = () => {
+    if (!selectedClass) return { coreSubjects: [], electiveGroups: [] };
+    
+    const mappingsForClass = classMappings.filter(mapping => mapping.class === selectedClass);
+    
+    // Get core subjects (union from all divisions)
+    const coreSubjects = Array.from(new Set(
+      mappingsForClass.flatMap(mapping => mapping.subjects || [])
+    ));
+    
+    // Get elective groups (union from all divisions)
+    const electiveGroupsMap = new Map();
+    mappingsForClass.forEach(mapping => {
+      ((mapping.electiveGroups as any[]) || []).forEach((group: any) => {
+        if (group.groupName && group.subjects) {
+          if (!electiveGroupsMap.has(group.groupName)) {
+            electiveGroupsMap.set(group.groupName, new Set());
+          }
+          group.subjects.forEach((subject: string) => {
+            electiveGroupsMap.get(group.groupName).add(subject);
+          });
+        }
+      });
+    });
+    
+    const electiveGroups = Array.from(electiveGroupsMap.entries()).map(([groupName, subjects]) => ({
+      groupName: groupName.trim(),
+      subjects: Array.from(subjects)
+    }));
+    
+    return { coreSubjects, electiveGroups };
+  };
+
+  const { coreSubjects, electiveGroups } = getStructuredSubjects();
 
 
 
@@ -538,9 +606,20 @@ export default function AddPeriodicTestPage() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          {availableSubjects.map((subject) => (
+                                          {/* Core Subjects */}
+                                          {coreSubjects.map((subject) => (
                                             <SelectItem key={subject} value={subject}>
                                               {subject}
+                                            </SelectItem>
+                                          ))}
+                                          
+                                          {/* Elective Groups */}
+                                          {electiveGroups.map((group) => (
+                                            <SelectItem 
+                                              key={group.groupName} 
+                                              value={group.groupName}
+                                            >
+                                              {group.groupName} ({group.subjects.join('/')})
                                             </SelectItem>
                                           ))}
                                         </SelectContent>
@@ -717,23 +796,38 @@ export default function AddPeriodicTestPage() {
               {selectedDayIndex !== null && (
                 <div className="space-y-4">
                   {getAvailableChaptersForDay(selectedDayIndex).length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
-                      {getAvailableChaptersForDay(selectedDayIndex).map((chapter) => (
-                        <div key={chapter.chapterNo} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
-                          <Checkbox
-                            checked={tempSelectedChapters.includes(chapter.chapterNo)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setTempSelectedChapters([...tempSelectedChapters, chapter.chapterNo]);
-                              } else {
-                                setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter.chapterNo));
-                              }
-                            }}
-                            className="border-slate-300"
-                          />
-                          <label className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
-                            {chapter.fullText}
-                          </label>
+                    <div className="space-y-6">
+                      {getAvailableChaptersForDay(selectedDayIndex).map((subjectGroup, groupIndex) => (
+                        <div key={`${subjectGroup.subject}-${groupIndex}`} className="space-y-3">
+                          <h3 className="font-semibold text-slate-800 text-lg border-b border-slate-200 pb-2">
+                            {subjectGroup.subject}
+                          </h3>
+                          {subjectGroup.chapters.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-3">
+                              {subjectGroup.chapters.map((chapter: any) => (
+                                <div key={`${subjectGroup.subject}-${chapter.chapterNo}`} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+                                  <Checkbox
+                                    checked={tempSelectedChapters.includes(chapter.chapterNo)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setTempSelectedChapters([...tempSelectedChapters, chapter.chapterNo]);
+                                      } else {
+                                        setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter.chapterNo));
+                                      }
+                                    }}
+                                    className="border-slate-300"
+                                  />
+                                  <label className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
+                                    {chapter.fullText}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-slate-400">
+                              <p className="text-sm">No syllabus chapters available for {subjectGroup.subject}.</p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
