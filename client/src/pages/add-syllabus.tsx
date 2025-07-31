@@ -22,6 +22,7 @@ import type { ClassMapping, Subject } from "@shared/schema";
 const formSchema = insertSyllabusMasterSchema.extend({
   divisions: z.array(z.string()).min(1, "At least one division must be selected"),
   description: z.string().optional(),
+  allDivisions: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -54,6 +55,7 @@ export default function AddSyllabusPage() {
       topic: "",
       description: "",
       status: "active",
+      allDivisions: false,
     },
   });
 
@@ -68,20 +70,25 @@ export default function AddSyllabusPage() {
     : [];
 
   // Get available subjects for selected class (including elective subjects from groups)
-  const availableSubjects = selectedClass
-    ? Array.from(new Set([
-        // Core subjects
-        ...classMappings
-          .filter(mapping => mapping.class === selectedClass)
-          .flatMap(mapping => mapping.subjects || []),
-        // Elective subjects from groups
-        ...classMappings
-          .filter(mapping => mapping.class === selectedClass)
-          .flatMap(mapping => 
-            (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
-          )
-      ]))
-    : [];
+  const classData = selectedClass ? classMappings.filter(mapping => mapping.class === selectedClass) : [];
+  
+  // Get elective subjects from groups
+  const electiveSubjects = Array.from(new Set(
+    classData.flatMap(mapping => 
+      (mapping.electiveGroups as any[] || []).flatMap((group: any) => group.subjects || [])
+    )
+  ));
+  
+  // Get core subjects (excluding elective subjects)
+  const coreSubjects = Array.from(new Set(
+    classData.flatMap(mapping => mapping.subjects || [])
+      .filter(subject => !electiveSubjects.includes(subject))
+  ));
+  
+  const availableSubjects = [...coreSubjects, ...electiveSubjects];
+  
+  // Check if selected subject is elective
+  const isSelectedSubjectElective = selectedSubject && electiveSubjects.includes(selectedSubject);
 
   const createSyllabusMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -105,7 +112,17 @@ export default function AddSyllabusPage() {
   });
 
   const onSubmit = (data: FormData) => {
-    createSyllabusMutation.mutate(data);
+    // If subject is elective, set divisions to all available divisions
+    if (isSelectedSubjectElective) {
+      data.divisions = availableDivisions;
+    } else if (data.allDivisions) {
+      // If "All Divisions" is checked for core subjects, set divisions to all available divisions
+      data.divisions = availableDivisions;
+    }
+    
+    // Remove the allDivisions field as it's not part of the schema
+    const { allDivisions, ...submitData } = data;
+    createSyllabusMutation.mutate(submitData);
   };
 
   if (isClassMappingsLoading || isSubjectsLoading) {
@@ -213,46 +230,92 @@ export default function AddSyllabusPage() {
                 </div>
 
                 {/* Divisions Selection */}
-                {selectedClass && availableDivisions.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="divisions"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Divisions *</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                          {availableDivisions.map((division) => (
-                            <FormField
-                              key={division}
-                              control={form.control}
-                              name="divisions"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem key={division} className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(division)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, division])
-                                            : field.onChange(field.value?.filter((value) => value !== division))
-                                        }}
-                                        className="border-gray-300 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="text-sm font-normal text-gray-600">
-                                      Division {division}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
+                {selectedClass && availableDivisions.length > 0 && !isSelectedSubjectElective && (
+                  <>
+                    {/* All Divisions Checkbox for Core Subjects */}
+                    <FormField
+                      control={form.control}
+                      name="allDivisions"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (checked) {
+                                  // If "All Divisions" is checked, clear individual division selections
+                                  form.setValue("divisions", []);
+                                }
                               }}
+                              className="border-gray-300 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
                             />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
+                          </FormControl>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Apply to All Divisions
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Individual Division Selection (only show if "All Divisions" is not checked) */}
+                    {!form.watch("allDivisions") && (
+                      <FormField
+                        control={form.control}
+                        name="divisions"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700 font-medium">Divisions *</FormLabel>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                              {availableDivisions.map((division) => (
+                                <FormField
+                                  key={division}
+                                  control={form.control}
+                                  name="divisions"
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem key={division} className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(division)}
+                                            onCheckedChange={(checked) => {
+                                              return checked
+                                                ? field.onChange([...field.value, division])
+                                                : field.onChange(field.value?.filter((value) => value !== division))
+                                            }}
+                                            className="border-gray-300 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="text-sm font-normal text-gray-600">
+                                          Division {division}
+                                        </FormLabel>
+                                      </FormItem>
+                                    )
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
-                  />
+                  </>
+                )}
+
+                {/* Info message for elective subjects */}
+                {isSelectedSubjectElective && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <p className="text-sm text-purple-700 font-medium">
+                        Elective Subject - Automatically applies to all divisions
+                      </p>
+                    </div>
+                    <p className="text-xs text-purple-600 mt-1 ml-4">
+                      Elective subjects are common across all divisions in the class.
+                    </p>
+                  </div>
                 )}
 
                 {/* Chapter/Lesson No. */}
