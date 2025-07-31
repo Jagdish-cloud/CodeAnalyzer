@@ -295,41 +295,39 @@ export default function AddPeriodicTestPage() {
 
   const { coreSubjects, electiveGroups } = getStructuredSubjects();
 
-  // Check if all subjects are properly mapped for test creation
-  const checkSubjectMapping = (formData: FormData): { hasUnmappedSubjects: boolean; unmappedSubjects: string[] } => {
-    const unmappedSubjects: string[] = [];
+  // Check if all subjects are allocated/scheduled in the test
+  const checkSubjectAllocation = (formData: FormData): { hasUnallocatedSubjects: boolean; unallocatedSubjects: string[] } => {
+    // Get all available subjects for the selected class
+    const allAvailableSubjects = [...coreSubjects];
     
-    formData.testDays.forEach((dayData, index) => {
+    // Add individual elective subjects (not groups)
+    electiveGroups.forEach(group => {
+      allAvailableSubjects.push(...group.subjects);
+    });
+    
+    // Get subjects that are scheduled in the test
+    const scheduledSubjects = new Set<string>();
+    formData.testDays.forEach((dayData) => {
       if (dayData.subject) {
-        let hasMapping = false;
-        
-        // Check if it's an elective group
+        // If it's an elective group, add all subjects in that group
         if (isElectiveGroup(dayData.subject)) {
           const electiveSubjects = getSubjectsInElectiveGroup(dayData.subject);
-          // Check if any of the elective subjects have syllabus mapping
-          hasMapping = electiveSubjects.some(subject => 
-            syllabusMasters.some(syllabus => 
-              syllabus.class === formData.class && 
-              syllabus.subject === subject
-            )
-          );
+          electiveSubjects.forEach(subject => scheduledSubjects.add(subject));
         } else {
-          // Check if core subject has syllabus mapping
-          hasMapping = syllabusMasters.some(syllabus => 
-            syllabus.class === formData.class && 
-            syllabus.subject === dayData.subject
-          );
-        }
-        
-        if (!hasMapping && !unmappedSubjects.includes(dayData.subject)) {
-          unmappedSubjects.push(dayData.subject);
+          // If it's a core subject, add it directly
+          scheduledSubjects.add(dayData.subject);
         }
       }
     });
     
+    // Find subjects that are available but not scheduled
+    const unallocatedSubjects = allAvailableSubjects.filter(subject => 
+      !scheduledSubjects.has(subject)
+    );
+    
     return {
-      hasUnmappedSubjects: unmappedSubjects.length > 0,
-      unmappedSubjects
+      hasUnallocatedSubjects: unallocatedSubjects.length > 0,
+      unallocatedSubjects
     };
   };
 
@@ -416,9 +414,9 @@ export default function AddPeriodicTestPage() {
       }
     }
     
-    // Check subject mapping
-    const mappingCheck = checkSubjectMapping(data);
-    if (mappingCheck.hasUnmappedSubjects) {
+    // Check subject allocation
+    const allocationCheck = checkSubjectAllocation(data);
+    if (allocationCheck.hasUnallocatedSubjects) {
       setPendingSubmissionData(data);
       setShowMappingWarning(true);
       return;
@@ -933,7 +931,7 @@ export default function AddPeriodicTestPage() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-amber-600">
-                Subject Mapping Warning
+                Subject Allocation Warning
               </DialogTitle>
             </DialogHeader>
             
@@ -944,9 +942,9 @@ export default function AddPeriodicTestPage() {
               
               {pendingSubmissionData && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-amber-800 font-medium mb-2">Unmapped subjects:</p>
+                  <p className="text-sm text-amber-800 font-medium mb-2">Subjects not allocated in test:</p>
                   <div className="text-sm text-amber-700">
-                    {checkSubjectMapping(pendingSubmissionData).unmappedSubjects.map((subject, index) => (
+                    {checkSubjectAllocation(pendingSubmissionData).unallocatedSubjects.map((subject, index) => (
                       <div key={index} className="flex items-center">
                         <span className="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
                         {subject}
