@@ -23,10 +23,7 @@ export default function SyllabusClassPage() {
   const uniqueDivisions = Array.from(new Set(classData.map(mapping => mapping.division)));
   
   // Get both core and elective subjects (ensuring uniqueness across all divisions)
-  const coreSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects || [])));
-  
-  // For elective subjects, we need to be more careful to avoid duplicates
-  // Get all unique elective groups first, then extract subjects
+  // First, collect all elective subjects from groups to avoid showing them as core subjects
   const allElectiveGroups = new Map<string, any>();
   classData.forEach(mapping => {
     (mapping.electiveGroups as any[] || []).forEach((group: any) => {
@@ -39,6 +36,10 @@ export default function SyllabusClassPage() {
   const electiveSubjects = Array.from(new Set(
     Array.from(allElectiveGroups.values()).flatMap((group: any) => group.subjects || [])
   ));
+  
+  // Get core subjects but exclude any that are also in elective groups
+  const allCoreSubjects = Array.from(new Set(classData.flatMap(mapping => mapping.subjects || [])));
+  const coreSubjects = allCoreSubjects.filter(subject => !electiveSubjects.includes(subject));
   
   const allSubjects = [...coreSubjects, ...electiveSubjects];
 
