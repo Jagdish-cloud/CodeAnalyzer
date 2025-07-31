@@ -48,6 +48,8 @@ export default function AddPeriodicTestPage() {
   const [tempSelectedChapters, setTempSelectedChapters] = useState<string[]>([]);
   const [showNewTestNameInput, setShowNewTestNameInput] = useState(false);
   const [newTestName, setNewTestName] = useState("");
+  const [showMappingWarning, setShowMappingWarning] = useState(false);
+  const [pendingSubmissionData, setPendingSubmissionData] = useState<FormData | null>(null);
 
   const { data: classMappings = [], isLoading: isClassMappingsLoading } = useQuery<ClassMapping[]>({
     queryKey: ["/api/class-mappings"],
@@ -293,6 +295,44 @@ export default function AddPeriodicTestPage() {
 
   const { coreSubjects, electiveGroups } = getStructuredSubjects();
 
+  // Check if all subjects are properly mapped for test creation
+  const checkSubjectMapping = (formData: FormData): { hasUnmappedSubjects: boolean; unmappedSubjects: string[] } => {
+    const unmappedSubjects: string[] = [];
+    
+    formData.testDays.forEach((dayData, index) => {
+      if (dayData.subject) {
+        let hasMapping = false;
+        
+        // Check if it's an elective group
+        if (isElectiveGroup(dayData.subject)) {
+          const electiveSubjects = getSubjectsInElectiveGroup(dayData.subject);
+          // Check if any of the elective subjects have syllabus mapping
+          hasMapping = electiveSubjects.some(subject => 
+            syllabusMasters.some(syllabus => 
+              syllabus.class === formData.class && 
+              syllabus.subject === subject
+            )
+          );
+        } else {
+          // Check if core subject has syllabus mapping
+          hasMapping = syllabusMasters.some(syllabus => 
+            syllabus.class === formData.class && 
+            syllabus.subject === dayData.subject
+          );
+        }
+        
+        if (!hasMapping && !unmappedSubjects.includes(dayData.subject)) {
+          unmappedSubjects.push(dayData.subject);
+        }
+      }
+    });
+    
+    return {
+      hasUnmappedSubjects: unmappedSubjects.length > 0,
+      unmappedSubjects
+    };
+  };
+
 
 
 
@@ -376,7 +416,31 @@ export default function AddPeriodicTestPage() {
       }
     }
     
+    // Check subject mapping
+    const mappingCheck = checkSubjectMapping(data);
+    if (mappingCheck.hasUnmappedSubjects) {
+      setPendingSubmissionData(data);
+      setShowMappingWarning(true);
+      return;
+    }
+    
+    // Proceed with submission if all subjects are mapped
     createTestMutation.mutate(data);
+  };
+
+  // Handle submission with unmapped subjects after user confirmation
+  const handleConfirmSubmission = () => {
+    if (pendingSubmissionData) {
+      createTestMutation.mutate(pendingSubmissionData);
+    }
+    setShowMappingWarning(false);
+    setPendingSubmissionData(null);
+  };
+
+  // Handle cancellation of submission
+  const handleCancelSubmission = () => {
+    setShowMappingWarning(false);
+    setPendingSubmissionData(null);
   };
 
   if (isClassMappingsLoading || isSyllabusLoading) {
@@ -860,6 +924,56 @@ export default function AddPeriodicTestPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Subject Mapping Warning Dialog */}
+        <Dialog open={showMappingWarning} onOpenChange={setShowMappingWarning}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-amber-600">
+                Subject Mapping Warning
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="py-4">
+              <p className="text-slate-700 mb-4">
+                All the Subjects are not Mapped for this Test. Do you wish to continue?
+              </p>
+              
+              {pendingSubmissionData && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-amber-800 font-medium mb-2">Unmapped subjects:</p>
+                  <div className="text-sm text-amber-700">
+                    {checkSubjectMapping(pendingSubmissionData).unmappedSubjects.map((subject, index) => (
+                      <div key={index} className="flex items-center">
+                        <span className="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
+                        {subject}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelSubmission}
+                  className="text-slate-600 border-slate-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmSubmission}
+                  disabled={createTestMutation.isPending}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                >
+                  {createTestMutation.isPending ? "Creating..." : "Continue"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

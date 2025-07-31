@@ -455,6 +455,16 @@ Preferred communication style: Simple, everyday language.
     - Ensures elective subjects are applicable to all divisions of the class for syllabus mapping
   - Enhanced form validation and data handling across all updated modules for the new grouping system
   - Applied consistent elective group display throughout the application interface
+- July 31, 2025: Enhanced Schedule Periodic Test with Elective Groups Support and Subject Mapping Validation:
+  - Updated subject dropdown in Add Schedule Periodic Test to group elective subjects as "Group Name (Subject1/Subject2)"
+  - Modified syllabus functionality to display all subjects within selected elective groups in organized modal sections
+  - Enhanced "Add Syllabus" modal to show chapters organized by subject when elective group is selected
+  - Added comprehensive subject mapping validation with warning dialog for unmapped subjects
+  - Implemented "All the Subjects are not Mapped for this Test. Do you wish to continue?" confirmation prompt
+  - Added unmapped subjects list display in warning dialog with clear visual indicators
+  - Enhanced form submission logic to validate syllabus availability before test creation
+  - Applied amber-orange gradient styling to warning dialog for clear visual distinction
+  - Maintained backward compatibility with core subjects while supporting new elective group functionality
 
 ## Changelog
 
