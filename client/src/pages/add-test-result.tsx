@@ -50,6 +50,11 @@ export default function AddTestResultPage() {
     queryKey: ['/api/class-mappings'],
   });
 
+  // Fetch subjects for elective group processing
+  const { data: subjects = [] } = useQuery<any[]>({
+    queryKey: ['/api/subjects'],
+  });
+
   // Fetch students based on selected class and division
   const studentsQueryKey = watchedValues.division === "All" 
     ? [`/api/students`] 
@@ -132,6 +137,51 @@ export default function AddTestResultPage() {
     }
   }, [watchedValues.class, form]);
 
+  // Helper functions for elective group processing
+  const getStructuredSubjects = () => {
+    // Get class mapping for the selected class to identify elective groups
+    const classMapping = classMappings.find(mapping => 
+      mapping.class === watchedValues.class && 
+      mapping.year === watchedValues.year
+    );
+    
+    if (!classMapping || !classMapping.electiveGroups) {
+      return { coreSubjects: subjects.filter(s => s.subjectType === 'Core').map(s => s.subjectName), electiveGroups: [] };
+    }
+    
+    // Get all elective subjects from groups
+    const allElectiveSubjects = classMapping.electiveGroups.flatMap((group: any) => group.subjects);
+    
+    // Filter core subjects (exclude those in elective groups)
+    const coreSubjects = subjects
+      .filter(subject => 
+        subject.subjectType === 'Core' && 
+        !allElectiveSubjects.includes(subject.subjectName)
+      )
+      .map(subject => subject.subjectName);
+    
+    return {
+      coreSubjects,
+      electiveGroups: classMapping.electiveGroups || []
+    };
+  };
+
+  const isElectiveGroup = (subject: string) => {
+    const { electiveGroups } = getStructuredSubjects();
+    return electiveGroups.some((group: any) => group.groupName === subject);
+  };
+
+  const formatSubjectName = (subject: string) => {
+    if (isElectiveGroup(subject)) {
+      const { electiveGroups } = getStructuredSubjects();
+      const group = electiveGroups.find((g: any) => g.groupName === subject);
+      if (group && group.subjects) {
+        return `${subject} (${group.subjects.join('/')})`;
+      }
+    }
+    return subject;
+  };
+
   const generateDataStructure = (formData: TestResultFormData) => {
     if (!selectedTest) throw new Error("No test selected");
     
@@ -142,7 +192,8 @@ export default function AddTestResultPage() {
       test.year === formData.year
     );
     
-    const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
+    const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)))
+      .map(subject => formatSubjectName(subject)); // Format elective group names
     
     console.log("Debug - Total students before processing:", students.length);
     console.log("Debug - Students data:", students.map(s => ({ name: s.firstName, class: s.class, division: s.division })));
@@ -270,12 +321,7 @@ export default function AddTestResultPage() {
       student.studentName,
       student.division || '',
       ...data.subjects.map((subject: string) => {
-        // If "All" divisions and subject not available for this student's division, mark as N/A
-        if (data.testInfo.division === "All" && data.subjectAvailability && data.subjectAvailability[subject]) {
-          const studentDivision = student.division;
-          const isSubjectAvailable = data.subjectAvailability[subject].includes(studentDivision);
-          return isSubjectAvailable ? '' : 'N/A';
-        }
+        // Always return empty string for score cells - no N/A values
         return '';
       })
     ]);
@@ -299,13 +345,7 @@ export default function AddTestResultPage() {
         1: { cellWidth: 50 }, // Student Name  
         2: { cellWidth: 20 }, // Division
       },
-      didParseCell: (data: any) => {
-        // Grey out N/A cells
-        if (data.cell.text[0] === 'N/A') {
-          data.cell.styles.fillColor = [220, 220, 220];
-          data.cell.styles.textColor = [100, 100, 100];
-        }
-      }
+      // Removed N/A cell styling since we no longer use N/A values
     });
     
     // Save the PDF
@@ -334,12 +374,7 @@ export default function AddTestResultPage() {
         student.studentName,
         student.division || '',
         ...data.subjects.map((subject: string) => {
-          // If "All" divisions and subject not available for this student's division, mark as N/A
-          if (data.testInfo.division === "All" && data.subjectAvailability && data.subjectAvailability[subject]) {
-            const studentDivision = student.division;
-            const isSubjectAvailable = data.subjectAvailability[subject].includes(studentDivision);
-            return isSubjectAvailable ? '' : 'N/A';
-          }
+          // Always return empty string for score cells - no N/A values
           return '';
         })
       ])

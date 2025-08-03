@@ -73,3 +73,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Services and APIs
 - **Google Maps API**: Integrated for bus route management (map interaction, geocoding).
+
+## Recent Changes
+
+- August 3, 2025: Enhanced Test Results PDF/Excel Generation with Elective Groups and Removed N/A Values:
+  - Updated Add Test Results to format elective groups as "Group Name (Subject1/Subject2/Subject3...)" in PDF/Excel headers
+  - Removed all "N/A" values from test result sheets since core subjects are common and electives are mandatory
+  - Enhanced PDF generation to display properly formatted elective group names in column headers
+  - Updated Excel generation to match PDF formatting with clean elective group display
+  - Removed grey-out styling for N/A cells since N/A values are no longer used
+  - Applied consistent elective group formatting throughout test result generation system
+  - Improved user experience with cleaner, more professional test result sheet appearance
