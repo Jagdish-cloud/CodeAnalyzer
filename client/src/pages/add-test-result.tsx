@@ -138,11 +138,13 @@ export default function AddTestResultPage() {
   }, [watchedValues.class, form]);
 
   // Helper functions for elective group processing
-  const getStructuredSubjects = () => {
-    // Get class mapping for the selected class to identify elective groups
+  const getStructuredSubjects = (formData?: TestResultFormData) => {
+    const targetClass = formData?.class || watchedValues.class;
+    const targetYear = formData?.year || watchedValues.year;
+    
+    // Get class mapping for the target class to identify elective groups
     const classMapping = classMappings.find(mapping => 
-      mapping.class === watchedValues.class && 
-      mapping.year === watchedValues.year
+      mapping.class === targetClass
     );
     
     if (!classMapping || !classMapping.electiveGroups) {
@@ -166,14 +168,14 @@ export default function AddTestResultPage() {
     };
   };
 
-  const isElectiveGroup = (subject: string) => {
-    const { electiveGroups } = getStructuredSubjects();
+  const isElectiveGroup = (subject: string, formData?: TestResultFormData) => {
+    const { electiveGroups } = getStructuredSubjects(formData);
     return electiveGroups.some((group: any) => group.groupName === subject);
   };
 
-  const formatSubjectName = (subject: string) => {
-    if (isElectiveGroup(subject)) {
-      const { electiveGroups } = getStructuredSubjects();
+  const formatSubjectName = (subject: string, formData?: TestResultFormData) => {
+    if (isElectiveGroup(subject, formData)) {
+      const { electiveGroups } = getStructuredSubjects(formData);
       const group = electiveGroups.find((g: any) => g.groupName === subject);
       if (group && group.subjects) {
         return `${subject} (${group.subjects.join('/')})`;
@@ -192,8 +194,13 @@ export default function AddTestResultPage() {
       test.year === formData.year
     );
     
-    const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)))
-      .map(subject => formatSubjectName(subject)); // Format elective group names
+    const rawSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
+    console.log("Debug - Raw subjects from tests:", rawSubjects);
+    console.log("Debug - Class mappings:", classMappings);
+    console.log("Debug - Selected class mapping for", formData.class, ":", classMappings.find(m => m.class === formData.class));
+    
+    const testSubjects = rawSubjects.map(subject => formatSubjectName(subject, formData)); // Format elective group names
+    console.log("Debug - Formatted subjects:", testSubjects);
     
     console.log("Debug - Total students before processing:", students.length);
     console.log("Debug - Students data:", students.map(s => ({ name: s.firstName, class: s.class, division: s.division })));
