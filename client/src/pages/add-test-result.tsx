@@ -178,10 +178,30 @@ export default function AddTestResultPage() {
       const { electiveGroups } = getStructuredSubjects(formData);
       const group = electiveGroups.find((g: any) => g.groupName === subject);
       if (group && group.subjects) {
-        return `${subject} (${group.subjects.join('/')})`;
+        // Return individual subjects from the elective group
+        return group.subjects;
       }
     }
     return subject;
+  };
+
+  const expandElectiveSubjects = (subjects: string[], formData?: TestResultFormData) => {
+    const expandedSubjects: string[] = [];
+    
+    subjects.forEach(subject => {
+      if (isElectiveGroup(subject, formData)) {
+        const { electiveGroups } = getStructuredSubjects(formData);
+        const group = electiveGroups.find((g: any) => g.groupName === subject);
+        if (group && group.subjects) {
+          // Add each individual subject from the elective group
+          expandedSubjects.push(...group.subjects);
+        }
+      } else {
+        expandedSubjects.push(subject);
+      }
+    });
+    
+    return expandedSubjects;
   };
 
   const generateDataStructure = (formData: TestResultFormData) => {
@@ -199,8 +219,8 @@ export default function AddTestResultPage() {
     console.log("Debug - Class mappings:", classMappings);
     console.log("Debug - Selected class mapping for", formData.class, ":", classMappings.find(m => m.class === formData.class));
     
-    const testSubjects = rawSubjects.map(subject => formatSubjectName(subject, formData)); // Format elective group names
-    console.log("Debug - Formatted subjects:", testSubjects);
+    const testSubjects = expandElectiveSubjects(rawSubjects, formData); // Expand elective groups into individual subjects
+    console.log("Debug - Expanded subjects:", testSubjects);
     
     console.log("Debug - Total students before processing:", students.length);
     console.log("Debug - Students data:", students.map(s => ({ name: s.firstName, class: s.class, division: s.division })));
