@@ -463,8 +463,9 @@ export default function AddTestResultPage() {
       ...finalHeaders.map(() => '') // Empty cells for scores
     ]);
 
-    // Create a properly formatted table with elective group headers
+    // Create a more sophisticated header structure for elective groups
     const createElectiveTable = () => {
+      // For the elective groups, create a custom two-row header
       const hasElectiveGroups = Object.keys(electiveGroupInfo).length > 0;
       
       if (!hasElectiveGroups) {
@@ -474,11 +475,11 @@ export default function AddTestResultPage() {
           body: tableData,
           startY: infoY + 20,
           styles: {
-            fontSize: 9,
-            cellPadding: 3,
+            fontSize: 8,
+            cellPadding: 2,
           },
           headStyles: {
-            fillColor: [180, 180, 180],
+            fillColor: [200, 200, 200],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
           },
@@ -491,97 +492,69 @@ export default function AddTestResultPage() {
         return;
       }
       
-      // Build the proper header structure for elective groups
-      const headerRow1: string[] = [...basicHeaders]; // Roll No, Student Name, Division
-      const headerRow2: string[] = ['', '', '']; // Empty for basic columns in second row
+      // Complex case: handle elective groups with custom header structure
+      const firstRowHeaders: string[] = [...basicHeaders];
+      const actualSecondRowHeaders: string[] = [...basicHeaders];
       
-      // Add core subjects (single row headers)
+      // Add core subjects first (no grouping needed)
       coreSubjects.forEach(subject => {
-        headerRow1.push(subject);
-        headerRow2.push('');
+        firstRowHeaders.push(subject);
+        actualSecondRowHeaders.push('');
       });
       
-      // Add elective groups (two-row headers with proper spanning)
+      // Add elective groups with proper header structure
       Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
-        // First subject gets the group name, others get empty for spanning
-        headerRow1.push(groupName);
+        // Add group name spanning across all its subjects in first row
+        firstRowHeaders.push(groupName);
         for (let i = 1; i < subjectsList.length; i++) {
-          headerRow1.push('');
+          firstRowHeaders.push(''); // Empty cells for spanning
         }
         
         // Add individual subjects in second row
         subjectsList.forEach(subject => {
-          headerRow2.push(subject);
+          actualSecondRowHeaders.push(subject);
         });
       });
       
-      // Create the table with proper styling and column widths
-      const totalCols = basicHeaders.length + coreSubjects.length + 
-        Object.values(electiveGroupInfo).reduce((sum, subjects) => sum + subjects.length, 0);
-      
-      // Calculate dynamic column widths
-      const basicColWidth = 20;
-      const nameColWidth = 50;
-      const divisionColWidth = 20;
-      const subjectColWidth = Math.max(15, (250 - basicColWidth - nameColWidth - divisionColWidth) / 
-        (totalCols - 3));
-      
-      const columnStyles: any = {
-        0: { cellWidth: basicColWidth },
-        1: { cellWidth: nameColWidth },
-        2: { cellWidth: divisionColWidth },
-      };
-      
-      // Set widths for subject columns
-      for (let i = 3; i < totalCols; i++) {
-        columnStyles[i] = { cellWidth: subjectColWidth };
-      }
-      
+      // Use autoTable with custom didDrawCell to merge elective group headers
       autoTable(doc, {
-        head: [headerRow1, headerRow2],
+        head: [firstRowHeaders, actualSecondRowHeaders],
         body: tableData,
         startY: infoY + 20,
         styles: {
-          fontSize: 9,
-          cellPadding: 3,
-          lineColor: [0, 0, 0],
-          lineWidth: 0.5,
+          fontSize: 8,
+          cellPadding: 2,
         },
         headStyles: {
-          fillColor: [180, 180, 180],
+          fillColor: [200, 200, 200],
           textColor: [0, 0, 0],
           fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
         },
-        columnStyles: columnStyles,
+        columnStyles: {
+          0: { cellWidth: 20 }, // Roll No
+          1: { cellWidth: 50 }, // Student Name  
+          2: { cellWidth: 20 }, // Division
+        },
         didDrawCell: function (data) {
-          if (data.row.section === 'head' && data.row.index === 0) {
-            // Draw spanning borders for elective groups in first header row
+          // Handle header row merging for elective groups
+          if (data.row.index === 0) { // First header row
             let currentCol = basicHeaders.length + coreSubjects.length;
             
+            // Draw borders around elective group spans
             Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
               if (data.column.index >= currentCol && data.column.index < currentCol + subjectsList.length) {
-                if (data.column.index === currentCol && subjectsList.length > 1) {
-                  // This is the first cell of an elective group - draw spanning border
-                  const spanWidth = subjectColWidth * subjectsList.length;
-                  
-                  // Clear the default borders for spanning
-                  doc.setFillColor(180, 180, 180);
-                  doc.rect(data.cell.x, data.cell.y, spanWidth, data.cell.height, 'F');
-                  
-                  // Draw the group border
+                // This cell is part of an elective group
+                if (data.column.index === currentCol) {
+                  // First cell of the group - keep the text
+                  // Add bottom border to separate from individual subjects
                   doc.setDrawColor(0, 0, 0);
                   doc.setLineWidth(0.5);
-                  doc.rect(data.cell.x, data.cell.y, spanWidth, data.cell.height, 'S');
-                  
-                  // Add the group name text centered
-                  doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(9);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(groupName, data.cell.x + spanWidth/2, data.cell.y + data.cell.height/2 + 2, {
-                    align: 'center'
-                  });
+                  doc.line(
+                    data.cell.x, 
+                    data.cell.y + data.cell.height, 
+                    data.cell.x + (data.cell.width * subjectsList.length), 
+                    data.cell.y + data.cell.height
+                  );
                 }
               }
               currentCol += subjectsList.length;
