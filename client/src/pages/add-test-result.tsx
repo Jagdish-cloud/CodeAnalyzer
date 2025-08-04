@@ -228,16 +228,37 @@ export default function AddTestResultPage() {
     // If "All" divisions selected, get subjects available for each division
     let subjectAvailability: { [subject: string]: string[] } = {};
     if (formData.division === "All") {
-      // For each subject, check which divisions have it mapped in class mappings
-      testSubjects.forEach(subject => {
+      // Handle both core subjects and elective groups separately
+      const { coreSubjects, electiveGroups } = getStructuredSubjects(formData);
+      
+      // Handle core subjects - check which divisions have them mapped
+      coreSubjects.forEach(subject => {
         const divisionsWithSubject = classMappings
           .filter(mapping => 
             mapping.class === formData.class &&
             mapping.subjects && 
             mapping.subjects.includes(subject)
           )
-          .map(mapping => mapping.division); // Each mapping has one division
+          .map(mapping => mapping.division);
         subjectAvailability[subject] = Array.from(new Set(divisionsWithSubject));
+      });
+      
+      // Handle elective groups - for each group, create an entry with group name and comma-separated subjects
+      electiveGroups.forEach((group: any) => {
+        if (rawSubjects.includes(group.groupName)) {
+          // Check which divisions have this elective group
+          const divisionsWithGroup = classMappings
+            .filter(mapping => 
+              mapping.class === formData.class &&
+              mapping.electiveGroups &&
+              mapping.electiveGroups.some((eg: any) => eg.groupName === group.groupName)
+            )
+            .map(mapping => mapping.division);
+          
+          // Create combined display: "Elective Group Name: Subject1, Subject2, Subject3"
+          const groupDisplay = `${group.groupName}: ${group.subjects.join(', ')}`;
+          subjectAvailability[groupDisplay] = Array.from(new Set(divisionsWithGroup));
+        }
       });
     }
 
@@ -259,6 +280,28 @@ export default function AddTestResultPage() {
         
     console.log("Debug - Final processed students:", processedStudents);
     
+    // Create structured subjects array for display (combining core subjects and elective groups)
+    const structuredSubjects: string[] = [];
+    if (formData.division === "All") {
+      const { coreSubjects, electiveGroups } = getStructuredSubjects(formData);
+      
+      // Add core subjects
+      coreSubjects.forEach(subject => {
+        structuredSubjects.push(subject);
+      });
+      
+      // Add elective groups with their subjects formatted as "GroupName: Subject1, Subject2"
+      electiveGroups.forEach((group: any) => {
+        if (rawSubjects.includes(group.groupName)) {
+          const groupDisplay = `${group.groupName}: ${group.subjects.join(', ')}`;
+          structuredSubjects.push(groupDisplay);
+        }
+      });
+    } else {
+      // For specific division, use the expanded subjects
+      structuredSubjects.push(...testSubjects);
+    }
+
     return {
       testInfo: {
         schoolName: "Greenwood International School",
@@ -271,7 +314,7 @@ export default function AddTestResultPage() {
         duration: selectedTest.duration,
       },
       students: processedStudents,
-      subjects: testSubjects,
+      subjects: structuredSubjects,
       subjectAvailability: subjectAvailability,
     };
   };
