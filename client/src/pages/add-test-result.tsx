@@ -388,24 +388,50 @@ export default function AddTestResultPage() {
     const processHeadersForElectives = () => {
       const basicHeaders = ['Roll No', 'Student Name', 'Division'];
       const electiveGroupInfo: { [key: string]: string[] } = {};
-      const finalHeaders: string[] = [];
-      const secondRowHeaders: string[] = [];
+      const coreSubjects: string[] = [];
       
-      // Parse subjects to identify elective groups
+      // Get class mapping for elective groups structure from database
+      const classMapping = classMappings.find(mapping => 
+        mapping.class === data.testInfo.class && 
+        (data.testInfo.division === "All" || mapping.division === data.testInfo.division)
+      );
+      
+      // Process core subjects first
       data.subjects.forEach((subject: string) => {
-        if (subject.includes(': ')) {
-          // This is an elective group format: "Elective 1: Dance, Music, Art"
-          const [groupName, subjectsStr] = subject.split(': ');
-          const subjectsList = subjectsStr.split(', ').map(s => s.trim());
-          electiveGroupInfo[groupName] = subjectsList;
-        } else {
-          // Regular subject
-          finalHeaders.push(subject);
-          secondRowHeaders.push('');
+        if (!subject.includes(': ')) {
+          coreSubjects.push(subject);
         }
       });
       
-      // Add elective group headers
+      // Process elective groups from database structure
+      if (classMapping?.electiveGroups && Array.isArray(classMapping.electiveGroups)) {
+        classMapping.electiveGroups.forEach((group: any) => {
+          if (group.groupName && group.subjects && Array.isArray(group.subjects)) {
+            electiveGroupInfo[group.groupName] = group.subjects;
+          }
+        });
+      }
+      
+      // Also handle the legacy format from data.subjects (backward compatibility)
+      data.subjects.forEach((subject: string) => {
+        if (subject.includes(': ')) {
+          const [groupName, subjectsStr] = subject.split(': ');
+          const subjectsList = subjectsStr.split(', ').map(s => s.trim());
+          electiveGroupInfo[groupName] = subjectsList;
+        }
+      });
+      
+      // Build final headers structure
+      const finalHeaders: string[] = [];
+      const secondRowHeaders: string[] = [];
+      
+      // Add core subjects
+      coreSubjects.forEach(subject => {
+        finalHeaders.push(subject);
+        secondRowHeaders.push('');
+      });
+      
+      // Add elective groups
       Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
         finalHeaders.push(...subjectsList);
         // First subject gets the group name, others get empty string for merging
@@ -419,11 +445,12 @@ export default function AddTestResultPage() {
         basicHeaders,
         finalHeaders,
         secondRowHeaders,
-        electiveGroupInfo
+        electiveGroupInfo,
+        coreSubjects
       };
     };
     
-    const { basicHeaders, finalHeaders, secondRowHeaders, electiveGroupInfo } = processHeadersForElectives();
+    const { basicHeaders, finalHeaders, secondRowHeaders, electiveGroupInfo, coreSubjects } = processHeadersForElectives();
     
     // Prepare table headers - basic headers + processed subject headers
     const tableHeaders = [...basicHeaders, ...finalHeaders];
@@ -465,25 +492,19 @@ export default function AddTestResultPage() {
         return;
       }
       
-      // Complex case: handle elective groups with custom header
-      const basicCols = 3; // Roll No, Student Name, Division
-      const totalCols = basicCols + finalHeaders.length;
-      
-      // Create first row of headers (with merged elective group names)
+      // Complex case: handle elective groups with custom header structure
       const firstRowHeaders: string[] = [...basicHeaders];
-      const secondRowHeaders: string[] = [...basicHeaders];
+      const actualSecondRowHeaders: string[] = [...basicHeaders];
       
-      // Add regular subjects (not in elective groups)
-      data.subjects.forEach((subject: string) => {
-        if (!subject.includes(': ')) {
-          firstRowHeaders.push(subject);
-          secondRowHeaders.push('');
-        }
+      // Add core subjects first (no grouping needed)
+      coreSubjects.forEach(subject => {
+        firstRowHeaders.push(subject);
+        actualSecondRowHeaders.push('');
       });
       
-      // Add elective groups
+      // Add elective groups with proper header structure
       Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
-        // Add group name spanning across all its subjects
+        // Add group name spanning across all its subjects in first row
         firstRowHeaders.push(groupName);
         for (let i = 1; i < subjectsList.length; i++) {
           firstRowHeaders.push(''); // Empty cells for spanning
@@ -491,13 +512,13 @@ export default function AddTestResultPage() {
         
         // Add individual subjects in second row
         subjectsList.forEach(subject => {
-          secondRowHeaders.push(subject);
+          actualSecondRowHeaders.push(subject);
         });
       });
       
-      // Use standard autoTable with manually constructed headers
+      // Use autoTable with custom didDrawCell to merge elective group headers
       autoTable(doc, {
-        head: [firstRowHeaders, secondRowHeaders],
+        head: [firstRowHeaders, actualSecondRowHeaders],
         body: tableData,
         startY: infoY + 20,
         styles: {
@@ -514,6 +535,32 @@ export default function AddTestResultPage() {
           1: { cellWidth: 50 }, // Student Name  
           2: { cellWidth: 20 }, // Division
         },
+        didDrawCell: function (data) {
+          // Handle header row merging for elective groups
+          if (data.row.index === 0) { // First header row
+            let currentCol = basicHeaders.length + coreSubjects.length;
+            
+            // Draw borders around elective group spans
+            Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
+              if (data.column.index >= currentCol && data.column.index < currentCol + subjectsList.length) {
+                // This cell is part of an elective group
+                if (data.column.index === currentCol) {
+                  // First cell of the group - keep the text
+                  // Add bottom border to separate from individual subjects
+                  doc.setDrawColor(0, 0, 0);
+                  doc.setLineWidth(0.5);
+                  doc.line(
+                    data.cell.x, 
+                    data.cell.y + data.cell.height, 
+                    data.cell.x + (data.cell.width * subjectsList.length), 
+                    data.cell.y + data.cell.height
+                  );
+                }
+              }
+              currentCol += subjectsList.length;
+            });
+          }
+        }
       });
     };
     
