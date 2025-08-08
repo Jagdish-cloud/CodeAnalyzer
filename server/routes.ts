@@ -645,15 +645,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid student ID" });
       }
 
-      const deleted = await storage.deleteStudent(id);
-      
-      if (!deleted) {
+      const success = await storage.deleteStudent(id);
+      if (!success) {
         return res.status(404).json({ message: "Student not found" });
       }
-      
-      res.status(204).send();
+
+      res.json({ message: "Student deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete student" });
+    }
+  });
+
+  // New endpoint to reorder roll numbers for a class-division
+  app.post("/api/students/reorder-roll-numbers", async (req, res) => {
+    try {
+      const { class: className, division } = req.body;
+      
+      if (!className || !division) {
+        return res.status(400).json({ 
+          message: "Class and division are required" 
+        });
+      }
+
+      await storage.reorderRollNumbers(className, division);
+      res.json({ message: "Roll numbers reordered successfully" });
+    } catch (error) {
+      console.error("Roll number reordering error:", error);
+      res.status(500).json({ message: "Failed to reorder roll numbers" });
     }
   });
 

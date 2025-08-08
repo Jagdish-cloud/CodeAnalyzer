@@ -85,6 +85,8 @@ const formSchema = insertStudentSchema
       .optional()
       .or(z.literal("")),
     guardianRelation: z.string().optional(),
+    // Elective selections field
+    electiveSelections: z.record(z.string()).optional(),
   })
   .refine(
     (data) => {
@@ -667,69 +669,76 @@ export default function AddStudent() {
                     />
 
                     {/* Elective Groups Selection */}
-                    {selectedClassMapping && selectedClassMapping.electiveGroups && (selectedClassMapping.electiveGroups as any[]).length > 0 && (
-                      <div className="space-y-6">
-                        <div>
-                          <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
-                            Elective Groups Selection
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            Select one subject from each elective group
-                          </p>
-                        </div>
+                    {(() => {
+                      const electiveGroups = selectedClassMapping?.electiveGroups;
+                      if (!electiveGroups || !Array.isArray(electiveGroups) || electiveGroups.length === 0) {
+                        return null;
+                      }
+                      
+                      return (
+                        <div className="space-y-6">
+                          <div>
+                            <h4 className="text-md font-medium text-slate-700 dark:text-slate-300">
+                              Elective Groups Selection
+                            </h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                              Select one subject from each elective group
+                            </p>
+                          </div>
 
-                        <FormField
-                          control={form.control}
-                          name="electiveSelections"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="space-y-6">
-                                {(selectedClassMapping.electiveGroups as any[]).map((group: any, groupIndex: number) => (
-                                  <div key={groupIndex} className="border border-purple-200 dark:border-purple-700 rounded-lg p-4 bg-purple-50/50 dark:bg-purple-900/10">
-                                    <div className="mb-3">
-                                      <h5 className="font-semibold text-slate-900 dark:text-slate-100">
-                                        {group.groupName}
-                                      </h5>
-                                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                                        Choose one subject from this group
-                                      </p>
+                          <FormField
+                            control={form.control}
+                            name="electiveSelections"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="space-y-6">
+                                  {(electiveGroups as Array<{groupName: string, subjects: string[]}>).map((group, groupIndex: number) => (
+                                    <div key={groupIndex} className="border border-purple-200 dark:border-purple-700 rounded-lg p-4 bg-purple-50/50 dark:bg-purple-900/10">
+                                      <div className="mb-3">
+                                        <h5 className="font-semibold text-slate-900 dark:text-slate-100">
+                                          {group.groupName}
+                                        </h5>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                                          Choose one subject from this group
+                                        </p>
+                                      </div>
+                                      
+                                      <div className="space-y-2">
+                                        {group.subjects?.map((subject: string) => (
+                                          <div key={subject} className="flex items-center space-x-3">
+                                            <input
+                                              type="radio"
+                                              id={`${group.groupName}-${subject}`}
+                                              name={`elective-group-${groupIndex}`}
+                                              checked={(field.value as Record<string, string>)?.[group.groupName] === subject}
+                                              onChange={() => {
+                                                const currentSelections = field.value as Record<string, string> || {};
+                                                field.onChange({
+                                                  ...currentSelections,
+                                                  [group.groupName]: subject
+                                                });
+                                              }}
+                                              className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500"
+                                            />
+                                            <label
+                                              htmlFor={`${group.groupName}-${subject}`}
+                                              className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                                            >
+                                              {subject}
+                                            </label>
+                                          </div>
+                                        )) || <div className="text-slate-500 dark:text-slate-400 text-sm">No subjects available in this group</div>}
+                                      </div>
                                     </div>
-                                    
-                                    <div className="space-y-2">
-                                      {group.subjects?.map((subject: string) => (
-                                        <div key={subject} className="flex items-center space-x-3">
-                                          <input
-                                            type="radio"
-                                            id={`${group.groupName}-${subject}`}
-                                            name={`elective-group-${groupIndex}`}
-                                            checked={(field.value as any)?.[group.groupName] === subject}
-                                            onChange={() => {
-                                              const currentSelections = field.value as any || {};
-                                              field.onChange({
-                                                ...currentSelections,
-                                                [group.groupName]: subject
-                                              });
-                                            }}
-                                            className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500"
-                                          />
-                                          <label
-                                            htmlFor={`${group.groupName}-${subject}`}
-                                            className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                                          >
-                                            {subject}
-                                          </label>
-                                        </div>
-                                      )) || <div className="text-slate-500 dark:text-slate-400 text-sm">No subjects available in this group</div>}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Parent/Guardian Information */}

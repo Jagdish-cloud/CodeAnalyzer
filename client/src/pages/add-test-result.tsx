@@ -147,36 +147,48 @@ export default function AddTestResultPage() {
       mapping.class === targetClass
     );
     
-    if (!classMapping || !classMapping.electiveGroups) {
+    if (!classMapping) {
       return { coreSubjects: subjects.filter(s => s.subjectType === 'Core').map(s => s.subjectName), electiveGroups: [] };
     }
     
-    // Get all elective subjects from groups
-    const allElectiveSubjects = classMapping.electiveGroups.flatMap((group: any) => group.subjects);
+    // Get core subjects from the class mapping (these are the subjects configured for this class)
+    const coreSubjects = classMapping.subjects || [];
     
-    // Filter core subjects (exclude those in elective groups)
-    const coreSubjects = subjects
-      .filter(subject => 
-        subject.subjectType === 'Core' && 
-        !allElectiveSubjects.includes(subject.subjectName)
-      )
-      .map(subject => subject.subjectName);
+    // Get elective groups
+    const electiveGroups = classMapping.electiveGroups || [];
     
     return {
       coreSubjects,
-      electiveGroups: classMapping.electiveGroups || []
+      electiveGroups
     };
   };
 
   const isElectiveGroup = (subject: string, formData?: TestResultFormData) => {
     const { electiveGroups } = getStructuredSubjects(formData);
-    return electiveGroups.some((group: any) => group.groupName === subject);
+    // Check if the subject matches any elective group name exactly
+    const exactMatch = electiveGroups.some((group: any) => group.groupName === subject);
+    if (exactMatch) return true;
+    
+    // If no exact match, check if it's a partial match (e.g., "Elective 1" might match "Elective 1 Test")
+    const partialMatch = electiveGroups.some((group: any) => 
+      group.groupName.includes(subject) || subject.includes(group.groupName)
+    );
+    return partialMatch;
   };
 
   const formatSubjectName = (subject: string, formData?: TestResultFormData) => {
     if (isElectiveGroup(subject, formData)) {
       const { electiveGroups } = getStructuredSubjects(formData);
-      const group = electiveGroups.find((g: any) => g.groupName === subject);
+      // First try exact match
+      let group = electiveGroups.find((g: any) => g.groupName === subject);
+      
+      // If no exact match, try partial match
+      if (!group) {
+        group = electiveGroups.find((g: any) => 
+          g.groupName.includes(subject) || subject.includes(g.groupName)
+        );
+      }
+      
       if (group && group.subjects) {
         // Return individual subjects from the elective group
         return group.subjects;
@@ -187,11 +199,22 @@ export default function AddTestResultPage() {
 
   const expandElectiveSubjects = (subjects: string[], formData?: TestResultFormData) => {
     const expandedSubjects: string[] = [];
+    console.log("expandElectiveSubjects - Subjects to expand:", subjects);
+    console.log("expandElectiveSubjects - Form data:", formData);
     
     subjects.forEach(subject => {
       if (isElectiveGroup(subject, formData)) {
         const { electiveGroups } = getStructuredSubjects(formData);
-        const group = electiveGroups.find((g: any) => g.groupName === subject);
+        // First try exact match
+        let group = electiveGroups.find((g: any) => g.groupName === subject);
+        
+        // If no exact match, try partial match
+        if (!group) {
+          group = electiveGroups.find((g: any) => 
+            g.groupName.includes(subject) || subject.includes(group.groupName)
+          );
+        }
+        
         if (group && group.subjects) {
           // Add each individual subject from the elective group
           expandedSubjects.push(...group.subjects);
@@ -203,6 +226,85 @@ export default function AddTestResultPage() {
     
     return expandedSubjects;
   };
+
+  // Function to determine which elective subjects are "Not Applicable" for a student
+  const getNotApplicableSubjects = (student: any, electiveGroupInfo: { [key: string]: string[] }) => {
+    const notApplicableSubjects: string[] = [];
+    
+    // Get student's elective selections
+    const studentElectiveSelections = student.selectedElectiveGroups || [];
+    
+    // For each elective group, check if the student has selected a subject
+    Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
+      // Find the student's selection for this group
+      const studentSelection = studentElectiveSelections.find((selection: any) => 
+        selection.groupName === groupName
+      );
+      
+      if (studentSelection) {
+        // Student has selected a subject from this group
+        // All other subjects in this group are "Not Applicable"
+        subjectsList.forEach(subject => {
+          if (subject !== studentSelection.selectedSubject) {
+            notApplicableSubjects.push(subject);
+          }
+        });
+      } else {
+        // Student hasn't selected any subject from this group
+        // All subjects in this group are "Not Applicable"
+        notApplicableSubjects.push(...subjectsList);
+      }
+    });
+    
+    return notApplicableSubjects;
+  };
+
+  // Function to check if a subject is "Not Applicable" for a specific student
+  const isSubjectNotApplicable = (subject: string, student: any, electiveGroupInfo: { [key: string]: string[] }) => {
+    const notApplicableSubjects = getNotApplicableSubjects(student, electiveGroupInfo);
+    return notApplicableSubjects.includes(subject);
+  };
+
+  // Test function to demonstrate "Not Applicable" validation
+  const testNotApplicableValidation = () => {
+    // Sample student data as provided
+    const studentData = [
+      {"groupName":"Elective II A","selectedSubject":"Political Science"},
+      {"groupName":"Elective II B","selectedSubject":"French"},
+      {"groupName":"Elective II C","selectedSubject":"Dance"}
+    ];
+    
+    // Sample elective group info
+    const electiveGroupInfo = {
+      "Elective II A": ["Political Science", "Economics", "History"],
+      "Elective II B": ["French", "German", "Spanish"],
+      "Elective II C": ["Dance", "Music", "Art"]
+    };
+    
+    const student = {
+      selectedElectiveGroups: studentData
+    };
+    
+    console.log("=== Not Applicable Validation Test ===");
+    console.log("Student elective selections:", studentData);
+    console.log("Elective group info:", electiveGroupInfo);
+    
+    // Test each subject
+    Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
+      console.log(`\n--- ${groupName} ---`);
+      subjectsList.forEach(subject => {
+        const isNotApplicable = isSubjectNotApplicable(subject, student, electiveGroupInfo);
+        console.log(`${subject}: ${isNotApplicable ? 'N/A' : 'Applicable'}`);
+      });
+    });
+    
+    // Get all not applicable subjects
+    const notApplicableSubjects = getNotApplicableSubjects(student, electiveGroupInfo);
+    console.log("\nAll Not Applicable subjects:", notApplicableSubjects);
+  };
+
+  // Uncomment the line below to run the test
+  // testNotApplicableValidation();
 
   const generateDataStructure = (formData: TestResultFormData) => {
     if (!selectedTest) throw new Error("No test selected");
@@ -219,9 +321,44 @@ export default function AddTestResultPage() {
     console.log("Debug - Class mappings:", classMappings);
     console.log("Debug - Selected class mapping for", formData.class, ":", classMappings.find(m => m.class === formData.class));
     
-    const testSubjects = expandElectiveSubjects(rawSubjects, formData); // Expand elective groups into individual subjects
-    console.log("Debug - Expanded subjects:", testSubjects);
+    // Create structured subjects array for display (combining core subjects and elective groups)
+    const structuredSubjects: string[] = [];
     
+    // Get the subjects that are actually mapped to this periodic test
+    const testSubjects = Array.from(new Set(testsForName.map(test => test.subject)));
+    console.log("Debug - Subjects mapped to this test:", testSubjects);
+    
+    // Get structured subjects for reference
+    const { coreSubjects, electiveGroups } = getStructuredSubjects(formData);
+    
+    // Add core subjects that are mapped to this test
+    coreSubjects.forEach((subject: string) => {
+      if (testSubjects.includes(subject)) {
+        structuredSubjects.push(subject);
+      }
+    });
+    
+    // Add elective groups that are mapped to this test
+    electiveGroups.forEach((group: any) => {
+      console.log("Processing elective group:", group);
+      // Check if any test subject matches this group (exact or partial match)
+      const hasMatchingSubject = testSubjects.some((testSubject: string) => 
+        testSubject === group.groupName || 
+        group.groupName.includes(testSubject) || 
+        testSubject.includes(group.groupName)
+      );
+      
+      console.log("Group", group.groupName, "has matching subject:", hasMatchingSubject);
+      
+      if (hasMatchingSubject) {
+        const groupDisplay = `${group.groupName}: ${group.subjects.join(', ')}`;
+        structuredSubjects.push(groupDisplay);
+        console.log("Added elective group to structured subjects:", groupDisplay);
+      }
+    });
+
+    console.log("Final structuredSubjects array:", structuredSubjects);
+
     console.log("Debug - Total students before processing:", students.length);
     console.log("Debug - Students data:", students.map(s => ({ name: s.firstName, class: s.class, division: s.division })));
 
@@ -232,7 +369,7 @@ export default function AddTestResultPage() {
       const { coreSubjects, electiveGroups } = getStructuredSubjects(formData);
       
       // Handle core subjects - check which divisions have them mapped
-      coreSubjects.forEach(subject => {
+      coreSubjects.forEach((subject: string) => {
         const divisionsWithSubject = classMappings
           .filter(mapping => 
             mapping.class === formData.class &&
@@ -245,7 +382,14 @@ export default function AddTestResultPage() {
       
       // Handle elective groups - for each group, create an entry with group name and comma-separated subjects
       electiveGroups.forEach((group: any) => {
-        if (rawSubjects.includes(group.groupName)) {
+        // Check if any raw subject matches this group (exact or partial match)
+        const hasMatchingSubject = rawSubjects.some(rawSubject => 
+          rawSubject === group.groupName || 
+          group.groupName.includes(rawSubject) || 
+          rawSubject.includes(group.groupName)
+        );
+        
+        if (hasMatchingSubject) {
           // Check which divisions have this elective group
           const divisionsWithGroup = classMappings
             .filter(mapping => 
@@ -275,36 +419,15 @@ export default function AddTestResultPage() {
         rollNumber: student.rollNumber,
         studentName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName || ''}`.trim(),
         division: student.division,
+        selectedElectiveGroups: student.selectedElectiveGroups || [],
       }))
       .sort((a, b) => a.rollNumber - b.rollNumber);
         
     console.log("Debug - Final processed students:", processedStudents);
     
-    // Create structured subjects array for display (combining core subjects and elective groups)
-    const structuredSubjects: string[] = [];
-    if (formData.division === "All") {
-      const { coreSubjects, electiveGroups } = getStructuredSubjects(formData);
-      
-      // Add core subjects
-      coreSubjects.forEach(subject => {
-        structuredSubjects.push(subject);
-      });
-      
-      // Add elective groups with their subjects formatted as "GroupName: Subject1, Subject2"
-      electiveGroups.forEach((group: any) => {
-        if (rawSubjects.includes(group.groupName)) {
-          const groupDisplay = `${group.groupName}: ${group.subjects.join(', ')}`;
-          structuredSubjects.push(groupDisplay);
-        }
-      });
-    } else {
-      // For specific division, use the expanded subjects
-      structuredSubjects.push(...testSubjects);
-    }
-
     return {
       testInfo: {
-        schoolName: "Greenwood International School",
+        schoolName: "Greenwood International Schoolasas",
         testName: selectedTest.testName, // This will be the periodic test name like "Unit Test 1"
         class: formData.class,
         division: formData.division,
@@ -322,6 +445,8 @@ export default function AddTestResultPage() {
   const createPDFMutation = useMutation({
     mutationFn: async (formData: TestResultFormData) => {
       const pdfData = generateDataStructure(formData);
+      console.log(pdfData);
+      
       generatePDF(pdfData);
       return pdfData;
     },
@@ -362,6 +487,10 @@ export default function AddTestResultPage() {
   });
 
   const generatePDF = (data: any) => {
+    console.log("PDF Generation - Full data:", data);
+    console.log("PDF Generation - Subjects:", data.subjects);
+    console.log("PDF Generation - Students:", data.students);
+    
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation for better table fit
     
     // School Header
@@ -390,78 +519,99 @@ export default function AddTestResultPage() {
       const electiveGroupInfo: { [key: string]: string[] } = {};
       const coreSubjects: string[] = [];
       
-      // Get class mapping for elective groups structure from database
-      const classMapping = classMappings.find(mapping => 
-        mapping.class === data.testInfo.class && 
-        (data.testInfo.division === "All" || mapping.division === data.testInfo.division)
-      );
+      console.log("processHeadersForElectives - Input data.subjects:", data.subjects);
       
-      // Process core subjects first
+      // Process subjects from the structured format
       data.subjects.forEach((subject: string) => {
-        if (!subject.includes(': ')) {
-          coreSubjects.push(subject);
-        }
-      });
-      
-      // Process elective groups from database structure
-      if (classMapping?.electiveGroups && Array.isArray(classMapping.electiveGroups)) {
-        classMapping.electiveGroups.forEach((group: any) => {
-          if (group.groupName && group.subjects && Array.isArray(group.subjects)) {
-            electiveGroupInfo[group.groupName] = group.subjects;
-          }
-        });
-      }
-      
-      // Also handle the legacy format from data.subjects (backward compatibility)
-      data.subjects.forEach((subject: string) => {
+        console.log("Processing subject:", subject);
         if (subject.includes(': ')) {
+          // This is an elective group in format "GroupName: Subject1, Subject2"
           const [groupName, subjectsStr] = subject.split(': ');
           const subjectsList = subjectsStr.split(', ').map(s => s.trim());
           electiveGroupInfo[groupName] = subjectsList;
+          console.log("Found elective group:", groupName, "with subjects:", subjectsList);
+        } else {
+          // This is a core subject
+          coreSubjects.push(subject);
+          console.log("Found core subject:", subject);
         }
       });
       
-      // Build final headers structure
+      console.log("Final coreSubjects:", coreSubjects);
+      console.log("Final electiveGroupInfo:", electiveGroupInfo);
+      
+      // Build final headers structure for autoTable
       const finalHeaders: string[] = [];
-      const secondRowHeaders: string[] = [];
       
       // Add core subjects
       coreSubjects.forEach(subject => {
         finalHeaders.push(subject);
-        secondRowHeaders.push('');
       });
       
-      // Add elective groups
+      // Add elective groups - each group will span across its subjects
       Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
-        finalHeaders.push(...subjectsList);
-        // First subject gets the group name, others get empty string for merging
-        secondRowHeaders.push(groupName);
-        for (let i = 1; i < subjectsList.length; i++) {
-          secondRowHeaders.push('');
-        }
+        // Add the group name as a single header that will span across all its subjects
+        finalHeaders.push(groupName);
+        console.log("Added elective group to final headers:", groupName, "with span:", subjectsList.length);
       });
+      
+      console.log("Final headers structure:", { basicHeaders, finalHeaders, electiveGroupInfo, coreSubjects });
       
       return {
         basicHeaders,
         finalHeaders,
-        secondRowHeaders,
         electiveGroupInfo,
         coreSubjects
       };
     };
     
-    const { basicHeaders, finalHeaders, secondRowHeaders, electiveGroupInfo, coreSubjects } = processHeadersForElectives();
+    const { basicHeaders, finalHeaders, electiveGroupInfo, coreSubjects } = processHeadersForElectives();
+    
+    // TEMPORARY DEBUG: Force elective groups for testing
+    console.log("DEBUG - Before processing:");
+    console.log("basicHeaders:", basicHeaders);
+    console.log("finalHeaders:", finalHeaders);
+    console.log("electiveGroupInfo:", electiveGroupInfo);
+    console.log("coreSubjects:", coreSubjects);
+    
+    // If no elective groups found, try to create them manually from the data
+    if (Object.keys(electiveGroupInfo).length === 0) {
+      console.log("No elective groups found, trying manual creation...");
+      // Look for subjects that might be elective groups
+      data.subjects.forEach((subject: string) => {
+        if (subject.includes('Elective')) {
+          console.log("Found potential elective subject:", subject);
+        }
+      });
+    }
     
     // Prepare table headers - basic headers + processed subject headers
     const tableHeaders = [...basicHeaders, ...finalHeaders];
     
-    // Prepare table data
-    const tableData = data.students.map((student: any) => [
-      student.rollNumber,
-      student.studentName,
-      student.division || '',
-      ...finalHeaders.map(() => '') // Empty cells for scores
-    ]);
+    // Prepare table data with "Not Applicable" validation
+    const tableData = data.students.map((student: any) => {
+      const row = [
+        student.rollNumber,
+        student.studentName,
+        student.division || '',
+      ];
+      
+      // Add cells for core subjects (always applicable)
+      coreSubjects.forEach(() => {
+        row.push('');
+      });
+      
+      // Add cells for each subject within elective groups with "Not Applicable" validation
+      Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
+        subjectsList.forEach((subject) => {
+          // Check if this subject is "Not Applicable" for this student
+          const isNotApplicable = isSubjectNotApplicable(subject, student, electiveGroupInfo);
+          row.push(isNotApplicable ? 'N/A' : '');
+        });
+      });
+      
+      return row;
+    });
 
     // Create a properly formatted table matching the reference image
     const createElectiveTable = () => {
@@ -486,7 +636,7 @@ export default function AddTestResultPage() {
         return;
       }
       
-      // Build the header structure exactly like the reference image
+      // Build proper two-row header structure for elective groups
       const headerRow1: string[] = [...basicHeaders]; // Roll No, Student Name, Division
       const headerRow2: string[] = ['', '', '']; // Empty cells for basic headers in row 2
       
@@ -496,20 +646,20 @@ export default function AddTestResultPage() {
         headerRow2.push('');
       });
       
-      // Add elective groups - group name in row 1, subjects in row 2
+      // Add elective groups with proper spanning
       Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
-        // First subject column gets the group name in row 1
+        // Add the group name to row 1, spanning across all its subjects
         headerRow1.push(groupName);
-        headerRow2.push(subjectsList[0]);
+        headerRow2.push(subjectsList[0]); // First subject in row 2
         
-        // Remaining subject columns get empty in row 1, subject names in row 2
+        // Add remaining subjects to row 2 only (empty cells in row 1 for spanning)
         for (let i = 1; i < subjectsList.length; i++) {
-          headerRow1.push('');
-          headerRow2.push(subjectsList[i]);
+          headerRow1.push(''); // Empty in row 1 for spanning
+          headerRow2.push(subjectsList[i] || ''); // Subject name in row 2
         }
       });
       
-      // Create table with clean formatting
+      // Create table with proper two-row header
       autoTable(doc, {
         head: [headerRow1, headerRow2],
         body: tableData,
@@ -517,8 +667,8 @@ export default function AddTestResultPage() {
         styles: {
           fontSize: 8,
           cellPadding: 2,
-          lineColor: [0, 0, 0],
-          lineWidth: 0.2,
+          halign: 'center',
+          valign: 'middle',
         },
         headStyles: {
           fillColor: [180, 180, 180],
@@ -533,7 +683,25 @@ export default function AddTestResultPage() {
           2: { cellWidth: 20 }, // Division
         },
         didDrawCell: function (data) {
-          // Handle elective group header merging
+          // Handle "N/A" cells with gray background
+          if (data.section === 'body' && data.cell.text[0] === 'N/A') {
+            // Set gray background for N/A cells
+            doc.setFillColor(220, 220, 220); // Light gray
+            doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+            
+            // Redraw the text in dark gray
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100); // Dark gray text
+            doc.text(
+              'N/A',
+              data.cell.x + data.cell.width / 2,
+              data.cell.y + data.cell.height / 2 + 2,
+              { align: 'center' }
+            );
+          }
+          
+          // Only handle elective group spanning in the first header row
           if (data.section === 'head' && data.row.index === 0) {
             let colIndex = basicHeaders.length + coreSubjects.length;
             
@@ -543,28 +711,36 @@ export default function AddTestResultPage() {
                 // Calculate the width to span across all subjects in this group
                 const cellWidth = data.cell.width;
                 const totalWidth = cellWidth * subjectsList.length;
-                
-                // Clear the default cell content first
-                doc.setFillColor(180, 180, 180);
-                doc.rect(data.cell.x, data.cell.y, totalWidth, data.cell.height, 'F');
-                
-                // Draw the border
-                doc.setDrawColor(0, 0, 0);
-                doc.setLineWidth(0.3);
-                doc.rect(data.cell.x, data.cell.y, totalWidth, data.cell.height, 'S');
-                
-                // Add the group name text centered
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 0, 0);
-                doc.text(
-                  groupName, 
-                  data.cell.x + totalWidth / 2, 
-                  data.cell.y + data.cell.height / 2 + 1, 
-                  { align: 'center' }
-                );
+                // doc.text(
+                //   groupName, 
+                //   data.cell.x + totalWidth / 2, 
+                //   data.cell.y + data.cell.height / 2 + 1, 
+                //   { align: 'center' }
+                // );
+                // Clear the current cell content
+               //  doc.setFillColor(180, 180, 180);
+                // doc.rect(data.cell.x, data.cell.y, totalWidth, data.cell.height, 'F');
+                
+                // Draw the border around the entire spanned cell
+                // doc.setDrawColor(0, 0, 0);
+                // doc.setLineWidth(0.3);
+               //   doc.rect(data.cell.x, data.cell.y, totalWidth, data.cell.height, 'S');
+                
+                // Add the group name text properly centered
+
+                
+                // Remove individual cell borders within the spanned area
+                // for (let i = 1; i < subjectsList.length; i++) {
+                //   const nextCellX = data.cell.x + (cellWidth * i);
+                //   doc.setDrawColor(180, 18d0, 180); // Match background color to hide borders
+                //   doc.setLineWidth(0.1);
+                //    doc.line(nextCellX, data.cell.y, nextCellX, data.cell.y + data.cell.height);
+                // }
               }
-              colIndex += subjectsList.length;
+              colIndex += subjectsList.length; // Move to next group
             });
           }
         }
@@ -670,12 +846,33 @@ export default function AddTestResultPage() {
     }
     
     // Student rows
-    csvContent.push(...data.students.map((student: any) => [
-      student.rollNumber,
-      student.studentName,
-      student.division || '',
-      ...finalHeaders.map(() => '') // Empty cells for scores
-    ]));
+    csvContent.push(...data.students.map((student: any) => {
+      const row = [
+        student.rollNumber,
+        student.studentName,
+        student.division || '',
+      ];
+      
+      // Add cells for core subjects (always applicable)
+      finalHeaders.forEach((subject) => {
+        // Check if this is a core subject (not part of elective groups)
+        const isCoreSubject = !Object.values(electiveGroupInfo).flat().includes(subject);
+        if (isCoreSubject) {
+          row.push(''); // Empty cell for core subjects
+        }
+      });
+      
+      // Add cells for elective subjects with "Not Applicable" validation
+      Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
+        subjectsList.forEach((subject) => {
+          // Check if this subject is "Not Applicable" for this student
+          const isNotApplicable = isSubjectNotApplicable(subject, student, electiveGroupInfo);
+          row.push(isNotApplicable ? 'N/A' : '');
+        });
+      });
+      
+      return row;
+    }));
 
     // Convert to CSV string
     const csvString = csvContent
