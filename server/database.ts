@@ -12,6 +12,7 @@ const pool = new Pool({
   max: 1,
   idleTimeoutMillis: 20000,
   connectionTimeoutMillis: 10000,
+  ssl: false
 });
 
 // Create drizzle database instance

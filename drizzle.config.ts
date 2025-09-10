@@ -10,5 +10,6 @@ export default defineConfig({
     user: "postgres",
     password: "root",
     database: "School_database",
+    ssl: false
   },
 });

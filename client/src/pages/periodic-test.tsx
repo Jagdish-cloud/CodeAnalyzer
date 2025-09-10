@@ -19,6 +19,7 @@ export default function PeriodicTestPage() {
         class: test.class,
         testName: test.testName,
         subjects: [],
+        electiveGroups: new Set<string>(),
         startDate: test.testDate,
         endDate: test.testEndDate,
         maxMarks: test.maximumMarks || 50,
@@ -26,8 +27,14 @@ export default function PeriodicTestPage() {
       };
     }
     
-    // Add subject to the group
-    acc[key].subjects.push(test.subject);
+    // Add subject to the group, handling elective groups
+    if (test.groupElectiveName) {
+      // If it's part of an elective group, group them together
+      acc[key].electiveGroups.add(test.groupElectiveName);
+    } else {
+      // Regular subject
+      acc[key].subjects.push(test.subject);
+    }
     
     // Update date range if needed
     if (test.testDate < acc[key].startDate) {
@@ -40,7 +47,15 @@ export default function PeriodicTestPage() {
     return acc;
   }, {} as Record<string, any>);
 
-  const groupedTestArray = Object.values(groupedTests);
+  // Convert elective groups Set to Array and format for display
+  const groupedTestArray = Object.values(groupedTests).map(testGroup => ({
+    ...testGroup,
+    electiveGroups: Array.from(testGroup.electiveGroups),
+    displaySubjects: [
+      ...testGroup.subjects,
+      ...Array.from(testGroup.electiveGroups as Set<string>).map((group: string) => `${group} (Elective Group)`)
+    ]
+  }));
 
 
   if (isLoading) {
@@ -111,7 +126,7 @@ export default function PeriodicTestPage() {
                         <td className="py-3 px-4">
                           <div className="flex flex-col">
                             <span className="font-medium text-gray-800">
-                              Class {testGroup.class} - {testGroup.subjects.join(', ')}
+                              Class {testGroup.class} - {testGroup.displaySubjects.join(', ')}
                             </span>
                             <Badge variant="outline" className="w-fit mt-1">
                               {testGroup.status}

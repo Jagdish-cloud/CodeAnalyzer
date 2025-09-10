@@ -156,7 +156,9 @@ export default function ViewTestResultPage() {
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-cyan-600">{periodicTest.subject}</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Subject</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                      {periodicTest.groupElectiveName ? `${periodicTest.groupElectiveName} (Elective Group)` : 'Subject'}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">{periodicTest.testDate}</div>

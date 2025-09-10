@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertPeriodicTestSchema } from "@shared/schema";
 import type { ClassMapping, SyllabusMaster } from "@shared/schema";
+import SyllabusSelector from "@/components/SyllabusSelector";
 
 const formSchema = z.object({
   year: z.string().min(1, "Year is required"),
@@ -45,7 +46,6 @@ export default function AddPeriodicTestPage() {
   const { toast } = useToast();
   const [syllabusModalOpen, setSyllabusModalOpen] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
-  const [tempSelectedChapters, setTempSelectedChapters] = useState<string[]>([]);
   const [showNewTestNameInput, setShowNewTestNameInput] = useState(false);
   const [newTestName, setNewTestName] = useState("");
   const [showMappingWarning, setShowMappingWarning] = useState(false);
@@ -176,10 +176,6 @@ export default function AddPeriodicTestPage() {
   // Open syllabus modal for specific day
   const openSyllabusModal = (dayIndex: number) => {
     setSelectedDayIndex(dayIndex);
-    const currentDay = testDays[dayIndex];
-    if (currentDay) {
-      setTempSelectedChapters([...currentDay.syllabusChapters]);
-    }
     setSyllabusModalOpen(true);
   };
 
@@ -191,72 +187,43 @@ export default function AddPeriodicTestPage() {
   // Get subjects for an elective group
   const getSubjectsInElectiveGroup = (groupName: string) => {
     const group = electiveGroups.find(g => g.groupName === groupName);
-    return group ? group.subjects : [];
+    return group ? (group.subjects as string[]) : [];
   };
 
-  // Get available chapters for selected subject in modal
-  const getAvailableChaptersForDay = (dayIndex: number) => {
-    const currentDay = testDays[dayIndex];
-    if (!currentDay || !currentDay.subject || !selectedClass) return [];
+  // Get chapter name by chapter key - handles both old format and new subject|chapter format
+  const getChapterNameByKey = (chapterKey: string, fallbackSubject?: string) => {
+    let subject = fallbackSubject;
+    let chapterNo = chapterKey;
     
-    let subjectsToQuery = [];
-    
-    // If it's an elective group, get all subjects in that group
-    if (isElectiveGroup(currentDay.subject)) {
-      subjectsToQuery = getSubjectsInElectiveGroup(currentDay.subject);
-    } else {
-      // If it's a regular subject
-      subjectsToQuery = [currentDay.subject];
+    // Check if it's the new format with subject|chapterNo
+    if (chapterKey.includes('|')) {
+      const parts = chapterKey.split('|');
+      subject = parts[0];
+      chapterNo = parts[1];
     }
     
-    // Get chapters for all subjects
-    const chaptersGroupedBySubject = subjectsToQuery.map(subject => {
-      const chapters = syllabusMasters
-        .filter(syllabus => 
-          syllabus.class === selectedClass && 
-          syllabus.subject === subject
-        )
-        .map(syllabus => ({
-          chapterNo: syllabus.chapterLessonNo,
-          chapterName: syllabus.description || `Chapter ${syllabus.chapterLessonNo}`,
-          fullText: `${syllabus.chapterLessonNo} - ${syllabus.description || `Chapter ${syllabus.chapterLessonNo}`}`,
-          subject: subject as string
-        }));
-        
-      return {
-        subject: subject as string,
-        chapters: chapters
-      };
-    });
+    if (!subject) return chapterNo;
     
-    return chaptersGroupedBySubject;
+    const chapter = syllabusMasters.find(syllabus => 
+      syllabus.class === selectedClass &&
+      syllabus.subject === subject &&
+      syllabus.chapterLessonNo === chapterNo
+    );
+    
+    return chapter?.description || chapter?.topic || chapterNo;
   };
 
-  // Get chapter name by chapter number
-  const getChapterNameByNumber = (chapterNo: string, dayIndex: number) => {
-    const availableChapters = getAvailableChaptersForDay(dayIndex);
-    
-    // Handle elective groups (array of subject groups)
-    if (Array.isArray(availableChapters) && availableChapters.length > 0 && availableChapters[0].subject) {
-      for (const subjectGroup of availableChapters) {
-        const chapter = subjectGroup.chapters.find((ch: any) => ch.chapterNo === chapterNo);
-        if (chapter) {
-          return chapter.chapterName;
-        }
-      }
-    }
-    
-    return chapterNo;
-  };
-
-  // Handle syllabus submission
-  const handleSyllabusSubmit = () => {
+  // Handle syllabus chapters change
+  const handleSyllabusChaptersChange = (chapters: string[]) => {
     if (selectedDayIndex !== null) {
-      form.setValue(`testDays.${selectedDayIndex}.syllabusChapters`, tempSelectedChapters);
+      form.setValue(`testDays.${selectedDayIndex}.syllabusChapters`, chapters);
     }
+  };
+
+  // Handle syllabus modal close
+  const handleSyllabusModalClose = () => {
     setSyllabusModalOpen(false);
     setSelectedDayIndex(null);
-    setTempSelectedChapters([]);
   };
 
   // Get structured subjects with elective groups for selected class
@@ -302,7 +269,7 @@ export default function AddPeriodicTestPage() {
     
     // Add individual elective subjects (not groups)
     electiveGroups.forEach(group => {
-      allAvailableSubjects.push(...group.subjects);
+      allAvailableSubjects.push(...(group.subjects as string[]));
     });
     
     // Get subjects that are scheduled in the test
@@ -338,21 +305,56 @@ export default function AddPeriodicTestPage() {
   const createTestMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       // Create separate test entries for each day
-      const testPromises = formData.testDays.map((dayData) => {
-        return apiRequest("POST", "/api/periodic-tests", {
-          year: formData.year,
-          testName: formData.testName,
-          class: formData.class,
-          subject: dayData.subject,
-          chapters: dayData.syllabusChapters.length > 0 ? dayData.syllabusChapters : ["No chapters available"],
-          testDate: dayData.date,
-          testEndDate: dayData.date, // Each day is its own test
-          fromTime: dayData.fromTime,
-          toTime: dayData.toTime,
-          duration: dayData.duration,
-          maximumMarks: dayData.maximumMarks || 50,
-          status: formData.status,
-        });
+      const testPromises = formData.testDays.flatMap((dayData) => {
+        // If the subject is an elective group, create individual entries for each subject in the group
+        if (isElectiveGroup(dayData.subject)) {
+          const electiveSubjects = getSubjectsInElectiveGroup(dayData.subject);
+          
+          // Create individual test entries for each subject in the elective group
+          return electiveSubjects.map((subject) => {
+            // Get chapters specific to this subject from the syllabus chapters
+            const subjectChapters = dayData.syllabusChapters
+              .filter(key => key.includes('|') ? key.split('|')[0] === subject : true)
+              .map(key => key.includes('|') ? key.split('|')[1] : key);
+            
+            return apiRequest("POST", "/api/periodic-tests", {
+              year: formData.year,
+              testName: formData.testName,
+              class: formData.class,
+              subject: subject,
+              subjectType: "elective",
+              groupElectiveName: dayData.subject, // Store the elective group name
+              chapters: subjectChapters.length > 0 ? subjectChapters : ["No chapters available"],
+              testDate: dayData.date,
+              testEndDate: dayData.date, // Each day is its own test
+              fromTime: dayData.fromTime,
+              toTime: dayData.toTime,
+              duration: dayData.duration,
+              maximumMarks: dayData.maximumMarks || 50,
+              status: formData.status,
+            });
+          });
+        } else {
+          // Regular subject test entry - groupElectiveName will be null
+          return [apiRequest("POST", "/api/periodic-tests", {
+            year: formData.year,
+            testName: formData.testName,
+            class: formData.class,
+            subject: dayData.subject,
+            subjectType: "core",
+            groupElectiveName: null, // null for non-elective subjects
+            chapters: dayData.syllabusChapters.length > 0 ? 
+              dayData.syllabusChapters.map(key => key.includes('|') ? key.split('|')[1] : key) : 
+              ["No chapters available"],
+            testDate: dayData.date,
+            testEndDate: dayData.date, // Each day is its own test
+            fromTime: dayData.fromTime,
+            toTime: dayData.toTime,
+            duration: dayData.duration,
+            maximumMarks: dayData.maximumMarks || 50,
+            status: formData.status,
+          })];
+        }
       });
       
       return Promise.all(testPromises);
@@ -783,18 +785,23 @@ export default function AddPeriodicTestPage() {
                                       {testDays[index].syllabusChapters.length} chapter{testDays[index].syllabusChapters.length > 1 ? 's' : ''} selected
                                       <div className="flex flex-wrap gap-1 mt-1">
                                         <TooltipProvider>
-                                          {testDays[index].syllabusChapters.slice(0, 3).map((chapterNo, idx) => (
-                                            <Tooltip key={idx}>
-                                              <TooltipTrigger asChild>
-                                                <span className="bg-blue-100 text-blue-600 px-1 py-0.5 rounded text-xs cursor-pointer hover:bg-blue-200">
-                                                  {chapterNo}
-                                                </span>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>{getChapterNameByNumber(chapterNo, index)}</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          ))}
+                                          {testDays[index].syllabusChapters.slice(0, 3).map((chapterKey, idx) => {
+                                            // Extract chapter number for display
+                                            const displayChapter = chapterKey.includes('|') ? chapterKey.split('|')[1] : chapterKey;
+                                            
+                                            return (
+                                              <Tooltip key={idx}>
+                                                <TooltipTrigger asChild>
+                                                  <span className="bg-blue-100 text-blue-600 px-1 py-0.5 rounded text-xs cursor-pointer hover:bg-blue-200">
+                                                    {displayChapter}
+                                                  </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p>{getChapterNameByKey(chapterKey, testDays[index].subject)}</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            );
+                                          })}
                                         </TooltipProvider>
                                         {testDays[index].syllabusChapters.length > 3 && (
                                           <span className="text-blue-600 text-xs">+{testDays[index].syllabusChapters.length - 3} more</span>
@@ -841,9 +848,9 @@ export default function AddPeriodicTestPage() {
         </Card>
 
         {/* Syllabus Selection Modal */}
-        <Dialog open={syllabusModalOpen} onOpenChange={setSyllabusModalOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
+        <Dialog open={syllabusModalOpen} onOpenChange={handleSyllabusModalClose}>
+          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-xl font-bold text-slate-800">
                 Select Syllabus Chapters
                 {selectedDayIndex !== null && testDays[selectedDayIndex] && (
@@ -854,74 +861,27 @@ export default function AddPeriodicTestPage() {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="py-4">
-              {selectedDayIndex !== null && (
-                <div className="space-y-4">
-                  {getAvailableChaptersForDay(selectedDayIndex).length > 0 ? (
-                    <div className="space-y-6">
-                      {getAvailableChaptersForDay(selectedDayIndex).map((subjectGroup, groupIndex) => (
-                        <div key={`${subjectGroup.subject}-${groupIndex}`} className="space-y-3">
-                          <h3 className="font-semibold text-slate-800 text-lg border-b border-slate-200 pb-2">
-                            {subjectGroup.subject}
-                          </h3>
-                          {subjectGroup.chapters.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-3">
-                              {subjectGroup.chapters.map((chapter: any) => (
-                                <div key={`${subjectGroup.subject}-${chapter.chapterNo}`} className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
-                                  <Checkbox
-                                    checked={tempSelectedChapters.includes(chapter.chapterNo)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setTempSelectedChapters([...tempSelectedChapters, chapter.chapterNo]);
-                                      } else {
-                                        setTempSelectedChapters(tempSelectedChapters.filter(ch => ch !== chapter.chapterNo));
-                                      }
-                                    }}
-                                    className="border-slate-300"
-                                  />
-                                  <label className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
-                                    {chapter.fullText}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-slate-400">
-                              <p className="text-sm">No syllabus chapters available for {subjectGroup.subject}.</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-slate-500">
-                      <p>No syllabus chapters available for this subject.</p>
-                      <p className="text-sm mt-2">Please ensure syllabus is mapped for this class and subject.</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setSyllabusModalOpen(false);
-                        setTempSelectedChapters([]);
-                      }}
-                      className="text-slate-600 border-slate-300"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleSyllabusSubmit}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                </div>
+            <div className="flex-1 min-h-0">
+              {selectedDayIndex !== null && testDays[selectedDayIndex] && (
+                <SyllabusSelector
+                  selectedClass={selectedClass}
+                  selectedSubject={testDays[selectedDayIndex].subject}
+                  selectedChapters={testDays[selectedDayIndex].syllabusChapters || []}
+                  onChaptersChange={handleSyllabusChaptersChange}
+                  className="border-0 shadow-none h-full"
+                />
               )}
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200 flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSyllabusModalClose}
+                className="text-slate-600 border-slate-300"
+              >
+                Close
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

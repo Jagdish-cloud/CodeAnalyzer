@@ -91,6 +91,7 @@ export const students = pgTable("students", {
   guardianRelation: text("guardian_relation"),
   apaarId: text("apaar_id").notNull(),
   aadharNumber: text("aadhar_number").notNull(),
+  password: text("password"),
 });
 
 export const workingDays = pgTable("working_days", {
@@ -149,6 +150,7 @@ export const periodicTests = pgTable("periodic_tests", {
   class: text("class").notNull(),
   subject: text("subject").notNull(),
   subjectType: text("subject_type").notNull().default("core"), // "core" or "elective"
+  groupElectiveName: text("group_elective_name"), // Stores the elective group name, null for non-elective subjects
   chapters: text("chapters").array().notNull(), // Array of chapter/lesson numbers
   testDate: text("test_date").notNull(),
   testEndDate: text("test_end_date").notNull(),
