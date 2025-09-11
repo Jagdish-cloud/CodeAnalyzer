@@ -2343,6 +2343,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import test results from CSV
+  app.post("/api/test-results/import", async (req, res) => {
+    try {
+      console.log('Import endpoint called');
+      const { testResults } = req.body;
+      console.log('Received testResults:', testResults?.length, 'items');
+      console.log('Sample testResult:', testResults?.[0]);
+      
+      if (!Array.isArray(testResults)) {
+        console.error('testResults is not an array:', typeof testResults);
+        return res.status(400).json({ message: "Test results must be an array" });
+      }
+
+      // Validate each test result
+      const validatedResults = [];
+      for (let i = 0; i < testResults.length; i++) {
+        const testResult = testResults[i];
+        console.log(`Validating test result ${i + 1}:`, testResult);
+        
+        const result = insertTestResultSchema.safeParse(testResult);
+        if (!result.success) {
+          console.error(`Validation failed for test result ${i + 1}:`, result.error.errors);
+          return res.status(400).json({ 
+            message: "Validation failed for test result", 
+            errors: result.error.errors,
+            data: testResult
+          });
+        }
+        validatedResults.push(result.data);
+        console.log(`✅ Test result ${i + 1} validated successfully`);
+      }
+
+      // Bulk create test results
+      console.log('Calling bulkCreateTestResults with', validatedResults.length, 'validated results');
+      const createdResults = await storage.bulkCreateTestResults(validatedResults);
+      console.log('bulkCreateTestResults returned:', createdResults.length, 'results');
+      
+      res.status(201).json({ 
+        message: "Test results imported successfully",
+        count: createdResults.length,
+        results: createdResults
+      });
+    } catch (error) {
+      console.error("Test results import error:", error);
+      res.status(500).json({ message: "Failed to import test results" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static(uploadDir));
 

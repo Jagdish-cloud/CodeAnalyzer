@@ -99,7 +99,7 @@ export default function ViewTestResultPage() {
 
         {/* Navigation Tabs */}
         <Tabs value="view" className="w-full max-w-7xl mx-auto">
-          <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-0 h-14">
+          <TabsList className="grid w-full grid-cols-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-0 h-14">
             <TabsTrigger 
               value="landing" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white text-base font-semibold transition-all duration-300"
@@ -113,6 +113,13 @@ export default function ViewTestResultPage() {
               asChild
             >
               <Link href="/test-results/add">Add</Link>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="import" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white text-base font-semibold transition-all duration-300"
+              asChild
+            >
+              <Link href="/test-results/import">Import</Link>
             </TabsTrigger>
             <TabsTrigger 
               value="view" 

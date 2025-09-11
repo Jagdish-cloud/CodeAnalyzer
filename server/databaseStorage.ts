@@ -823,8 +823,12 @@ export class DatabaseStorage {
     return result.length > 0;
   }
 
-  async bulkCreateTestResults(testResults: InsertTestResult[]): Promise<TestResult[]> {
-    const result = await db.insert(testResults).values(testResults as any).returning();
+  async bulkCreateTestResults(testResultsData: InsertTestResult[]): Promise<TestResult[]> {
+    console.log('bulkCreateTestResults called with:', testResultsData.length, 'records');
+    console.log('Sample record:', testResultsData[0]);
+    
+    const result = await db.insert(testResults).values(testResultsData as any).returning();
+    console.log('Insert result:', result);
     return result as TestResult[];
   }
 } 

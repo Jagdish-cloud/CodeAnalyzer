@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Plus, Edit, Trash2, FileText } from "lucide-react";
+import { Eye, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
 
 // Define class group type for display
 interface ClassGroup {
@@ -128,7 +128,7 @@ export default function TestResultsPage() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} className="w-full max-w-5xl mx-auto">
-          <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-0 h-14">
+          <TabsList className="grid w-full grid-cols-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-0 h-14">
             <TabsTrigger 
               value="landing" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white text-base font-semibold transition-all duration-300"
@@ -142,6 +142,13 @@ export default function TestResultsPage() {
               asChild
             >
               <Link href="/test-results/add">Add</Link>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="import" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white text-base font-semibold transition-all duration-300"
+              asChild
+            >
+              <Link href="/test-results/import">Import</Link>
             </TabsTrigger>
             <TabsTrigger 
               value="view" 
@@ -159,15 +166,27 @@ export default function TestResultsPage() {
                   <CardTitle className="text-2xl text-slate-800 dark:text-slate-200">
                     Test Results Overview
                   </CardTitle>
-                  <Button 
-                    asChild
-                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <Link href="/test-results/add">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Test Result
-                    </Link>
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      asChild
+                      variant="outline"
+                      className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+                    >
+                      <Link href="/test-results/import">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import CSV
+                      </Link>
+                    </Button>
+                    <Button 
+                      asChild
+                      className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Link href="/test-results/add">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Test Result
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               

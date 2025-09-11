@@ -54,6 +54,7 @@ import AddMockTest from "@/pages/add-mock-test";
 import ViewMockTest from "@/pages/view-mock-test";
 import TestResults from "@/pages/test-results";
 import AddTestResult from "@/pages/add-test-result";
+import ImportTestResults from "@/pages/import-test-results";
 import ViewTestResult from "@/pages/view-test-result";
 
 function Router() {
@@ -110,6 +111,7 @@ function Router() {
         <Route path="/mock-tests/view/:id" component={ViewMockTest} />
         <Route path="/test-results" component={TestResults} />
         <Route path="/test-results/add" component={AddTestResult} />
+        <Route path="/test-results/import" component={ImportTestResults} />
         <Route path="/test-results/view/:id" component={ViewTestResult} />
         <Route component={NotFound} />
       </Switch>

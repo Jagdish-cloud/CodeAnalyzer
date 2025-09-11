@@ -460,6 +460,7 @@ export const testResults = pgTable("test_results", {
 
 export const insertTestResultSchema = createInsertSchema(testResults).omit({
   id: true,
+  grade: true, // Grade is calculated by database, not sent from frontend
   createdAt: true,
   updatedAt: true,
 });
