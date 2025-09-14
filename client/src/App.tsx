@@ -112,7 +112,7 @@ function Router() {
         <Route path="/test-results" component={TestResults} />
         <Route path="/test-results/add" component={AddTestResult} />
         <Route path="/test-results/import" component={ImportTestResults} />
-        <Route path="/test-results/view/:id" component={ViewTestResult} />
+        <Route path="/test-results/view/:testName/:className" component={ViewTestResult} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

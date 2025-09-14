@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, FileText, CheckCircle, AlertCircle, Eye } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import * as XLSX from 'xlsx';
 
 interface ParsedTestData {
   testInfo: {
@@ -35,6 +37,7 @@ export default function ImportTestResultsPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedTestData | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [editableScores, setEditableScores] = useState<{ [key: string]: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -47,6 +50,214 @@ export default function ImportTestResultsPage() {
   const { data: students = [] } = useQuery<any[]>({
     queryKey: ['/api/students'],
   });
+
+  // Initialize editable scores when data is parsed
+  const initializeEditableScores = (data: ParsedTestData) => {
+    const scores: { [key: string]: string } = {};
+    data.students.forEach((student, studentIndex) => {
+      data.subjects.forEach((subject) => {
+        const key = `${studentIndex}-${subject}`;
+        scores[key] = student.scores[subject] || '';
+      });
+    });
+    setEditableScores(scores);
+  };
+
+  // Update a specific score
+  const updateScore = (studentIndex: number, subject: string, value: string) => {
+    const key = `${studentIndex}-${subject}`;
+    setEditableScores(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  // Get updated parsed data with editable scores
+  const getUpdatedParsedData = (): ParsedTestData | null => {
+    if (!parsedData) return null;
+    
+    const updatedStudents = parsedData.students.map((student, studentIndex) => ({
+      ...student,
+      scores: parsedData.subjects.reduce((acc, subject) => {
+        const key = `${studentIndex}-${subject}`;
+        acc[subject] = editableScores[key] || student.scores[subject] || '';
+        return acc;
+      }, {} as { [subject: string]: string })
+    }));
+
+    return {
+      ...parsedData,
+      students: updatedStudents
+    };
+  };
+
+  const parseXLSX = (file: File): Promise<ParsedTestData> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get the first worksheet
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          
+          // Convert to JSON array
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          
+          // Process the data similar to CSV parsing
+          const parsed = processExcelData(jsonData as any[][]);
+          resolve(parsed);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const processExcelData = (data: any[][]): ParsedTestData => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Parse header information
+    const testInfo = {
+      schoolName: data[0]?.[0] || '',
+      testName: data[1]?.[0] || '',
+      class: '',
+      division: '',
+      year: '',
+      fromDate: '',
+      toDate: '',
+      duration: ''
+    };
+
+    // Extract class, division, year, dates, duration
+    console.log('Excel data for parsing:', data.slice(0, 15)); // Debug: show first 15 rows
+    
+    for (let i = 0; i < Math.min(15, data.length); i++) {
+      const row = data[i];
+      const firstCell = row?.[0] || '';
+      console.log(`Row ${i}: "${firstCell}"`); // Debug: show each row being processed
+      
+      if (firstCell.toString().startsWith('Class:')) {
+        testInfo.class = firstCell.toString().replace('Class:', '').trim();
+        console.log('✅ Parsed class:', testInfo.class);
+      } else if (firstCell.toString().startsWith('Division:')) {
+        testInfo.division = firstCell.toString().replace('Division:', '').trim();
+        console.log('✅ Parsed division:', testInfo.division);
+      } else if (firstCell.toString().startsWith('Year:')) {
+        testInfo.year = firstCell.toString().replace('Year:', '').trim();
+        console.log('✅ Parsed year:', testInfo.year);
+      } else if (firstCell.toString().startsWith('From Date:')) {
+        testInfo.fromDate = firstCell.toString().replace('From Date:', '').trim();
+      } else if (firstCell.toString().startsWith('To Date:')) {
+        testInfo.toDate = firstCell.toString().replace('To Date:', '').trim();
+      } else if (firstCell.toString().startsWith('Duration:')) {
+        testInfo.duration = firstCell.toString().replace('Duration:', '').trim();
+      }
+    }
+    
+    console.log('Final parsed test info:', testInfo);
+    
+    // Validate that we have the required fields
+    if (!testInfo.class || !testInfo.division || !testInfo.year) {
+      console.error('Missing required fields:', {
+        class: testInfo.class,
+        division: testInfo.division,
+        year: testInfo.year
+      });
+      throw new Error(`Missing required fields in Excel file. Class: "${testInfo.class}", Division: "${testInfo.division}", Year: "${testInfo.year}"`);
+    }
+
+    // Find the header row (contains "Roll No", "Student Name", etc.)
+    let headerRowIndex = -1;
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (row && row[0]?.toString().includes('Roll No') && row[1]?.toString().includes('Student Name')) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+
+    if (headerRowIndex === -1) {
+      errors.push('Could not find header row with "Roll No" and "Student Name"');
+      return { testInfo, subjects: [], students: [], errors, warnings };
+    }
+
+    // Parse subjects from header row
+    const headerRow = data[headerRowIndex];
+    const subjects = headerRow.slice(3).map(col => col?.toString().trim() || '').filter(col => col); // Skip Roll No, Student Name, Division
+
+    // Parse student data
+    const students: ParsedTestData['students'] = [];
+    for (let i = headerRowIndex + 1; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length < 3) continue;
+
+      const rollNumber = parseInt(row[0]?.toString() || '');
+      if (isNaN(rollNumber)) {
+        warnings.push(`Row ${i + 1}: Invalid roll number "${row[0]}"`);
+        continue;
+      }
+
+      const studentName = row[1]?.toString().trim() || '';
+      const division = row[2]?.toString().trim() || '';
+      const scores: { [subject: string]: string } = {};
+
+      // Parse scores for each subject
+      subjects.forEach((subject, index) => {
+        const scoreIndex = 3 + index;
+        scores[subject] = row[scoreIndex]?.toString().trim() || '';
+      });
+
+      students.push({
+        rollNumber,
+        studentName,
+        division,
+        scores
+      });
+    }
+
+    // Check if periodic test exists
+    const matchingTests = periodicTests.filter(test => 
+      test.testName === testInfo.testName && 
+      test.class === testInfo.class && 
+      test.year === testInfo.year
+    );
+
+    if (matchingTests.length === 0) {
+      // Debug: Log available tests for troubleshooting
+      const availableTests = periodicTests.filter(test => 
+        test.testName === testInfo.testName && test.year === testInfo.year
+      );
+      const availableClasses = Array.from(new Set(availableTests.map(test => test.class)));
+      
+      warnings.push(`No matching periodic test found for "${testInfo.testName}" in class "${testInfo.class}" for year "${testInfo.year}". Available classes for this test: ${availableClasses.join(', ')}`);
+    } else {
+      // Check if all subjects in Excel have corresponding periodic tests
+      const testSubjects = matchingTests.map(test => test.subject);
+      
+      // Filter out elective group columns from missing subjects check
+      const coreSubjects = subjects.filter(subject => !subject.includes('Elective') || (subject.includes('Elective') && !subject.includes('(')));
+      const missingSubjects = coreSubjects.filter(subject => !testSubjects.includes(subject));
+      
+      if (missingSubjects.length > 0) {
+        warnings.push(`No periodic test found for subjects: ${missingSubjects.join(', ')}`);
+      }
+      
+      // Log elective group columns for debugging
+      const electiveGroupColumns = subjects.filter(subject => subject.includes('Elective') && subject.includes('(') && subject.includes(')'));
+      if (electiveGroupColumns.length > 0) {
+        console.log('Elective group columns found:', electiveGroupColumns);
+        console.log('These will be mapped to individual subjects based on student selections');
+      }
+    }
+
+    return { testInfo, subjects, students, errors, warnings };
+  };
 
   const parseCSV = (csvContent: string): ParsedTestData => {
     const lines = csvContent.split('\n').map(line => line.trim()).filter(line => line);
@@ -180,7 +391,7 @@ export default function ImportTestResultsPage() {
       const testSubjects = matchingTests.map(test => test.subject);
       
       // Filter out elective group columns from missing subjects check
-      const coreSubjects = subjects.filter(subject => !subject.includes('Elective') || subject.includes(':'));
+      const coreSubjects = subjects.filter(subject => !subject.includes('Elective') || (subject.includes('Elective') && !subject.includes('(')));
       const missingSubjects = coreSubjects.filter(subject => !testSubjects.includes(subject));
       
       if (missingSubjects.length > 0) {
@@ -188,7 +399,7 @@ export default function ImportTestResultsPage() {
       }
       
       // Log elective group columns for debugging
-      const electiveGroupColumns = subjects.filter(subject => subject.includes('Elective') && !subject.includes(':'));
+      const electiveGroupColumns = subjects.filter(subject => subject.includes('Elective') && subject.includes('(') && subject.includes(')'));
       if (electiveGroupColumns.length > 0) {
         console.log('Elective group columns found:', electiveGroupColumns);
         console.log('These will be mapped to individual subjects based on student selections');
@@ -202,10 +413,10 @@ export default function ImportTestResultsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
+    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.csv')) {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a CSV file.",
+        description: "Please upload an XLSX or CSV file.",
         variant: "destructive",
       });
       return;
@@ -215,18 +426,40 @@ export default function ImportTestResultsPage() {
     setIsPreviewMode(false);
     setParsedData(null);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const csvContent = e.target?.result as string;
-      const parsed = parseCSV(csvContent);
-      setParsedData(parsed);
-      setIsPreviewMode(true);
-    };
-    reader.readAsText(file);
+    // Handle XLSX files
+    if (file.name.toLowerCase().endsWith('.xlsx')) {
+      parseXLSX(file)
+        .then((parsed) => {
+          setParsedData(parsed);
+          initializeEditableScores(parsed);
+          setIsPreviewMode(true);
+        })
+        .catch((error) => {
+          console.error('Error parsing XLSX:', error);
+          toast({
+            title: "Error Parsing File",
+            description: error.message || "Failed to parse XLSX file.",
+            variant: "destructive",
+          });
+        });
+    } else {
+      // Handle CSV files (existing logic)
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvContent = e.target?.result as string;
+        const parsed = parseCSV(csvContent);
+        setParsedData(parsed);
+        initializeEditableScores(parsed);
+        setIsPreviewMode(true);
+      };
+      reader.readAsText(file);
+    }
   };
 
   const importMutation = useMutation({
-    mutationFn: async (data: ParsedTestData) => {
+    mutationFn: async () => {
+      const data = getUpdatedParsedData();
+      if (!data) throw new Error('No data to import');
       // Find the matching periodic tests
       const matchingTests = periodicTests.filter(test => 
         test.testName === data.testInfo.testName && 
@@ -281,20 +514,23 @@ export default function ImportTestResultsPage() {
           const score = student.scores[subject];
           const marks = score && score.trim() !== '' && score !== 'N/A' ? parseInt(score) : null;
           
-          // Check if this is an elective group column (like "Elective 2 I")
-          const isElectiveGroup = subject.includes('Elective') && !subject.includes(':');
+          // Check if this is an elective group column (format: "ElectiveGroupName(Subject1,Subject2)")
+          const isElectiveGroup = subject.includes('Elective') && subject.includes('(') && subject.includes(')');
           
           if (isElectiveGroup) {
-            // This is an elective group column, find the student's selected subject from this group
+            // This is an elective group column, extract the group name from format "ElectiveGroupName(Subject1,Subject2)"
+            const groupName = subject.split('(')[0]; // Extract "ElectiveGroupName" from "ElectiveGroupName(Subject1,Subject2)"
+            console.log(`Processing elective group: "${subject}" -> Group name: "${groupName}"`);
+            
             const studentElectives = systemStudent.selectedElectiveGroups || [];
             const selectedElective = studentElectives.find((elective: any) => 
-              elective.groupName === subject
+              elective.groupName === groupName
             );
             
             if (selectedElective) {
               // Student has selected a subject from this group
               const selectedSubject = selectedElective.selectedSubject;
-              console.log(`Student ${student.studentName}: Elective group "${subject}" maps to subject "${selectedSubject}"`);
+              console.log(`Student ${student.studentName}: Elective group "${groupName}" maps to subject "${selectedSubject}"`);
               
               // Find the periodic test for the selected subject
               const subjectTest = periodicTests.find(test => 
@@ -326,7 +562,7 @@ export default function ImportTestResultsPage() {
                 console.warn(`❌ No periodic test found for subject "${selectedSubject}" in test "${data.testInfo.testName}" for class "${data.testInfo.class}" and year "${data.testInfo.year}"`);
               }
             } else {
-              console.log(`Student ${student.studentName}: No elective selection found for group "${subject}"`);
+              console.log(`Student ${student.studentName}: No elective selection found for group "${groupName}"`);
             }
           } else {
             // This is a core subject or individual elective subject
@@ -411,6 +647,7 @@ export default function ImportTestResultsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/test-results'] });
       setUploadedFile(null);
       setParsedData(null);
+      setEditableScores({});
       setIsPreviewMode(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -497,15 +734,15 @@ export default function ImportTestResultsPage() {
                         <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 hover:border-emerald-500 transition-colors">
                           <Upload className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            Upload CSV File
+                            Upload XLSX/CSV File
                           </h3>
                           <p className="text-slate-600 dark:text-slate-400 mb-4">
-                            Select a CSV file containing test results data
+                            Select an XLSX or CSV file containing test results data
                           </p>
                           <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".csv"
+                            accept=".xlsx,.csv"
                             onChange={handleFileUpload}
                             className="hidden"
                           />
@@ -524,10 +761,10 @@ export default function ImportTestResultsPage() {
                         <CardContent className="p-6">
                           <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
                             <FileText className="h-5 w-5" />
-                            CSV Format Requirements
+                            XLSX/CSV Format Requirements
                           </h4>
                           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
-                            <li>• File must be in CSV format (.csv extension)</li>
+                            <li>• File must be in XLSX or CSV format (.xlsx or .csv extension)</li>
                             <li>• First row should contain school name</li>
                             <li>• Second row should contain test name (e.g., "Final Semester")</li>
                             <li>• Rows 4-9 should contain class, division, year (2025-2026), dates, and duration</li>
@@ -535,6 +772,7 @@ export default function ImportTestResultsPage() {
                             <li>• Data rows should contain student information and scores</li>
                             <li>• Year format should match database format (e.g., "2025-2026")</li>
                             <li>• Elective subjects will be marked as N/A for students who haven't selected them</li>
+                            <li>• Elective groups should be in format: ElectiveGroupName(Subject1,Subject2)</li>
                           </ul>
                           <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-800/30 rounded-lg">
                             <p className="text-xs text-blue-800 dark:text-blue-200">
@@ -559,7 +797,7 @@ export default function ImportTestResultsPage() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm ">
                             <div><span className="font-medium">School:</span> {parsedData.testInfo.schoolName}</div>
                             <div><span className="font-medium">Test:</span> {parsedData.testInfo.testName}</div>
                             <div><span className="font-medium">Class:</span> {parsedData.testInfo.class}</div>
@@ -611,47 +849,70 @@ export default function ImportTestResultsPage() {
                         </Alert>
                       )}
 
-                      {/* Sample Data Preview */}
+                      {/* Editable Data Preview */}
                       {parsedData.students.length > 0 && (
                         <Card>
                           <CardHeader>
-                            <CardTitle className="text-lg">Sample Data Preview</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Eye className="h-5 w-5" />
+                              Editable Data Preview ({parsedData.students.length} students)
+                            </CardTitle>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              You can edit the scores before importing. Click on any score cell to edit.
+                            </p>
                           </CardHeader>
                           <CardContent>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto max-h-96 overflow-y-auto">
                               <table className="w-full border-collapse border border-slate-300 dark:border-slate-600">
-                                <thead>
-                                  <tr className="bg-slate-100 dark:bg-slate-800">
-                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left">Roll No</th>
-                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left">Student Name</th>
-                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left">Division</th>
+                                <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 z-10">
+                                  <tr>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left left-0 bg-slate-100 dark:bg-slate-800">Roll No</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left left-16 bg-slate-100 dark:bg-slate-800">Student Name</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-2 text-left left-32 bg-slate-100 dark:bg-slate-800">Division</th>
                                     {parsedData.subjects.map((subject) => (
-                                      <th key={subject} className="border border-slate-300 dark:border-slate-600 p-2 text-left">
-                                        {subject}
+                                      <th key={subject} className="border border-slate-300 dark:border-slate-600 p-2 text-left min-w-auto">
+                                        <div className="text-xs font-medium">{subject}</div>
                                       </th>
                                     ))}
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {parsedData.students.slice(0, 5).map((student, index) => (
-                                    <tr key={index}>
-                                      <td className="border border-slate-300 dark:border-slate-600 p-2">{student.rollNumber}</td>
-                                      <td className="border border-slate-300 dark:border-slate-600 p-2">{student.studentName}</td>
-                                      <td className="border border-slate-300 dark:border-slate-600 p-2">{student.division}</td>
-                                      {parsedData.subjects.map((subject) => (
-                                        <td key={subject} className="border border-slate-300 dark:border-slate-600 p-2">
-                                          {student.scores[subject] || '-'}
-                                        </td>
-                                      ))}
+                                  {parsedData.students.map((student, index) => (
+                                    <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                      <td className="border border-slate-300 dark:border-slate-600 p-2 left-0 bg-white dark:bg-slate-900 font-medium">
+                                        {student.rollNumber}
+                                      </td>
+                                      <td className="border border-slate-300 dark:border-slate-600 p-2 left-16 bg-white dark:bg-slate-900">
+                                        {student.studentName}
+                                      </td>
+                                      <td className="border border-slate-300 dark:border-slate-600 p-2 left-48 bg-white dark:bg-slate-900 mr-4">
+                                        {student.division}
+                                      </td>
+                                      {parsedData.subjects.map((subject) => {
+                                        const key = `${index}-${subject}`;
+                                        const currentValue = editableScores[key] || student.scores[subject] || '';
+                                        return (
+                                          <td key={subject} className="border border-slate-300 dark:border-slate-600 p-1">
+                                            <Input
+                                              value={currentValue}
+                                              onChange={(e) => updateScore(index, subject, e.target.value)}
+                                              className="w-full h-8 text-xs border-0 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-transparent"
+                                              placeholder="Score"
+                                              type="text"
+                                            />
+                                          </td>
+                                        );
+                                      })}
                                     </tr>
                                   ))}
                                 </tbody>
                               </table>
-                              {parsedData.students.length > 5 && (
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                                  Showing first 5 rows of {parsedData.students.length} total students
-                                </p>
-                              )}
+                            </div>
+                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <p className="text-sm text-blue-800 dark:text-blue-200">
+                                <strong>Note:</strong> Edit any scores above before importing. Empty cells will be treated as no score. 
+                                Leave cells empty for "N/A" values.
+                              </p>
                             </div>
                           </CardContent>
                         </Card>
@@ -665,6 +926,7 @@ export default function ImportTestResultsPage() {
                             setIsPreviewMode(false);
                             setParsedData(null);
                             setUploadedFile(null);
+                            setEditableScores({});
                             if (fileInputRef.current) {
                               fileInputRef.current.value = '';
                             }
@@ -676,7 +938,7 @@ export default function ImportTestResultsPage() {
                         <div className="flex gap-4">
                           {parsedData.errors.length === 0 && (
                             <Button
-                              onClick={() => importMutation.mutate(parsedData)}
+                              onClick={() => importMutation.mutate()}
                               disabled={!canImport || importMutation.isPending}
                               className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
                             >

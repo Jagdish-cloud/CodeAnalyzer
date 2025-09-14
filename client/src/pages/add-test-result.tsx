@@ -14,6 +14,7 @@ import { ArrowLeft, FileDown, Plus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const testResultFormSchema = z.object({
   year: z.string().min(1, "Year is required"),
@@ -459,8 +460,8 @@ export default function AddTestResultPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Excel Generated Successfully",
-        description: "The Excel file has been downloaded.",
+        title: "XLSX Generated Successfully",
+        description: "The XLSX file has been downloaded.",
       });
     },
     onError: (error: any) => {
@@ -773,8 +774,11 @@ export default function AddTestResultPage() {
     
     const { basicHeaders, finalHeaders, electiveGroupInfo } = processExcelHeaders();
     
-    // Create Excel content as CSV format
-    const csvContent = [
+    // Create Excel workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Create worksheet data
+    const worksheetData = [
       // Header rows
       [data.testInfo.schoolName],
       [data.testInfo.testName],
@@ -798,15 +802,16 @@ export default function AddTestResultPage() {
       }
     });
     
-    // Add elective group names as single columns
+    // Add elective group names as single columns in format: groupName(subject1,subject2)
     Object.entries(electiveGroupInfo).forEach(([groupName, subjectsList]) => {
-      headerRow.push(groupName);
+      const formattedGroupName = `${groupName}(${subjectsList.join(',')})`;
+      headerRow.push(formattedGroupName);
     });
     
-    csvContent.push(headerRow);
+    worksheetData.push(headerRow);
     
     // Student rows
-    csvContent.push(...data.students.map((student: any) => {
+    data.students.forEach((student: any) => {
       const row = [
         student.rollNumber,
         student.studentName,
@@ -835,24 +840,33 @@ export default function AddTestResultPage() {
         }
       });
       
-      return row;
-    }));
+      worksheetData.push(row);
+    });
 
-    // Convert to CSV string
-    const csvString = csvContent
-      .map(row => row.map((cell: any) => `"${cell}"`).join(','))
-      .join('\n');
-
-    // Create a blob and download
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-result-sheet-${data.testInfo.class}-${data.testInfo.division}-${data.testInfo.year}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    // Create worksheet from data
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 10 }, // Roll No
+      { wch: 30 }, // Student Name
+      { wch: 15 }, // Division
+    ];
+    
+    // Add column widths for subjects
+    const totalSubjects = finalHeaders.length;
+    for (let i = 0; i < totalSubjects; i++) {
+      columnWidths.push({ wch: 15 });
+    }
+    
+    worksheet['!cols'] = columnWidths;
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Test Results');
+    
+    // Generate and download the file
+    const fileName = `test-result-sheet-${data.testInfo.class}-${data.testInfo.division}-${data.testInfo.year}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   const onSubmitPDF = (data: TestResultFormData) => {
@@ -1084,7 +1098,7 @@ export default function AddTestResultPage() {
                         ) : (
                           <>
                             <FileDown className="h-5 w-5 mr-2" />
-                            Download Excel File
+                            Download XLSX File
                           </>
                         )}
                       </Button>
