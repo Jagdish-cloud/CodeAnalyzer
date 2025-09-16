@@ -131,14 +131,16 @@ export default function TimeTableLanding() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-blue-300 hover:bg-blue-50 dark:border-blue-700 dark:hover:bg-blue-950"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
+                            <Link href={`/view-time-table/${timeTable.id}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-300 hover:bg-blue-50 dark:border-blue-700 dark:hover:bg-blue-950"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View
+                              </Button>
+                            </Link>
                             <Link href={`/edit-time-table/${timeTable.id}`}>
                               <Button
                                 variant="outline"

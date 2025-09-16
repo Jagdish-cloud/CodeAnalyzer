@@ -381,7 +381,7 @@ export default function AddTimeTable() {
         
         // Handle both regular subjects and elective groups
         if (value.startsWith('elective-group-')) {
-          // For elective groups, we need to create entries for all subjects in the group
+          // For elective groups, store the group name and comma-separated subject/teacher IDs
           // Extract the group name and division from the value
           const electiveMatch = value.match(/elective-group-(.+)-division-(.+)/);
           if (electiveMatch) {
@@ -394,7 +394,10 @@ export default function AddTimeTable() {
               .find((group: any) => group.groupName === groupName);
             
             if (electiveGroup && electiveGroup.subjects) {
-              // Create entries for all subjects in the elective group
+              // Collect subject IDs and teacher IDs for the elective group
+              const subjectIds: number[] = [];
+              const teacherIds: number[] = [];
+              
               electiveGroup.subjects.forEach((subjectName: string) => {
                 const subject = subjects.find(s => s.subjectName === subjectName);
                 const teacherMapping = teacherMappings.find(tm => 
@@ -406,16 +409,25 @@ export default function AddTimeTable() {
                     .find(div => div.division === divisionName);
                   
                   if (divisionData && divisionData.teacherId) {
-                    entries.push({
-                      timeTableId: 0, // Will be set after time table creation
-                      dayOfWeek: day,
-                      scheduleSlot: slot,
-                      subjectId: subject.id,
-                      teacherId: divisionData.teacherId,
-                    });
+                    subjectIds.push(subject.id);
+                    teacherIds.push(divisionData.teacherId);
                   }
                 }
               });
+              
+              // Create a single entry for the elective group with comma-separated values
+              if (subjectIds.length > 0 && teacherIds.length > 0) {
+                entries.push({
+                  timeTableId: 0, // Will be set after time table creation
+                  dayOfWeek: day,
+                  scheduleSlot: slot,
+                  subjectId: null, // Not used for elective groups
+                  teacherId: null, // Not used for elective groups
+                  electiveGroupName: groupName,
+                  subjectIds: subjectIds.join(','),
+                  teacherIds: teacherIds.join(','),
+                });
+              }
             }
           }
         } else {
@@ -429,6 +441,9 @@ export default function AddTimeTable() {
               scheduleSlot: slot,
               subjectId: parseInt(subjectId),
               teacherId: parseInt(teacherId),
+              electiveGroupName: null, // Not an elective group
+              subjectIds: null, // Not an elective group
+              teacherIds: null, // Not an elective group
             });
           }
         }

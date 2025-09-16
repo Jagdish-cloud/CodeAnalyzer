@@ -72,8 +72,8 @@ export default function TeacherMapping() {
 
   // Group teacher mappings by class-division combinations
   const groupedMappings = teacherMappings?.reduce((acc, mapping) => {
-    // mapping.divisions is an array of {division: string, teacherId: number, teacherName: string}
-    const divisions = mapping.divisions as Array<{division: string, teacherId: number, teacherName: string}>;
+    // mapping.divisions is an array of {division: string, teacherId: number, teacherName: string, isClassTeacher?: boolean}
+    const divisions = mapping.divisions as Array<{division: string, teacherId: number, teacherName: string, isClassTeacher?: boolean}>;
     divisions.forEach((divisionData) => {
       const classDivisionKey = `${mapping.class}-${divisionData.division}`;
       
@@ -83,12 +83,21 @@ export default function TeacherMapping() {
           division: divisionData.division,
           subjects: [],
           status: mapping.status || "active",
-          mappingIds: []
+          mappingIds: [],
+          classTeacher: null
         };
       }
       
       acc[classDivisionKey].subjects.push(mapping.subject);
       acc[classDivisionKey].mappingIds.push(mapping.id);
+      
+      // Check if this teacher is the class teacher
+      if (divisionData.isClassTeacher) {
+        acc[classDivisionKey].classTeacher = {
+          name: divisionData.teacherName,
+          subject: mapping.subject
+        };
+      }
     });
     
     return acc;
@@ -98,6 +107,7 @@ export default function TeacherMapping() {
     subjects: string[];
     status: string;
     mappingIds: number[];
+    classTeacher: {name: string, subject: string} | null;
   }>) || {};
 
   if (isLoading) {
@@ -217,6 +227,9 @@ export default function TeacherMapping() {
                           Class Details
                         </TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">
+                          Class Teacher
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">
                           Status
                         </TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">
@@ -239,6 +252,22 @@ export default function TeacherMapping() {
                                 Subject: {group.subjects.join(', ')}
                               </div>
                             </div>
+                          </TableCell>
+                          <TableCell className="text-slate-700 dark:text-slate-300">
+                            {group.classTeacher ? (
+                              <div className="space-y-1">
+                                <div className="font-medium text-blue-600 dark:text-blue-400">
+                                  {group.classTeacher.name}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400">
+                                  ({group.classTeacher.subject})
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500 italic">
+                                No class teacher assigned
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge

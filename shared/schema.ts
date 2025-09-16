@@ -21,6 +21,16 @@ export const staff = pgTable("staff", {
   managerName: text("manager_name"),
   status: text("status").notNull(),
   lastWorkingDay: text("last_working_day"),
+  // Login fields
+  username: text("username").unique(),
+  password: text("password"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastLoginAt: timestamp("last_login_at"),
+  loginAttempts: integer("login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"),
+  passwordChangedAt: timestamp("password_changed_at"),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  twoFactorSecret: text("two_factor_secret"),
 });
 
 export const classMappings = pgTable("class_mappings", {
@@ -37,7 +47,7 @@ export const teacherMappings = pgTable("teacher_mappings", {
   id: serial("id").primaryKey(),
   class: text("class").notNull(),
   subject: text("subject").notNull(),
-  divisions: json("divisions").notNull(), // Array of {division: string, teacherId: number, teacherName: string}
+  divisions: json("divisions").notNull(), // Array of {division: string, teacherId: number, teacherName: string, isClassTeacher?: boolean}
   status: text("status").notNull().default("Current working"),
 });
 
@@ -128,6 +138,9 @@ export const timeTableEntries = pgTable("time_table_entries", {
   scheduleSlot: text("schedule_slot").notNull(), // Maps to schedule name like "Period-1", "Break-1", etc.
   subjectId: integer("subject_id").references(() => subjects.id),
   teacherId: integer("teacher_id").references(() => staff.id),
+  electiveGroupName: text("elective_group_name"), // Stores the elective group name, null for non-elective subjects
+  subjectIds: text("subject_ids"), // Comma-separated subject IDs for elective groups
+  teacherIds: text("teacher_ids"), // Comma-separated teacher IDs for elective groups
 });
 
 export const syllabusMasters = pgTable("syllabus_masters", {

@@ -176,6 +176,7 @@ export default function AddTeacherMapping() {
                 division: selectedDivision,
                 teacherId: assignment.teacherId!,
                 teacherName: assignment.teacherName || "",
+                isClassTeacher: assignment.isClassTeacher || false,
               },
             ],
             status: data.status || "Current working",
